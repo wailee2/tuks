@@ -1,3 +1,5 @@
+const pool = require('../config/db'); // <-- add this line
+
 const { createProduct, getUserProducts, updateProduct, deleteProduct } = require('../models/inventoryModel');
 
 const addProduct = async (req, res) => {
@@ -45,17 +47,14 @@ const deleteProductController = async (req, res) => {
 const getMarketplaceProducts = async (req, res) => {
   try {
     const result = await pool.query(
-      `SELECT p.*, u.name AS owner_name
-       FROM products p
-       JOIN users u ON u.id = p.user_id
-       WHERE is_available = true
-       ORDER BY created_at DESC`
+      'SELECT * FROM products WHERE is_available = TRUE ORDER BY created_at DESC'
     );
-    res.json(result.rows);
+    res.status(200).json(result.rows);
   } catch (err) {
-    console.error('Get marketplace products error:', err);
+    console.error('Get marketplace products error:', err.message);
     res.status(500).json({ message: 'Server error' });
   }
 };
+
 
 module.exports = { addProduct, getUserInventory, updateProductController, deleteProductController, getMarketplaceProducts };

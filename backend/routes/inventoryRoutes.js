@@ -17,5 +17,3 @@ router.get('/marketplace', authMiddleware, getMarketplaceProducts);
 
 
 module.exports = router;
-
-
