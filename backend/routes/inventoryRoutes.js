@@ -1,11 +1,26 @@
-// routes/inventoryRoutes.js
 const express = require('express');
 const router = express.Router();
-const { createProduct, listProducts, editProduct, removeProduct } = require('../controllers/inventoryController');
+const { authMiddleware, roleMiddleware } = require('../middleware/authMiddleware');
+const {
+  fetchAllProducts,
+  fetchProductById,
+  addProduct,
+  editProduct,
+  removeProduct,
+  fetchMarketplaceProducts
+} = require('../controllers/inventoryController');
 
-router.post('/', createProduct);
-router.get('/', listProducts);
-router.patch('/:id', editProduct);
+// All routes require login
+router.use(authMiddleware);
+
+// User inventory
+router.get('/', fetchAllProducts);
+router.get('/:id', fetchProductById);
+router.post('/', addProduct);
+router.put('/:id', editProduct);
 router.delete('/:id', removeProduct);
+
+// Marketplace (public products)
+router.get('/marketplace/all', fetchMarketplaceProducts);
 
 module.exports = router;
