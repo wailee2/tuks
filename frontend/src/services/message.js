@@ -1,7 +1,11 @@
 import api from './api';
 
+export const sendMessageAPI = async (receiver_id, content) => {
+  const res = await api.post('/messages', { receiver_id, content });
+  return res.data;
+};
 
-export const sendMessageAPI = (receiver_id, content) => api.post('/messages', { receiver_id, content });
-export const getConversationAPI = (userId) => api.get(`/messages/conversation/${userId}`);
-export const getNotificationsAPI = () => api.get('/messages/notifications');
-export const markNotificationReadAPI = (id) => api.patch(`/messages/notifications/${id}/read`);
+export const getConversationAPI = async (userId) => {
+  const res = await api.get(`/messages/conversation/${userId}`);
+  return res.data;
+};
