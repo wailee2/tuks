@@ -5,6 +5,8 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
 import AdminUsers from './pages/AdminUsers.jsx';
+import Inventory from './pages/Inventory.jsx';
+import Marketplace from './pages/Marketplace.jsx';
 import PageNotFound from './pages/PageNotFound';
 
 export default function AppRoutes() {
@@ -16,6 +18,8 @@ export default function AppRoutes() {
         <Route path="/" element={user ? <Navigate to="/dashboard" /> : <Login />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        <Route path="/inventory" element={user ? <Inventory /> : <Navigate to="/login" />} />
+        <Route path="/marketplace" element={<Marketplace />} />
         <Route
           path="/admin/users"
           element={user?.role === 'ADMIN' ? <AdminUsers /> : <Navigate to="/dashboard" />}

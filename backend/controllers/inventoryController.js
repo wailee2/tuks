@@ -1,88 +1,61 @@
-const {
-  getAllProducts,
-  getProductById,
-  createProduct,
-  updateProduct,
-  deleteProduct,
-  getMarketplaceProducts
-} = require('../models/inventoryModel');
+const { createProduct, getUserProducts, updateProduct, deleteProduct } = require('../models/inventoryModel');
 
-// Fetch logged-in user’s products
-const fetchAllProducts = async (req, res) => {
+const addProduct = async (req, res) => {
   try {
-    const products = await getAllProducts(req.user.id, req.user.role==='ADMIN');
-    res.json(products);
+    const product = await createProduct(req.user.id, req.body);
+    res.status(201).json(product);
   } catch (err) {
-    console.error(err.message);
+    console.error('Add product error:', err);
     res.status(500).json({ message: 'Server error' });
   }
 };
 
-// Fetch single product
-const fetchProductById = async (req, res) => {
+const getUserInventory = async (req, res) => {
   try {
-    const product = await getProductById(req.params.id);
+    const products = await getUserProducts(req.user.id);
+    res.json(products);
+  } catch (err) {
+    console.error('Get user inventory error:', err);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+const updateProductController = async (req, res) => {
+  try {
+    const product = await updateProduct(req.params.id, req.user.id, req.body);
     if (!product) return res.status(404).json({ message: 'Product not found' });
     res.json(product);
   } catch (err) {
-    console.error(err.message);
+    console.error('Update product error:', err);
     res.status(500).json({ message: 'Server error' });
   }
 };
 
-// Add new product
-const addProduct = async (req, res) => {
-  try {
-    const { name, description, category, supplier_id, purchase_price, retail_price, stock_quantity, reorder_level, is_available, market_price } = req.body;
-    const product = await createProduct(req.user.id, name, description, category, supplier_id, purchase_price, retail_price, stock_quantity, reorder_level, is_available, market_price);
-    res.status(201).json(product);
-  } catch (err) {
-    console.error(err.message);
-    res.status(500).json({ message: 'Server error' });
-  }
-};
-
-// Edit product
-const editProduct = async (req, res) => {
-  try {
-    const fields = req.body;
-    const product = await updateProduct(req.params.id, req.user.id, fields);
-    if (!product) return res.status(403).json({ message: 'You can only edit your own products' });
-    res.json(product);
-  } catch (err) {
-    console.error(err.message);
-    res.status(500).json({ message: 'Server error' });
-  }
-};
-
-// Delete product
-const removeProduct = async (req, res) => {
+const deleteProductController = async (req, res) => {
   try {
     const product = await deleteProduct(req.params.id, req.user.id);
-    if (!product) return res.status(403).json({ message: 'You can only delete your own products' });
-    res.json({ message: 'Product deleted successfully' });
+    if (!product) return res.status(404).json({ message: 'Product not found' });
+    res.json({ message: 'Product deleted', product });
   } catch (err) {
-    console.error(err.message);
+    console.error('Delete product error:', err);
     res.status(500).json({ message: 'Server error' });
   }
 };
 
-// Get all available products in marketplace
-const fetchMarketplaceProducts = async (req, res) => {
+const getMarketplaceProducts = async (req, res) => {
   try {
-    const products = await getMarketplaceProducts();
-    res.json(products);
+    const result = await pool.query(
+      `SELECT p.*, u.name AS owner_name
+       FROM products p
+       JOIN users u ON u.id = p.user_id
+       WHERE is_available = true
+       ORDER BY created_at DESC`
+    );
+    res.json(result.rows);
   } catch (err) {
-    console.error(err.message);
+    console.error('Get marketplace products error:', err);
     res.status(500).json({ message: 'Server error' });
   }
 };
 
-module.exports = {
-  fetchAllProducts,
-  fetchProductById,
-  addProduct,
-  editProduct,
-  removeProduct,
-  fetchMarketplaceProducts
-};
+module.exports = { addProduct, getUserInventory, updateProductController, deleteProductController, getMarketplaceProducts };

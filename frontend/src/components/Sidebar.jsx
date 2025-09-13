@@ -11,6 +11,7 @@ export default function Sidebar() {
     { name: 'Orders', path: '/orders' },
     { name: 'Feed', path: '/feed' },
     { name: 'Analytics', path: '/analytics' },
+    { name: 'Marketplace', path: '/marketplace' },
     // Only visible to admins
     ...(user?.role === 'ADMIN'
       ? [{ name: 'Admin Users', path: '/admin/users' }]

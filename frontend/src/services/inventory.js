@@ -1,21 +1,27 @@
-import API from "./api";
+import api from './api';
 
-export const getProducts = async () => {
-  const res = await API.get("/inventory");
+export const addProduct = async (data) => {
+  const res = await api.post('/inventory', data);
   return res.data;
 };
 
-export const createProduct = async (product) => {
-  const res = await API.post("/inventory", product);
+export const getUserInventory = async () => {
+  const res = await api.get('/inventory/user');
   return res.data;
 };
 
-export const updateProduct = async (id, product) => {
-  const res = await API.patch(`/inventory/${id}`, product);
+export const updateProduct = async (id, data) => {
+  const res = await api.put(`/inventory/${id}`, data);
   return res.data;
 };
 
 export const deleteProduct = async (id) => {
-  const res = await API.delete(`/inventory/${id}`);
+  const res = await api.delete(`/inventory/${id}`);
+  return res.data;
+};
+
+// Fetch all available products for marketplace
+export const fetchMarketplaceProducts = async () => {
+  const res = await api.get('/inventory/marketplace'); // backend endpoint
   return res.data;
 };
