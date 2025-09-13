@@ -1,11 +1,14 @@
 import { AuthProvider } from './context/AuthContext';
+import { OrderProvider } from './context/OrderContext';
 import AppRoutes from './routes';
 
 function App() {
   return (
-    <AuthProvider>
-      <AppRoutes />
-    </AuthProvider>
+    <OrderProvider>
+      <AuthProvider>
+        <AppRoutes />
+      </AuthProvider>
+    </OrderProvider>
   );
 }
 

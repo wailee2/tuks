@@ -7,6 +7,11 @@ import Dashboard from './pages/Dashboard';
 import AdminUsers from './pages/AdminUsers.jsx';
 import Inventory from './pages/Inventory.jsx';
 import Marketplace from './pages/Marketplace.jsx';
+import OrdersList from './components/OrdersList.jsx';
+import OrderDetails from './pages/OrderDetails.jsx';
+import Cart from './pages/Cart.jsx';
+import Messages from './pages/Messages.jsx';
+import Notifications from './pages/Notifications.jsx';
 import PageNotFound from './pages/PageNotFound';
 
 export default function AppRoutes() {
@@ -24,6 +29,13 @@ export default function AppRoutes() {
           path="/admin/users"
           element={user?.role === 'ADMIN' ? <AdminUsers /> : <Navigate to="/dashboard" />}
         />
+        <Route path="/orders" element={<OrdersList />} />
+        <Route path="/orders/:id" element={<OrderDetails />} />
+        <Route path="/cart" element={<Cart />} />
+        <Route path="/messages" element={user ? <Messages /> : <Navigate to="/login" />} />
+        <Route path="/notifications" element={user ? <Notifications /> : <Navigate to="/login" />} />
+
+
         <Route path="*" element={<PageNotFound />} />
         <Route path="/dashboard" element={user ? <Dashboard /> : <Navigate to="/login" />} />
       </Routes>

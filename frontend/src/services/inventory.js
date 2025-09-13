@@ -25,3 +25,9 @@ export const fetchMarketplaceProducts = async () => {
   const res = await api.get('/inventory/marketplace'); // backend endpoint
   return res.data;
 };
+
+// Place an order
+export const placeOrder = async (items) => {
+  const res = await api.post('/orders', { items });
+  return res.data;
+};
