@@ -1,67 +1,99 @@
-const MessageModel = require('../models/messageModel');
-const NotificationModel = require('../models/notificationModel');
+// controllers/messagesController.js
+const { createMessage, getMessagesBetweenUsers, markMessagesDelivered, markMessagesRead } = require('../models/messageModel');
+const { createNotification } = require('../models/notificationModel');
+const { getUserByUsername } = require('../models/userModel');
 
-exports.sendMessage = async (req, res) => {
+const sendMessage = async (req, res) => {
   try {
-    const { receiverId, content } = req.body;
-    const senderId = req.user.id;
+    const senderId = req.user.id; // authMiddleware populates req.user
+    const { toUsername, content, type } = req.body;
+    if (!toUsername || !content) return res.status(400).json({ message: 'toUsername and content required' });
 
-    const message = await MessageModel.createMessage({ senderId, receiverId, content });
+    const receiver = await getUserByUsername(toUsername);
+    if (!receiver) return res.status(404).json({ message: 'Recipient not found' });
 
-    // create notification
-    await NotificationModel.createNotification({
-      userId: receiverId,
-      type: 'message',
-      message: `New message from ${req.user.name}`,
-    });
+    // create message
+    const message = await createMessage(senderId, receiver.id, content, type || 'text');
 
-    // emit real-time event
-    req.io.to(`user_${receiverId}`).emit('receive_message', message);
+    // try to create a notification for the receiver
+    const notif = await createNotification(
+      receiver.id,
+      senderId,
+      'message',
+      `New message from ${req.user.id === senderId ? req.user.id : ''}`, // optional title
+      content.length > 200 ? content.slice(0, 197) + '...' : content,
+      `/chat/${toUsername}`
+    );
 
-    return res.json(message);
+    // emit via socket.io if available on app (server should do app.set('io', io))
+    try {
+      const io = req.app?.get('io');
+      if (io) {
+        // emit message to receiver room and sender room (so both clients update)
+        io.to(`user_${receiver.id}`).emit('private_message', message);
+        io.to(`user_${senderId}`).emit('private_message', message);
+
+        // emit notification
+        io.to(`user_${receiver.id}`).emit('notification', notif);
+      }
+    } catch (err) {
+      console.error('Socket emit failed', err);
+    }
+
+    return res.status(201).json({ message, notification: notif });
   } catch (err) {
-    console.error('sendMessage error:', err);
-    res.status(500).json({ error: 'Failed to send message' });
+    console.error('sendMessage error', err);
+    res.status(500).json({ message: 'Server error' });
   }
 };
 
-exports.getConversation = async (req, res) => {
+const fetchMessages = async (req, res) => {
   try {
-    const { otherUserId } = req.params;
     const userId = req.user.id;
-    const messages = await MessageModel.getConversation(userId, otherUserId);
-    res.json(messages);
+    const otherUsername = req.params.username;
+    const limit = Math.min(200, parseInt(req.query.limit || '50'));
+    const page = Math.max(0, parseInt(req.query.page || '0'));
+    const offset = page * limit;
+
+    const other = await getUserByUsername(otherUsername);
+    if (!other) return res.status(404).json({ message: 'User not found' });
+
+    const messages = await getMessagesBetweenUsers(userId, other.id, limit, offset);
+
+    // mark delivered for messages where current user is receiver
+    await markMessagesDelivered(userId, other.id);
+
+    res.json({ messages });
   } catch (err) {
-    res.status(500).json({ error: 'Failed to fetch conversation' });
+    console.error('fetchMessages error', err);
+    res.status(500).json({ message: 'Server error' });
   }
 };
 
-exports.updateMessage = async (req, res) => {
+const markRead = async (req, res) => {
   try {
-    const { messageId } = req.params;
-    const { content } = req.body;
-    const updated = await MessageModel.updateMessage(messageId, content);
-    res.json(updated);
+    const userId = req.user.id;
+    const otherUsername = req.params.username;
+    const other = await getUserByUsername(otherUsername);
+    if (!other) return res.status(404).json({ message: 'User not found' });
+
+    const updated = await markMessagesRead(userId, other.id);
+
+    // optional socket notify sender that messages are read
+    try {
+      const io = req.app?.get('io');
+      if (io) {
+        io.to(`user_${other.id}`).emit('messages_read', { by: userId, from: other.id });
+      }
+    } catch (err) {
+      console.error('socket notify read failed', err);
+    }
+
+    res.json({ updatedCount: updated.length });
   } catch (err) {
-    res.status(500).json({ error: 'Failed to update message' });
+    console.error('markRead error', err);
+    res.status(500).json({ message: 'Server error' });
   }
 };
 
-exports.deleteMessage = async (req, res) => {
-  try {
-    const { messageId } = req.params;
-    await MessageModel.deleteMessage(messageId);
-    res.json({ success: true });
-  } catch (err) {
-    res.status(500).json({ error: 'Failed to delete message' });
-  }
-};
-
-// helper for sockets
-exports.sendMessageSocket = async (io, msg) => {
-  const { senderId, receiverId, content } = msg;
-  const message = await MessageModel.createMessage({ senderId, receiverId, content });
-
-  io.to(`user_${receiverId}`).emit('receive_message', message);
-  io.to(`user_${senderId}`).emit('message_sent', message);
-};
+module.exports = { sendMessage, fetchMessages, markRead };

@@ -1,9 +1,14 @@
-const express = require('express');
-const cors = require('cors');
-require('dotenv').config();
-const http = require('http');
-const { Server } = require('socket.io');
 
+// server.js
+require('dotenv').config();
+const express = require('express');
+const http = require('http');
+const cors = require('cors');
+const helmet = require('helmet');
+const { Server } = require('socket.io');
+const jwt = require('jsonwebtoken');
+
+// route imports (make sure these files exist as per previous steps)
 const authRoutes = require('./routes/authRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 const inventoryRoutes = require('./routes/inventoryRoutes');
@@ -12,21 +17,20 @@ const messageRoutes = require('./routes/messageRoutes');
 const notificationRoutes = require('./routes/notificationRoutes');
 const { authMiddlewareSocket } = require('./middleware/authMiddlewareSocket');
 
-const { sendMessageSocket } = require('./controllers/messageController');
-
 const app = express();
-const server = http.createServer(app);
-const io = new Server(server, { cors: { origin: '*' } });
 
-app.use(cors());
+// Basic middleware
+app.use(helmet());
 app.use(express.json());
 
-// make io available to route handlers (so req.io can be used)
-app.use((req, res, next) => {
-  req.io = io;
-  next();
-});
+// CORS: allow your client origin (set CLIENT_ORIGIN in .env)
+const CLIENT_ORIGIN = process.env.CLIENT_ORIGIN || '*';
+app.use(cors({ origin: CLIENT_ORIGIN, credentials: true }));
 
+// Optional health check
+app.get('/health', (req, res) => res.json({ ok: true, time: new Date().toISOString() }));
+
+// API routes (prefix with /api)
 app.use('/api/auth', authRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/inventory', inventoryRoutes);
@@ -34,37 +38,87 @@ app.use('/api/orders', orderRoutes);
 app.use('/api/messages', messageRoutes);
 app.use('/api/notifications', notificationRoutes);
 
-// Socket.io auth + messaging
-io.use(authMiddlewareSocket);
 
-io.on('connection', (socket) => {
-  console.log('New client connected', socket.id);
-
-  // auto-join if auth middleware attached userId
-  if (socket.userId) {
-    socket.join(`user_${socket.userId}`);
-    console.log(`Auto-joined user_${socket.userId}`);
-  }
-
-  // still allow explicit join if frontend emits it
-  socket.on('join', (userId) => {
-    socket.join(`user_${userId}`);
-    console.log(`User ${userId} joined room`);
-  });
-
-  socket.on('send_message', async (msg) => {
-    try {
-      // use helper that persists message and emits to rooms
-      await sendMessageSocket(io, msg);
-    } catch (err) {
-      console.error('Socket send_message handler error:', err);
-    }
-  });
-
-  socket.on('disconnect', () => {
-    console.log('Client disconnected', socket.id);
-  });
+// Generic error handler (simple)
+app.use((err, req, res, next) => {
+  console.error('Unhandled error:', err);
+  res.status(500).json({ message: 'Server error' });
 });
 
+/* ---------- HTTP + Socket.IO setup ---------- */
+const server = http.createServer(app);
+
+const io = new Server(server, {
+  cors: {
+    origin: CLIENT_ORIGIN,
+    methods: ['GET', 'POST'],
+    credentials: true
+  },
+  // optional transports config:
+  transports: ['websocket', 'polling']
+});
+
+// expose io to controllers via app.get('io')
+app.set('io', io);
+
+// Keep track of connected sockets per user (optional, helpful)
+const onlineUsers = new Map(); // userId -> Set(socketId)
+
+// Socket auth middleware: expects client to connect with { auth: { token } }
+io.use((socket, next) => {
+  try {
+    const token = socket.handshake.auth?.token;
+    if (!token) return next(new Error('not-authenticated'));
+
+    const payload = jwt.verify(token, process.env.JWT_SECRET);
+    // attach to socket
+    socket.userId = payload.id ?? payload.userId ?? payload.user?.id;
+    if (!socket.userId) return next(new Error('invalid-token-payload'));
+
+    return next();
+  } catch (err) {
+    console.warn('Socket auth failed:', err.message);
+    return next(new Error('invalid-token'));
+  }
+});
+
+io.on('connection', (socket) => {
+  const uid = socket.userId;
+  if (!uid) {
+    // precaution
+    socket.disconnect(true);
+    return;
+  }
+
+  // record socket
+  const set = onlineUsers.get(uid) || new Set();
+  set.add(socket.id);
+  onlineUsers.set(uid, set);
+
+  // join user room
+  socket.join(`user_${uid}`);
+
+  console.log(`Socket connected: user=${uid} socketId=${socket.id} totalDevices=${set.size}`);
+
+  // optional: handle incoming client socket events (if you want)
+  socket.on('disconnect', (reason) => {
+    const s = onlineUsers.get(uid);
+    if (s) {
+      s.delete(socket.id);
+      if (s.size === 0) onlineUsers.delete(uid);
+      else onlineUsers.set(uid, s);
+    }
+    console.log(`Socket disconnected: user=${uid} socketId=${socket.id} reason=${reason}`);
+  });
+
+  // If you want to allow clients to emit messages through socket (instead of REST),
+  // add handlers here similar to your REST controllers. Example:
+  // socket.on('private_message', async (payload, ack) => { ... })
+});
+
+/* ---------- Start server ---------- */
 const PORT = process.env.PORT || 5000;
-server.listen(PORT, () => console.log(`✅Server running on port ${PORT}`));
+server.listen(PORT, () => {
+  console.log(`Server listening on port ${PORT}`);
+  console.log(`CORS origin: ${CLIENT_ORIGIN}`);
+});
