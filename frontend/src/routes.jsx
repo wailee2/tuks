@@ -12,6 +12,7 @@ import OrderDetails from './pages/OrderDetails.jsx';
 import Cart from './pages/Cart.jsx';
 import Messages from './pages/Messages.jsx';
 import Notifications from './pages/Notifications.jsx';
+import MessagesPage from './pages/MessagesPage.jsx';
 import PageNotFound from './pages/PageNotFound';
 
 export default function AppRoutes() {
@@ -34,6 +35,8 @@ export default function AppRoutes() {
         <Route path="/cart" element={<Cart />} />
         <Route path="/messages" element={user ? <Messages /> : <Navigate to="/login" />} />
         <Route path="/notifications" element={user ? <Notifications /> : <Navigate to="/login" />} />
+
+        <Route path="/messages/:username" element={user ? <MessagesPage /> : <Navigate to="/login" />} />
 
 
         <Route path="*" element={<PageNotFound />} />

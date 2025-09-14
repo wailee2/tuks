@@ -2,6 +2,7 @@
 
 import React, { createContext, useState, useEffect } from 'react';
 import { loginUser, registerUser, checkUsername as checkUsernameApi } from '../services/auth';
+import { initSocket } from "../services/socket";
 
 export const AuthContext = createContext();
 
@@ -11,6 +12,7 @@ export const AuthProvider = ({ children }) => {
     return saved ? JSON.parse(saved) : null;
   });
   const [token, setToken] = useState(() => localStorage.getItem('token') || null);
+  const [socket, setSocket] = useState(null);
 
   useEffect(() => {
     if (token) localStorage.setItem('token', token);
@@ -19,6 +21,17 @@ export const AuthProvider = ({ children }) => {
     if (user) localStorage.setItem('user', JSON.stringify(user));
     else localStorage.removeItem('user');
   }, [token, user]);
+
+  useEffect(() => {
+    if (token) {
+      const s = initSocket(token);
+      setSocket(s);
+
+      return () => {
+        s.disconnect();
+      };
+    }
+  }, [token]);
 
   const login = async (email, password) => {
     const { user: u, token: t } = await loginUser(email, password);
@@ -36,6 +49,7 @@ export const AuthProvider = ({ children }) => {
   const logout = () => {
     setUser(null);
     setToken(null);
+    if (socket) socket.disconnect();
   };
 
   // wrapper for checkUsername client function
@@ -45,7 +59,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, token, login, register, logout, checkUsername }}>
+    <AuthContext.Provider value={{ user, token, socket, login, register, logout, checkUsername }}>
       {children}
     </AuthContext.Provider>
   );

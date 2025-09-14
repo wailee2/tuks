@@ -15,7 +15,6 @@ const inventoryRoutes = require('./routes/inventoryRoutes');
 const orderRoutes = require('./routes/orderRoutes');
 const messageRoutes = require('./routes/messageRoutes');
 const notificationRoutes = require('./routes/notificationRoutes');
-const { authMiddlewareSocket } = require('./middleware/authMiddlewareSocket');
 
 const app = express();
 
@@ -122,3 +121,5 @@ server.listen(PORT, () => {
   console.log(`Server listening on port ${PORT}`);
   console.log(`CORS origin: ${CLIENT_ORIGIN}`);
 });
+
+
