@@ -1,3 +1,4 @@
+// context/AuthContext.jsx
 import { createContext, useState, useEffect } from 'react';
 import { loginUser, registerUser } from '../services/auth';
 
@@ -24,11 +25,13 @@ export const AuthProvider = ({ children }) => {
     setToken(t);
   };
 
-  const register = async (name, email, password) => {
-    const { user: u, token: t } = await registerUser(name, email, password);
+  
+  const register = async (name, username, email, password) => {
+    const { user: u, token: t } = await registerUser(name, username, email, password);
     setUser(u);
     setToken(t);
   };
+
 
   const logout = () => {
     setUser(null);
