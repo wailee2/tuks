@@ -3,10 +3,10 @@ import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 
 // Modern registration page component using Tailwind v4 classes
-// Expects AuthContext.register(name, username, email, password)
+// Expects AuthContext.register(name, username, email, password) and AuthContext.checkUsername(username)
 
 export default function RegisterPage() {
-  const { register } = useContext(AuthContext);
+  const { register, checkUsername } = useContext(AuthContext);
   const navigate = useNavigate();
 
   const [form, setForm] = useState({ name: '', username: '', email: '', password: '', confirm: '' });
@@ -27,7 +27,7 @@ export default function RegisterPage() {
   }, [form.password]);
 
   useEffect(() => {
-    // debounce username availability check
+    // debounce username availability check using AuthContext.checkUsername
     const username = (form.username || '').trim().toLowerCase();
     setUsernameAvailable(null); // reset while typing
 
@@ -44,25 +44,18 @@ export default function RegisterPage() {
 
     setCheckingUsername(true);
     usernameTimer.current = setTimeout(async () => {
-      // avoid duplicate checks for same value
       if (lastChecked.current === username) {
         setCheckingUsername(false);
         return;
       }
       lastChecked.current = username;
       try {
-        const base = import.meta.env.VITE_API_URL || '';
-        const res = await fetch(`${base}/auth/check-username?username=${encodeURIComponent(username)}`);
-        if (!res.ok) {
-          // treat invalid username format as unavailable
-          setUsernameAvailable(false);
-          setErrors(prev => ({ ...prev, username: 'Invalid username format' }));
-        } else {
-          const data = await res.json();
-          setUsernameAvailable(Boolean(data.available));
-          if (!data.available) setErrors(prev => ({ ...prev, username: 'Username already taken' }));
-          else setErrors(prev => ({ ...prev, username: '' }));
-        }
+        const res = await checkUsername(username);
+        // checkUsername may return { available: true } or boolean
+        const available = typeof res === 'boolean' ? res : Boolean(res?.available);
+        setUsernameAvailable(available);
+        if (!available) setErrors(prev => ({ ...prev, username: 'Username already taken' }));
+        else setErrors(prev => ({ ...prev, username: '' }));
       } catch (err) {
         console.error('Username check failed', err);
         // network failure: do not block user, just mark unknown
@@ -75,7 +68,7 @@ export default function RegisterPage() {
     return () => {
       if (usernameTimer.current) clearTimeout(usernameTimer.current);
     };
-  }, [form.username]);
+  }, [form.username, checkUsername]);
 
   function calcPasswordScore(pw) {
     if (!pw) return 0;

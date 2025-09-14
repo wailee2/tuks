@@ -13,3 +13,7 @@ export const loginUser = async (email, password) => {
 };
 
 
+export const checkUsername = async (username) => {
+  const res = await api.get(`/auth/check-username?username=${encodeURIComponent(username)}`);
+  return res.data;
+};

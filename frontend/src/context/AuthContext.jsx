@@ -1,6 +1,7 @@
 // context/AuthContext.jsx
-import { createContext, useState, useEffect } from 'react';
-import { loginUser, registerUser } from '../services/auth';
+
+import React, { createContext, useState, useEffect } from 'react';
+import { loginUser, registerUser, checkUsername as checkUsernameApi } from '../services/auth';
 
 export const AuthContext = createContext();
 
@@ -25,21 +26,26 @@ export const AuthProvider = ({ children }) => {
     setToken(t);
   };
 
-  
+  // register now expects (name, username, email, password)
   const register = async (name, username, email, password) => {
     const { user: u, token: t } = await registerUser(name, username, email, password);
     setUser(u);
     setToken(t);
   };
 
-
   const logout = () => {
     setUser(null);
     setToken(null);
   };
 
+  // wrapper for checkUsername client function
+  const checkUsername = async (username) => {
+    // simply forward to the service; caller will handle response shape
+    return await checkUsernameApi(username);
+  };
+
   return (
-    <AuthContext.Provider value={{ user, token, login, register, logout }}>
+    <AuthContext.Provider value={{ user, token, login, register, logout, checkUsername }}>
       {children}
     </AuthContext.Provider>
   );
