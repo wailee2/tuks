@@ -3,6 +3,7 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const { createUser, getUserByEmail, getUserByUsername } = require('../models/userModel');
 
+
 // REGISTER
 const register = async (req, res) => {
   try {
@@ -54,4 +55,23 @@ const login = async (req, res) => {
   }
 };
 
-module.exports = { register, login };
+
+// CHECK USERNAME AVAILABILITY
+const checkUsername = async (req, res) => {
+  try {
+    const username = (req.query.username || '').trim();
+    if (!username) return res.status(400).json({ available: false, message: 'username query param required' });
+    // same validation rule as client
+    if (!/^[a-zA-Z0-9._-]{3,30}$/.test(username)) {
+      return res.status(400).json({ available: false, message: 'invalid username' });
+    }
+
+    const existing = await getUserByUsername(username);
+    res.json({ available: !existing });
+  } catch (err) {
+    console.error('checkUsername error', err);
+    res.status(500).json({ available: false, message: 'Server error' });
+  }
+};
+
+module.exports = { register, login, checkUsername /* plus any other exports you already had */ };

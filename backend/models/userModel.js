@@ -6,8 +6,9 @@ const getUserByEmail = async (email) => {
   return res.rows[0];
 };
 
+// case-insensitive username lookup
 const getUserByUsername = async (username) => {
-  const res = await pool.query('SELECT * FROM users WHERE username = $1', [username]);
+  const res = await pool.query('SELECT * FROM users WHERE LOWER(username) = LOWER($1)', [username]);
   return res.rows[0];
 };
 
@@ -20,5 +21,3 @@ const createUser = async (name, username, email, password) => {
 };
 
 module.exports = { getUserByEmail, getUserByUsername, createUser };
-
-
