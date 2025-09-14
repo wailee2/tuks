@@ -1,11 +1,6 @@
 import api from './api';
 
-export const sendMessageAPI = async (receiver_id, content) => {
-  const res = await api.post('/messages', { receiver_id, content });
-  return res.data;
-};
-
-export const getConversationAPI = async (userId) => {
-  const res = await api.get(`/messages/conversation/${userId}`);
-  return res.data;
-};
+export const sendMessage = (data) => api.post('/messages', data);
+export const getConversation = (otherUserId) => api.get(`/messages/${otherUserId}`);
+export const updateMessage = (messageId, data) => api.put(`/messages/${messageId}`, data);
+export const deleteMessage = (messageId) => api.delete(`/messages/${messageId}`);

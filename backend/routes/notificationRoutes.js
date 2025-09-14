@@ -1,11 +1,9 @@
-// backend/routes/notificationRoutes.js
 const express = require('express');
-const { getNotifications, markRead } = require('../controllers/notificationController');
-const { authMiddleware } = require('../middleware/authMiddleware');
-
 const router = express.Router();
+const { authMiddleware } = require('../middleware/authMiddleware');
+const NotificationController = require('../controllers/notificationController');
 
-router.get('/', authMiddleware, getNotifications);
-router.put('/:id/read', authMiddleware, markRead);
+router.get('/', authMiddleware, NotificationController.getNotifications);
+router.put('/:notificationId', authMiddleware, NotificationController.markAsRead);
 
 module.exports = router;

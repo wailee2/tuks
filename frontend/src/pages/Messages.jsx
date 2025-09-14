@@ -1,124 +1,106 @@
-import { useEffect, useState, useRef, useContext } from 'react';
-import { useSocket } from '../services/socket';
-import { AuthContext } from '../context/AuthContext';
-import { getConversationAPI, sendMessageAPI } from '../services/message';
+// src/pages/Messages.jsx
+import { useEffect, useState, useContext } from "react";
+import { AuthContext } from "../context/AuthContext";
+import { useSocket } from "../services/socket";
+import { sendMessage as sendMessageAPI } from "../services/message";
 
-export default function Messages({ chatUserId, chatUserName }) {
+export default function Messages() {
   const { user, token } = useContext(AuthContext);
-  const { socket, subscribeToMessages, send } = useSocket(user?.id, token);
+  const {
+    isConnected,
+    subscribeToMessages,
+    sendMessage,
+  } = useSocket(token);
+
+  const [chatUserId, setChatUserId] = useState("");
   const [messages, setMessages] = useState([]);
-  const [input, setInput] = useState('');
-  const endRef = useRef(null);
+  const [newMessage, setNewMessage] = useState("");
 
-  // helper to scroll to bottom
-  const scrollToBottom = () => endRef.current?.scrollIntoView({ behavior: 'smooth' });
-
-  // load persisted conversation when chatUserId changes
+  // listen for incoming messages
   useEffect(() => {
-    if (!chatUserId || !user) {
-      setMessages([]);
-      return;
-    }
+    if (!token) return;
 
-    let mounted = true;
-    const load = async () => {
-      try {
-        const data = await getConversationAPI(chatUserId);
-        if (!mounted) return;
-        setMessages(data || []);
-        scrollToBottom();
-      } catch (err) {
-        console.error('Failed to load conversation', err);
-      }
-    };
-    load();
+    const unsubscribe = subscribeToMessages((msg) => {
+      setMessages((prev) => [...prev, msg]);
+    });
 
-    return () => { mounted = false; };
-  }, [chatUserId, user]);
-
-  // subscribe to real-time incoming messages (socket)
-  useEffect(() => {
-    if (!socket) return;
-    // handler receives a saved message object from server
-    const handler = (msg) => {
-      // only append messages that belong to this conversation
-      if (
-        (msg.sender_id === user.id && msg.receiver_id === Number(chatUserId)) ||
-        (msg.sender_id === Number(chatUserId) && msg.receiver_id === user.id)
-      ) {
-        setMessages((prev) => [...prev, msg]);
-        scrollToBottom();
-      }
-    };
-
-    const unsub = subscribeToMessages(handler);
-    // subscribeToMessages returns unsubscribe function (our hook provides that)
     return () => {
-      if (typeof unsub === 'function') unsub();
+      if (unsubscribe) unsubscribe();
     };
-  }, [socket, subscribeToMessages, chatUserId, user]);
+  }, [token, subscribeToMessages]);
 
-  // send message: call REST to persist; server will emit to receiver (and may emit to sender via socket helper)
-  const handleSend = async () => {
-    const text = input.trim();
-    if (!text) return;
+  const handleSendMessage = async () => {
+    if (!newMessage.trim() || !chatUserId) return;
 
-    try {
-      // persist via API (this returns the saved message)
-      const saved = await sendMessageAPI(chatUserId, text); // { id, sender_id, receiver_id, content, created_at }
-      // show locally (server may not emit to sender for REST path)
-      setMessages((prev) => [...prev, saved]);
-      setInput('');
-      scrollToBottom();
+    const msg = {
+      sender_id: user.id,
+      receiver_id: parseInt(chatUserId),
+      content: newMessage,
+    };
 
-      // optionally also emit via socket if you prefer socket-first flow:
-      // send('send_message', { sender_id: user.id, receiver_id: Number(chatUserId), content: text });
-    } catch (err) {
-      console.error('Failed to send message', err);
-      alert('Failed to send message');
-    }
+    sendMessage(msg); // real-time via socket
+    await sendMessageAPI(msg, token); // persist to DB
+
+    setMessages((prev) => [...prev, { ...msg, self: true }]);
+    setNewMessage("");
   };
 
   return (
-    <div className="flex flex-col h-full max-w-2xl mx-auto p-4">
-      <div className="mb-3">
-        <h2 className="text-lg font-semibold">{chatUserName ?? `Chat with ${chatUserId}`}</h2>
+    <div className="p-4 flex flex-col h-screen">
+      <div className="mb-4">
+        <label className="block text-sm font-medium">
+          Chat with User ID:
+        </label>
+        <input
+          type="text"
+          value={chatUserId}
+          onChange={(e) => setChatUserId(e.target.value)}
+          className="border p-2 rounded w-full"
+          placeholder="Enter user ID"
+        />
       </div>
 
-      <div className="flex-1 overflow-y-auto p-2 space-y-2 border rounded bg-white">
-        {messages.length === 0 ? (
-          <div className="text-sm text-gray-500">No messages yet. Say hi 👋</div>
-        ) : (
-          messages.map((m) => (
+      <div className="flex-1 border rounded p-2 overflow-y-auto mb-4 bg-gray-50">
+        {messages.length > 0 ? (
+          messages.map((msg, idx) => (
             <div
-              key={m.id ?? `${m.sender_id}-${m.receiver_id}-${m.created_at}`}
-              className={`max-w-[80%] p-2 rounded ${
-                m.sender_id === user.id ? 'bg-green-200 self-end ml-auto text-right' : 'bg-gray-200 self-start mr-auto text-left'
+              key={idx}
+              className={`p-2 my-1 rounded ${
+                msg.sender_id === user.id
+                  ? "bg-green-200 text-right"
+                  : "bg-gray-200 text-left"
               }`}
             >
-              <div>{m.content}</div>
-              <div className="text-xs text-gray-600 mt-1">{new Date(m.created_at).toLocaleString()}</div>
+              <p className="text-sm">{msg.content}</p>
+              <span className="text-xs text-gray-500">
+                From: {msg.sender_id} → To: {msg.receiver_id}
+              </span>
             </div>
           ))
+        ) : (
+          <p className="text-gray-500">Select a user to start chatting</p>
         )}
-        <div ref={endRef} />
       </div>
 
-      <div className="mt-3 flex gap-2">
+      <div className="flex">
         <input
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          onKeyDown={(e) => { if (e.key === 'Enter') handleSend(); }}
-          placeholder="Type a message..."
-          className="flex-1 border rounded px-3 py-2"
+          type="text"
+          value={newMessage}
+          onChange={(e) => setNewMessage(e.target.value)}
+          placeholder="Type your message..."
+          className="flex-1 border p-2 rounded-l"
         />
         <button
-          onClick={handleSend}
-          className="px-4 py-2 bg-blue-600 text-white rounded"
+          onClick={handleSendMessage}
+          className="bg-green-500 text-white px-4 rounded-r"
         >
           Send
         </button>
       </div>
+
+      <p className="text-xs text-gray-400 mt-2">
+        Socket: {isConnected ? "🟢 Connected" : "🔴 Disconnected"}
+      </p>
     </div>
   );
 }

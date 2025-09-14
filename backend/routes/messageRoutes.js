@@ -1,9 +1,11 @@
 const express = require('express');
 const router = express.Router();
 const { authMiddleware } = require('../middleware/authMiddleware');
-const { sendMessage, getConversation } = require('../controllers/messageController');
+const MessageController = require('../controllers/messageController');
 
-router.post('/', authMiddleware, sendMessage);
-router.get('/conversation/:userId', authMiddleware, getConversation);
+router.post('/', authMiddleware, MessageController.sendMessage);
+router.get('/:otherUserId', authMiddleware, MessageController.getConversation);
+router.put('/:messageId', authMiddleware, MessageController.updateMessage);
+router.delete('/:messageId', authMiddleware, MessageController.deleteMessage);
 
 module.exports = router;

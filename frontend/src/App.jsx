@@ -1,15 +1,20 @@
-import { AuthProvider } from './context/AuthContext';
-import { OrderProvider } from './context/OrderContext';
-import AppRoutes from './routes';
+// src/App.jsx
+import { useEffect, useContext } from "react";
+import { AuthContext } from "./context/AuthContext";
+import { useSocket } from "./services/socket";
+import AppRoutes from "./routes";
 
 function App() {
-  return (
-    <OrderProvider>
-      <AuthProvider>
-        <AppRoutes />
-      </AuthProvider>
-    </OrderProvider>
-  );
+  const { token } = useContext(AuthContext);
+  const { isConnected } = useSocket(token);
+
+  useEffect(() => {
+    if (token) {
+      console.log("Socket connected:", isConnected);
+    }
+  }, [token, isConnected]);
+
+  return <AppRoutes />;
 }
 
 export default App;
