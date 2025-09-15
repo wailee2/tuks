@@ -1,4 +1,3 @@
-
 // models/userModel.js
 const pool = require('../config/db');
 
@@ -29,22 +28,7 @@ const createUser = async (name, username, email, password) => {
  * @param {string} query - search term
  * @param {number} limit - max results
  */
-const searchUsers = async (query, limit = 20) => {
-  // sanitize and guard
-  if (!query || typeof query !== 'string') return [];
 
-  // use ILIKE for case-insensitive pattern matching (Postgres)
-  const q = `
-    SELECT id, name, username
-    FROM users
-    WHERE (name ILIKE $1 OR username ILIKE $1)
-    ORDER BY username
-    LIMIT $2;
-  `;
-  const like = `%${query}%`;
-  const r = await pool.query(q, [like, limit]);
-  return r.rows;
-};
 
 /* --- new helpers for disable feature --- */
 const getUserById = async (id) => {
@@ -60,12 +44,49 @@ const setUserDisabled = async (id, disabled) => {
   return res.rows[0];
 };
 
+
+
+
+
+// Find users by role (Postgres style)
+const findUsersByRole = async (role) => {
+  const res = await pool.query(
+    'SELECT id, username, name, role FROM users WHERE role = $1',
+    [role]
+  );
+  return res.rows;
+};
+
+// Search users by username or name (case-insensitive)
+const searchUsers = async (query) => {
+  const res = await pool.query(
+    'SELECT id, username, name, role FROM users WHERE username ILIKE $1 OR name ILIKE $1',
+    [`%${query}%`]
+  );
+  return res.rows;
+};
+
+// Lookup single user by username
+const findUserByUsername = async (username) => {
+  const res = await pool.query(
+    'SELECT id, username, name, role FROM users WHERE username = $1',
+    [username]
+  );
+  return res.rows[0];
+};
+
+
+
 module.exports = {
   getUserByEmail,
   getUserByUsername,
   createUser,
   searchUsers, // <- exported so controllers can use it
   getUserById,
-  setUserDisabled
+  setUserDisabled,
+  findUsersByRole,
+  searchUsers,
+  findUserByUsername
 };
 
+/** */

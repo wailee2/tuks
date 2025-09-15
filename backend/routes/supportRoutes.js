@@ -5,7 +5,8 @@ const {
   listTickets,
   getTicket,
   patchTicket,
-  postComment
+  postComment,
+  claimTicketHandler
 } = require('../controllers/supportController');
 const { authMiddleware } = require('../middleware/authMiddleware');
 const { roleMiddleware } = require('../middleware/authMiddleware'); // you already have roleMiddleware
@@ -28,5 +29,7 @@ router.put('/tickets/:id', authMiddleware, roleMiddleware(['SUPPORT', 'ADMIN']),
 
 // Comment on ticket (auth required; controller enforces ownership or support/admin)
 router.post('/tickets/:id/comments', authMiddleware, postComment);
+
+router.post('/tickets/:id/claim', authMiddleware, claimTicketHandler);
 
 module.exports = router;

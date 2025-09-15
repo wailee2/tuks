@@ -5,7 +5,9 @@ const {
   getTickets,
   updateTicket,
   createComment,
-  getCommentsForTicket
+  getCommentsForTicket,
+  claimTicket,
+  forceAssignTicket
 } = require('../models/supportModel');
 
 /**
@@ -97,7 +99,7 @@ const patchTicket = async (req, res) => {
     const id = parseInt(req.params.id);
     const updates = req.body;
 
-    // Only ADMIN may change assignment (industry standard)
+    // Only ADMIN may change assignment via update (allowed earlier)
     if (Object.prototype.hasOwnProperty.call(updates, 'assigned_to') && req.user.role !== 'ADMIN') {
       return res.status(403).json({ message: 'Only ADMINs can assign tickets' });
     }
@@ -107,6 +109,45 @@ const patchTicket = async (req, res) => {
     res.json(updated);
   } catch (err) {
     console.error('patchTicket', err);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+/**
+ * Claim a ticket (SUPPORT can claim only if unassigned; ADMIN can force-assign)
+ * POST /tickets/:id/claim
+ */
+const claimTicketHandler = async (req, res) => {
+  try {
+    const id = parseInt(req.params.id);
+    const actor = req.user;
+
+    if (!['SUPPORT', 'ADMIN'].includes(actor.role)) {
+      return res.status(403).json({ message: 'Forbidden' });
+    }
+
+    if (actor.role === 'SUPPORT') {
+      // atomic claim
+      const claimed = await claimTicket(id, actor.id);
+      if (!claimed) {
+        return res.status(409).json({ message: 'Ticket already assigned' });
+      }
+      // return the claimed ticket with assigned user info
+      const ticket = await getTicketById(id);
+      return res.json(ticket);
+    }
+
+    // ADMIN: force assign to themselves
+    if (actor.role === 'ADMIN') {
+      const forced = await forceAssignTicket(id, actor.id);
+      if (!forced) return res.status(404).json({ message: 'Ticket not found' });
+      const ticket = await getTicketById(id);
+      return res.json(ticket);
+    }
+
+    res.status(400).json({ message: 'Unable to claim' });
+  } catch (err) {
+    console.error('claimTicketHandler', err);
     res.status(500).json({ message: 'Server error' });
   }
 };
@@ -145,4 +186,14 @@ module.exports = {
   getTicket,
   patchTicket,
   postComment
+};
+
+
+module.exports = {
+  createSupportTicket,
+  listTickets,
+  getTicket,
+  patchTicket,
+  postComment,
+  claimTicketHandler
 };

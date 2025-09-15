@@ -39,3 +39,11 @@ export const postComment = async (token, ticketId, message) => {
   });
   return res.data;
 };
+
+// services/support.js (append)
+export const claimTicket = async (token, ticketId) => {
+  const res = await api.post(`/support/tickets/${ticketId}/claim`, {}, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+  return res.data;
+};

@@ -1,5 +1,8 @@
 // controllers/userController.js
-const { searchUsers, getUserByUsername } = require('../models/userModel');
+const { pool } = require('../config/db'); // if pool export; or require pool as earlier
+const { searchUsers, getUserByUsername, findUsersByRole } = require('../models/userModel');
+const poolConn = require('../config/db'); // adapt to your pool import style
+const poolRef = poolConn; // if pool is default export
 
 const handleSearchUsers = async (req, res) => {
   try {
@@ -17,6 +20,23 @@ const handleSearchUsers = async (req, res) => {
 };
 
 
+
+
+// Re-using getUserByUsername for lookup (already implemented)
+// Add getUsersByRole:
+const getUsersByRole = async (req, res) => {
+  try {
+    const { role } = req.query;
+    if (!role) return res.status(400).json({ message: 'Role query param required' });
+
+    const users = await findUsersByRole(role);
+    res.json(users);
+  } catch (err) {
+    console.error('getUsersByRole error:', err);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
 const lookupUserByUsername = async (req, res) => {
   try {
     const username = (req.query.username || '').trim();
@@ -25,7 +45,6 @@ const lookupUserByUsername = async (req, res) => {
     const user = await getUserByUsername(username);
     if (!user) return res.status(404).json({ message: 'User not found' });
 
-    // return id, username, name, role (do not return sensitive fields)
     res.json({
       id: user.id,
       username: user.username,
@@ -39,6 +58,4 @@ const lookupUserByUsername = async (req, res) => {
   }
 };
 
-
-
-module.exports = { handleSearchUsers, lookupUserByUsername };
+module.exports = { handleSearchUsers, lookupUserByUsername, getUsersByRole };

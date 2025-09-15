@@ -8,3 +8,11 @@ export const getUserByUsername = async (token, username) => {
   });
   return res.data;
 };
+
+export const getUsersByRole = async (token, role) => {
+  const res = await api.get('/users', {
+    headers: { Authorization: `Bearer ${token}` },
+    params: { role }
+  });
+  return res.data;
+};

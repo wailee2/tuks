@@ -1,11 +1,13 @@
 // pages/SupportDashboard.jsx
 import { useState, useEffect, useContext } from 'react';
 import { AuthContext } from '../context/AuthContext';
-import { getTickets, getTicket, updateTicket, postComment } from '../services/support';
-import { getUserByUsername } from '../services/users';
+import { getTickets, getTicket, updateTicket, postComment, claimTicket } from '../services/support';
+import { getUsersByRole } from '../services/users';
+import { useToasts } from '../context/ToastContext';
 
 export default function SupportDashboard() {
   const { user, token } = useContext(AuthContext);
+  const { addToast } = useToasts();
 
   const [tickets, setTickets] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -14,11 +16,25 @@ export default function SupportDashboard() {
   const [comments, setComments] = useState([]);
   const [commentText, setCommentText] = useState('');
   const [assignUsername, setAssignUsername] = useState('');
+  const [agents, setAgents] = useState([]);
   const [updating, setUpdating] = useState(false);
 
   useEffect(() => {
-    if (token) fetchAllTickets();
+    if (token) {
+      fetchAllTickets();
+      fetchAgents();
+    }
   }, [token]);
+
+  const fetchAgents = async () => {
+    try {
+      const list = await getUsersByRole(token, 'SUPPORT');
+      setAgents(list || []);
+    } catch (err) {
+      console.error('fetchAgents', err);
+      addToast('Failed to load support agents', 'error');
+    }
+  };
 
   const fetchAllTickets = async () => {
     try {
@@ -27,7 +43,7 @@ export default function SupportDashboard() {
       setTickets(data);
     } catch (err) {
       console.error(err);
-      alert('Failed to fetch tickets');
+      addToast('Failed to fetch tickets', 'error');
     } finally {
       setLoading(false);
     }
@@ -38,10 +54,10 @@ export default function SupportDashboard() {
       const { ticket, comments } = await getTicket(token, id);
       setSelected(ticket);
       setComments(comments || []);
-      setAssignUsername(ticket.assigned_to_username || ''); // may be undefined
+      setAssignUsername(ticket.assigned_to_username || '');
     } catch (err) {
       console.error(err);
-      alert('Failed to load ticket');
+      addToast('Failed to load ticket', 'error');
     }
   };
 
@@ -56,7 +72,7 @@ export default function SupportDashboard() {
       setTickets(data);
     } catch (err) {
       console.error(err);
-      alert('Failed to apply filters');
+      addToast('Failed to apply filters', 'error');
     } finally {
       setLoading(false);
     }
@@ -69,32 +85,46 @@ export default function SupportDashboard() {
       const updated = await updateTicket(token, selected.id, changes);
       setSelected(updated);
       fetchAllTickets();
+      addToast('Ticket updated', 'success');
     } catch (err) {
       console.error(err);
-      alert('Failed to update ticket');
+      addToast(err.response?.data?.message || 'Failed to update ticket', 'error');
     } finally {
       setUpdating(false);
     }
   };
 
-  const handleAssignByUsername = async () => {
-    if (!assignUsername || !selected) return alert('Enter a username to assign');
+  // "Assign to me" (claims ticket) - SUPPORT or ADMIN can call; SUPPORT only claims if unassigned
+  const handleAssignToMe = async () => {
+    if (!selected) return addToast('Select a ticket first', 'error');
     try {
       setUpdating(true);
-      // lookup user by username
-      const target = await getUserByUsername(token, assignUsername.trim());
-      if (!target || !target.id) {
-        alert('User not found');
-        return;
-      }
-      // now call existing updateTicket with assigned_to = id
-      const updated = await updateTicket(token, selected.id, { assigned_to: target.id });
+      const updated = await claimTicket(token, selected.id);
       setSelected(updated);
       fetchAllTickets();
-      alert(`Assigned to ${target.username}`);
+      addToast('You are now handling this ticket', 'success');
+    } catch (err) {
+      console.error('claim error', err);
+      if (err?.response?.status === 409) addToast('Ticket already assigned', 'error');
+      else addToast(err.response?.data?.message || 'Failed to claim ticket', 'error');
+    } finally {
+      setUpdating(false);
+    }
+  };
+
+  // Admin assign via dropdown (agents list) — Admin can override
+  const handleAssignAgent = async (agentId) => {
+    if (!selected) return addToast('Select a ticket first', 'error');
+    if (!agentId) return addToast('Select an agent', 'error');
+    try {
+      setUpdating(true);
+      const updated = await updateTicket(token, selected.id, { assigned_to: agentId });
+      setSelected(updated);
+      fetchAllTickets();
+      addToast('Ticket assigned', 'success');
     } catch (err) {
       console.error(err);
-      alert(err.response?.data?.message || 'Failed to assign ticket');
+      addToast(err.response?.data?.message || 'Failed to assign', 'error');
     } finally {
       setUpdating(false);
     }
@@ -107,15 +137,15 @@ export default function SupportDashboard() {
       setCommentText('');
       const { comments } = await getTicket(token, selected.id);
       setComments(comments || []);
+      addToast('Comment added', 'success');
     } catch (err) {
       console.error(err);
-      alert('Failed to add comment');
+      addToast('Failed to add comment', 'error');
     }
   };
 
   return (
     <div className="p-6 grid grid-cols-1 lg:grid-cols-4 gap-6">
-      {/* Filters & list */}
       <div className="col-span-1 lg:col-span-1 bg-white p-4 rounded shadow">
         <h3 className="font-semibold mb-3">Tickets</h3>
 
@@ -161,7 +191,6 @@ export default function SupportDashboard() {
         </div>
       </div>
 
-      {/* Detail & actions */}
       <div className="col-span-1 lg:col-span-3 bg-white p-4 rounded shadow">
         {selected ? (
           <>
@@ -192,16 +221,28 @@ export default function SupportDashboard() {
                   <option>URGENT</option>
                 </select>
 
-                {/* Assignment — only ADMIN may assign */}
-                {user.role === 'ADMIN' ? (
-                  <>
-                    <label className="text-sm">Assign to (username)</label>
-                    <input value={assignUsername} onChange={(e) => setAssignUsername(e.target.value)} className="border px-2 py-1 rounded w-36" placeholder="username" />
-                    <button onClick={handleAssignByUsername} disabled={updating} className="px-3 py-1 bg-green-600 text-white rounded">Assign</button>
-                  </>
-                ) : (
-                  <div className="text-xs text-gray-500 ml-2">Only ADMINs can reassign</div>
-                )}
+                {/* Assign controls */}
+                <div className="ml-4 flex items-center gap-2">
+                  {/* Assign to me (SUPPORT & ADMIN) */}
+                  <button onClick={handleAssignToMe} disabled={updating} className="px-3 py-1 bg-green-600 text-white rounded">
+                    Assign to me
+                  </button>
+
+                  {/* Admin-only agent dropdown */}
+                  {user.role === 'ADMIN' && (
+                    <>
+                      <select value={assignUsername} onChange={(e) => setAssignUsername(e.target.value)} className="border px-2 py-1 rounded">
+                        <option value="">Select agent</option>
+                        {agents.map(a => (
+                          <option key={a.id} value={a.id}>{a.username} — {a.name}</option>
+                        ))}
+                      </select>
+                      <button onClick={() => handleAssignAgent(assignUsername)} disabled={updating || !assignUsername} className="px-3 py-1 bg-indigo-600 text-white rounded">
+                        Assign
+                      </button>
+                    </>
+                  )}
+                </div>
               </div>
             </div>
 
@@ -220,6 +261,11 @@ export default function SupportDashboard() {
                 <input value={commentText} onChange={(e) => setCommentText(e.target.value)} placeholder="Write a reply..." className="flex-1 border px-3 py-2 rounded" />
                 <button onClick={handleAddComment} className="px-4 py-2 bg-blue-600 text-white rounded">Add Comment</button>
               </div>
+            </div>
+
+            {/* show who is handling the ticket */}
+            <div className="mt-4 text-sm text-gray-600">
+              Handling: {selected.assigned_to_name ? `${selected.assigned_to_name} (${selected.assigned_to_username})` : 'Unassigned'}
             </div>
           </>
         ) : (

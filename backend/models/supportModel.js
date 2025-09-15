@@ -1,10 +1,6 @@
 // models/supportModel.js
 const pool = require('../config/db');
 
-/**
- * Create a new support ticket
- * payload: { subject, description, category, created_by, is_public, priority }
- */
 const createTicket = async ({ subject, description, category = 'general', created_by, is_public = true, priority = 'MEDIUM' }) => {
   const q = `
     INSERT INTO support_tickets (subject, description, category, created_by, is_public, priority)
@@ -16,20 +12,21 @@ const createTicket = async ({ subject, description, category = 'general', create
 };
 
 const getTicketById = async (id) => {
-  const q = `SELECT st.*, u.name as created_by_name, a.name as assigned_to_name
-             FROM support_tickets st
-             LEFT JOIN users u ON u.id = st.created_by
-             LEFT JOIN users a ON a.id = st.assigned_to
-             WHERE st.id = $1`;
+  const q = `
+    SELECT st.*,
+           u.name as created_by_name,
+           u.username as created_by_username,
+           a.name as assigned_to_name,
+           a.username as assigned_to_username
+    FROM support_tickets st
+    LEFT JOIN users u ON u.id = st.created_by
+    LEFT JOIN users a ON a.id = st.assigned_to
+    WHERE st.id = $1
+  `;
   const r = await pool.query(q, [id]);
   return r.rows[0];
 };
 
-/**
- * Get tickets. 
- * - if forUserId provided, only return tickets created by that user (used for "My tickets")
- * - support/admin call with no forUserId returns all tickets with optional filters
- */
 const getTickets = async ({ forUserId = null, status = null, priority = null, assignedTo = null, search = null, limit = 100, offset = 0 } = {}) => {
   const filters = [];
   const params = [];
@@ -59,7 +56,11 @@ const getTickets = async ({ forUserId = null, status = null, priority = null, as
 
   const where = filters.length ? `WHERE ${filters.join(' AND ')}` : '';
   const q = `
-    SELECT st.*, u.name as created_by_name, a.name as assigned_to_name
+    SELECT st.*,
+           u.name as created_by_name,
+           u.username as created_by_username,
+           a.name as assigned_to_name,
+           a.username as assigned_to_username
     FROM support_tickets st
     LEFT JOIN users u ON u.id = st.created_by
     LEFT JOIN users a ON a.id = st.assigned_to
@@ -86,6 +87,30 @@ const updateTicket = async (id, updates = {}) => {
   return r.rows[0];
 };
 
+// Atomic claim: only set assigned_to if currently NULL
+const claimTicket = async (ticketId, userId) => {
+  const q = `
+    UPDATE support_tickets
+    SET assigned_to = $1, status = 'ASSIGNED', updated_at = NOW()
+    WHERE id = $2 AND (assigned_to IS NULL)
+    RETURNING *;
+  `;
+  const r = await pool.query(q, [userId, ticketId]);
+  return r.rows[0]; // if empty -> already assigned
+};
+
+// Admin/force assign: set assigned_to regardless of current state
+const forceAssignTicket = async (ticketId, userId) => {
+  const q = `
+    UPDATE support_tickets
+    SET assigned_to = $1, status = 'ASSIGNED', updated_at = NOW()
+    WHERE id = $2
+    RETURNING *;
+  `;
+  const r = await pool.query(q, [userId, ticketId]);
+  return r.rows[0];
+};
+
 const createComment = async ({ ticket_id, author_id, message }) => {
   const q = `
     INSERT INTO support_comments (ticket_id, author_id, message)
@@ -98,7 +123,7 @@ const createComment = async ({ ticket_id, author_id, message }) => {
 
 const getCommentsForTicket = async (ticket_id) => {
   const q = `
-    SELECT sc.*, u.name as author_name
+    SELECT sc.*, u.name as author_name, u.username as author_username
     FROM support_comments sc
     LEFT JOIN users u ON u.id = sc.author_id
     WHERE sc.ticket_id = $1
@@ -114,5 +139,7 @@ module.exports = {
   getTickets,
   updateTicket,
   createComment,
-  getCommentsForTicket
+  getCommentsForTicket,
+  claimTicket,
+  forceAssignTicket
 };
