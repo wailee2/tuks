@@ -1,8 +1,16 @@
-// controllers/messagesController.js
-const { createMessage, getMessagesBetweenUsers, markMessagesDelivered, markMessagesRead } = require('../models/messageModel');
-const { createNotification } = require('../models/notificationModel');
+// controllers/messageController.js
+const {
+  createMessage,
+  getMessagesBetweenUsers,
+  markMessagesDelivered,
+  markMessagesRead,
+  editMessageById,
+  deleteMessageById,
+} = require('../models/messageModel');
+const { createNotification } = require('../models/notificationModel'); // keep if you have one
 const { getUserByUsername } = require('../models/userModel');
 
+/* ---------- sendMessage (same as your existing implementation) ---------- */
 const sendMessage = async (req, res) => {
   try {
     const senderId = req.user.id; // authMiddleware populates req.user
@@ -12,29 +20,32 @@ const sendMessage = async (req, res) => {
     const receiver = await getUserByUsername(toUsername);
     if (!receiver) return res.status(404).json({ message: 'Recipient not found' });
 
-    // create message
     const message = await createMessage(senderId, receiver.id, content, type || 'text');
 
-    // try to create a notification for the receiver
-    const notif = await createNotification(
-      receiver.id,
-      senderId,
-      'message',
-      `New message from ${req.user.id === senderId ? req.user.id : ''}`, // optional title
-      content.length > 200 ? content.slice(0, 197) + '...' : content,
-      `/chat/${toUsername}`
-    );
+    // create notification (optional)
+    let notif = null;
+    try {
+      if (createNotification) {
+        notif = await createNotification(
+          receiver.id,
+          senderId,
+          'message',
+          `New message from ${req.user.id === senderId ? req.user.id : ''}`,
+          content.length > 200 ? content.slice(0, 197) + '...' : content,
+          `/chat/${toUsername}`
+        );
+      }
+    } catch (e) {
+      console.warn('createNotification failed', e);
+    }
 
-    // emit via socket.io if available on app (server should do app.set('io', io))
+    // socket emit if available
     try {
       const io = req.app?.get('io');
       if (io) {
-        // emit message to receiver room and sender room (so both clients update)
         io.to(`user_${receiver.id}`).emit('private_message', message);
         io.to(`user_${senderId}`).emit('private_message', message);
-
-        // emit notification
-        io.to(`user_${receiver.id}`).emit('notification', notif);
+        if (notif) io.to(`user_${receiver.id}`).emit('notification', notif);
       }
     } catch (err) {
       console.error('Socket emit failed', err);
@@ -47,12 +58,13 @@ const sendMessage = async (req, res) => {
   }
 };
 
+/* ---------- fetchMessages ---------- */
 const fetchMessages = async (req, res) => {
   try {
     const userId = req.user.id;
     const otherUsername = req.params.username;
-    const limit = Math.min(200, parseInt(req.query.limit || '50'));
-    const page = Math.max(0, parseInt(req.query.page || '0'));
+    const limit = Math.min(200, parseInt(req.query.limit || '50', 10));
+    const page = Math.max(0, parseInt(req.query.page || '0', 10));
     const offset = page * limit;
 
     const other = await getUserByUsername(otherUsername);
@@ -70,6 +82,7 @@ const fetchMessages = async (req, res) => {
   }
 };
 
+/* ---------- markRead ---------- */
 const markRead = async (req, res) => {
   try {
     const userId = req.user.id;
@@ -96,4 +109,74 @@ const markRead = async (req, res) => {
   }
 };
 
-module.exports = { sendMessage, fetchMessages, markRead };
+/* ---------- editMessage (PUT /api/messages/:id) ---------- */
+const editMessage = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const messageId = req.params.id;
+    const { content } = req.body;
+    if (!content || content.trim().length === 0) return res.status(400).json({ message: 'content required' });
+
+    const updated = await editMessageById(messageId, userId, content.trim());
+
+    if (!updated) {
+      // either message not found, already deleted, or user not sender
+      return res.status(404).json({ message: 'Message not found or you are not allowed to edit it' });
+    }
+
+    // notify via socket about message update
+    try {
+      const io = req.app?.get('io');
+      if (io) {
+        // emit an update event so clients can update the message in-place
+        io.to(`user_${updated.receiver_id}`).emit('message_updated', updated);
+        io.to(`user_${updated.sender_id}`).emit('message_updated', updated);
+      }
+    } catch (err) {
+      console.warn('socket emit message_updated failed', err);
+    }
+
+    res.json({ message: updated });
+  } catch (err) {
+    console.error('editMessage error', err);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+/* ---------- deleteMessage (DELETE /api/messages/:id) ---------- */
+const deleteMessage = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const messageId = req.params.id;
+
+    const deleted = await deleteMessageById(messageId, userId);
+
+    if (!deleted) {
+      return res.status(404).json({ message: 'Message not found or you are not allowed to delete it' });
+    }
+
+    // notify via socket about message deletion (clients can hide it)
+    try {
+      const io = req.app?.get('io');
+      if (io) {
+        io.to(`user_${deleted.receiver_id}`).emit('message_deleted', { id: deleted.id });
+        io.to(`user_${deleted.sender_id}`).emit('message_deleted', { id: deleted.id });
+      }
+    } catch (err) {
+      console.warn('socket emit message_deleted failed', err);
+    }
+
+    res.json({ message: 'deleted', id: deleted.id });
+  } catch (err) {
+    console.error('deleteMessage error', err);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+module.exports = {
+  sendMessage,
+  fetchMessages,
+  markRead,
+  editMessage,
+  deleteMessage,
+};

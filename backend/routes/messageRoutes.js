@@ -1,6 +1,13 @@
 // routes/messageRoutes.js
 const express = require('express');
-const { sendMessage, fetchMessages, markRead } = require('../controllers/messageController');
+// make sure the file path matches your controllers folder (controller filename is messageController.js)
+const {
+  sendMessage,
+  fetchMessages,
+  markRead,
+  editMessage,
+  deleteMessage,
+} = require('../controllers/messageController');
 const { authMiddleware } = require('../middleware/authMiddleware');
 
 const router = express.Router();
@@ -13,5 +20,11 @@ router.get('/:username', authMiddleware, fetchMessages);
 
 // POST /messages/:username/read  (mark messages from username as read)
 router.post('/:username/read', authMiddleware, markRead);
+
+// PUT /messages/:id  (edit message)   -> body: { content }
+router.put('/:id', authMiddleware, editMessage);
+
+// DELETE /messages/:id  (delete message)
+router.delete('/:id', authMiddleware, deleteMessage);
 
 module.exports = router;

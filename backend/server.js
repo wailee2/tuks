@@ -6,15 +6,18 @@ const http = require('http');
 const cors = require('cors');
 const helmet = require('helmet');
 const { Server } = require('socket.io');
+const startCleanup = require('./scripts/cleanupMessages');
 const jwt = require('jsonwebtoken');
 
 // route imports (make sure these files exist as per previous steps)
+const userRoutes = require('./routes/userRoutes');
 const authRoutes = require('./routes/authRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 const inventoryRoutes = require('./routes/inventoryRoutes');
 const orderRoutes = require('./routes/orderRoutes');
 const messageRoutes = require('./routes/messageRoutes');
 const notificationRoutes = require('./routes/notificationRoutes');
+
 
 const app = express();
 
@@ -30,6 +33,7 @@ app.use(cors({ origin: CLIENT_ORIGIN, credentials: true }));
 app.get('/health', (req, res) => res.json({ ok: true, time: new Date().toISOString() }));
 
 // API routes (prefix with /api)
+app.use('/api/users', userRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/inventory', inventoryRoutes);
@@ -64,22 +68,23 @@ app.set('io', io);
 const onlineUsers = new Map(); // userId -> Set(socketId)
 
 // Socket auth middleware: expects client to connect with { auth: { token } }
+// server.js (socket auth middleware snippet)
 io.use((socket, next) => {
   try {
     const token = socket.handshake.auth?.token;
-    if (!token) return next(new Error('not-authenticated'));
-
+    if (!token) {
+      return next(new Error('not-authenticated')); // client will see this
+    }
     const payload = jwt.verify(token, process.env.JWT_SECRET);
-    // attach to socket
     socket.userId = payload.id ?? payload.userId ?? payload.user?.id;
     if (!socket.userId) return next(new Error('invalid-token-payload'));
-
     return next();
   } catch (err) {
     console.warn('Socket auth failed:', err.message);
     return next(new Error('invalid-token'));
   }
 });
+
 
 io.on('connection', (socket) => {
   const uid = socket.userId;

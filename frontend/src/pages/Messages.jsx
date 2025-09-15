@@ -1,136 +1,151 @@
+// src/components/Messages.jsx
 import React, { useContext, useEffect, useRef, useState } from 'react';
 import { AuthContext } from '../context/AuthContext';
-import { getMessages, sendMessage, markMessagesRead } from '../services/message';
-import { initSocket, subscribe } from '../services/socket';
+import { initSocket, disconnectSocket, subscribe, getSocket } from '../services/socket';
+import { sendMessage, fetchMessages, searchUsers, markRead, editMessage, deleteMessage } from '../services/messages';
 
-export default function Messages({ chatUser }) {
-  // chatUser = username of the person you’re chatting with
+import Sidebar from '../components/messages/Sidebar';
+import ChatWindow from '../components/messages/ChatWindow';
+
+/**
+ * Messages page — main layout: Sidebar + Main chat area.
+ * It uses AuthContext (you requested this).
+ */
+export default function Messages() {
   const { user, token } = useContext(AuthContext);
-  const [messages, setMessages] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [text, setText] = useState('');
-  const bottomRef = useRef(null);
+  const [selectedUser, setSelectedUser] = useState(null); // { id, username, name }
+  const [messages, setMessages] = useState([]); // current conversation
+  const [convos, setConvos] = useState([]); // previousconversations, simple local list
+  const [loadingMessages, setLoadingMessages] = useState(false);
 
-  // Fetch messages with this user
-  useEffect(() => {
-    if (!chatUser) return;
-    let mounted = true;
-    setLoading(true);
+  // ref for sidebar search input focus control
+  const sidebarSearchRef = useRef(null);
 
-    getMessages(chatUser, { limit: 50, page: 0 })
-      .then((data) => {
-        if (!mounted) return;
-        setMessages(Array.isArray(data) ? data : data.messages || []);
-      })
-      .finally(() => mounted && setLoading(false));
-
-    // Mark as read when opening chat
-    markMessagesRead(chatUser).catch(() => {});
-
-    return () => {
-      mounted = false;
-    };
-  }, [chatUser]);
-
-  // Socket for real-time updates
+  // initialize socket when token available
   useEffect(() => {
     if (!token) return;
-    initSocket(token);
+    const s = initSocket(token);
 
-    const off = subscribe('message:received', (msg) => {
-      if (!msg) return;
-      if (
-        (msg.fromUsername === chatUser && msg.toUsername === user?.username) ||
-        (msg.toUsername === chatUser && msg.fromUsername === user?.username)
-      ) {
-        setMessages((prev) => [...prev, msg]);
-        scrollToBottom();
-      }
+    // subscribe to private messages
+    const unsubMsg = subscribe('private_message', (msg) => {
+      // when server pushes new message, if it's for or from current selectedUser, update UI
+      setMessages((prev) => {
+        if (!selectedUser) return prev;
+        // msg has sender_id, receiver_id etc.
+        const participantIds = [msg.sender_id, msg.receiver_id].map(String);
+        const selectedId = String(selectedUser.id);
+        if (participantIds.includes(selectedId)) {
+          return [...prev, msg];
+        }
+        return prev;
+      });
+      // optionally update convo list / play sound
     });
 
-    return () => off();
-  }, [chatUser, token, user?.username]);
+    const unsubNotif = subscribe('notification', (n) => {
+      // could update notification dropdown - left as an exercise
+      console.log('notification', n);
+    });
 
-  useEffect(() => scrollToBottom(), [messages]);
-
-  const scrollToBottom = () => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
-  };
-
-  const handleSend = async (e) => {
-    e.preventDefault();
-    if (!text.trim() || !chatUser) return;
-
-    const payload = { toUsername: chatUser, content: text.trim() };
-
-    const tempId = `temp-${Date.now()}`;
-    const tempMsg = {
-      id: tempId,
-      content: text,
-      fromUsername: user?.username || 'You',
-      toUsername: chatUser,
-      pending: true,
-      createdAt: new Date().toISOString(),
+    return () => {
+      unsubMsg();
+      unsubNotif();
+      // keep socket open if you want global socket; if you want to close:
+      // disconnectSocket();
     };
+  }, [token, selectedUser]);
 
-    setMessages((p) => [...p, tempMsg]);
-    setText('');
-    scrollToBottom();
-
-    try {
-      const saved = await sendMessage(payload);
-      setMessages((prev) => prev.map((m) => (m.id === tempId ? saved : m)));
-    } catch (err) {
-      setMessages((prev) =>
-        prev.map((m) => (m.id === tempId ? { ...m, failed: true } : m))
-      );
-      console.error('Send message failed', err);
+  // load conversation when selectedUser changes
+  useEffect(() => {
+    if (!selectedUser) return;
+    let cancelled = false;
+    async function load() {
+      setLoadingMessages(true);
+      try {
+        const { messages: msgs } = await fetchMessages(selectedUser.username, { limit: 200, page: 0 });
+        if (!cancelled) {
+          setMessages(msgs);
+          await markRead(selectedUser.username); // mark read when opened
+        }
+      } catch (err) {
+        console.error('Failed to load messages', err);
+      } finally {
+        if (!cancelled) setLoadingMessages(false);
+      }
     }
-  };
+    load();
+    return () => (cancelled = true);
+  }, [selectedUser]);
+
+  // when "Send a message to start chat" pressed -> focus sidebar searchbar
+  function focusSearch() {
+    sidebarSearchRef.current?.focus?.();
+  }
+
+  // handler when user selected in sidebar
+  function handleSelectUser(userObj) {
+    setSelectedUser(userObj);
+    // optionally update recent convos
+    setConvos((prev) => {
+      const exists = prev.find((p) => String(p.id) === String(userObj.id));
+      if (exists) return prev;
+      return [userObj, ...prev].slice(0, 50);
+    });
+  }
+
+  // handle sending message (from ChatWindow)
+  async function handleSend(content) {
+    if (!selectedUser) return;
+    try {
+      const res = await sendMessage(selectedUser.username, content);
+      // server will broadcast message; optimistically append
+      if (res?.message) setMessages((m) => [...m, res.message]);
+    } catch (err) {
+      console.error('send failed', err);
+      // TODO: show UI error / retry
+    }
+  }
+
+  // handlers for edit/delete (call API then update local state)
+  async function handleEditMessage(messageId, newText) {
+    try {
+      await editMessage(messageId, newText);
+      setMessages((prev) => prev.map((m) => (String(m.id) === String(messageId) ? { ...m, content: newText, edited: true } : m)));
+    } catch (err) {
+      console.error('edit failed', err);
+    }
+  }
+
+  async function handleDeleteMessage(messageId) {
+    try {
+      await deleteMessage(messageId);
+      setMessages((prev) => prev.filter((m) => String(m.id) !== String(messageId)));
+    } catch (err) {
+      console.error('delete failed', err);
+    }
+  }
 
   return (
-    <div className="w-full max-w-2xl mx-auto border rounded-lg p-4 bg-white">
-      <div className="h-96 overflow-y-auto mb-3" aria-live="polite">
-        {loading ? (
-          <div className="text-center text-sm text-gray-500">Loading messages...</div>
-        ) : messages.length === 0 ? (
-          <div className="text-center text-sm text-gray-500">No messages yet</div>
-        ) : (
-          messages.map((m) => (
-            <div key={m.id || m._id} className="mb-2">
-              <div className="text-sm">
-                <span className="font-semibold mr-2">
-                  {m.fromUsername === user?.username ? 'You' : m.fromUsername}
-                </span>
-                <span className="text-xs text-gray-400">
-                  {new Date(m.createdAt).toLocaleTimeString()}
-                </span>
-              </div>
-              <div
-                className={`py-2 px-3 rounded ${
-                  m.pending ? 'opacity-60 italic' : ''
-                } bg-gray-100 inline-block`}
-              >
-                {m.content}
-                {m.failed && <span className="text-red-500 ml-2">(failed)</span>}
-              </div>
-            </div>
-          ))
-        )}
-        <div ref={bottomRef} />
-      </div>
-
-      <form onSubmit={handleSend} className="flex gap-2">
-        <input
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-          placeholder={`Message ${chatUser}...`}
-          className="flex-1 border rounded px-3 py-2"
+    <div className="h-full min-h-screen flex bg-gray-50">
+      <Sidebar
+        onSelectUser={handleSelectUser}
+        searchRef={sidebarSearchRef}
+        onStartChatFocus={focusSearch}
+        convos={convos}
+        fetchUserSearch={searchUsers}
+      />
+      <main className="flex-1 p-4">
+        <ChatWindow
+          user={user}
+          selectedUser={selectedUser}
+          messages={messages}
+          loading={loadingMessages}
+          onSend={handleSend}
+          onEdit={handleEditMessage}
+          onDelete={handleDeleteMessage}
+          onFocusSearch={focusSearch}
         />
-        <button type="submit" className="px-4 py-2 rounded bg-blue-600 text-white">
-          Send
-        </button>
-      </form>
+      </main>
     </div>
   );
 }

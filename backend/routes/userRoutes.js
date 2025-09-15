@@ -1,11 +1,12 @@
 // routes/userRoutes.js
 const express = require('express');
-const router = express.Router();
-const { getUsers, updateUserRole, blockUser } = require('../controllers/userController');
-const { roleMiddleware } = require('../middleware/authMiddleware');
+const { handleSearchUsers } = require('../controllers/userController');
+const { authMiddleware } = require('../middleware/authMiddleware'); // optional, allow only logged-in users to search
 
-router.get('/', roleMiddleware(['owner', 'analyst']), getUsers);
-router.patch('/:id', roleMiddleware(['owner']), updateUserRole);
-router.patch('/:id/block', roleMiddleware(['owner', 'support']), blockUser);
+const router = express.Router();
+
+// GET /api/users/search?query=...
+// Optionally protect this route with authMiddleware if you want only logged-in users to search.
+router.get('/search', authMiddleware, handleSearchUsers);
 
 module.exports = router;

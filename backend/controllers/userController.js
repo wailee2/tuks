@@ -1,48 +1,19 @@
 // controllers/userController.js
-const pool = require('../config/db');
+const { searchUsers } = require('../models/userModel');
 
-const getUsers = async (req, res) => {
+const handleSearchUsers = async (req, res) => {
   try {
-    const { rows } = await pool.query('SELECT id, name, email, role, is_active FROM users');
-    res.json(rows);
+    const q = (req.query.query || '').trim();
+    console.log('[userController] search query:', q, 'from', req.ip);
+    if (!q) return res.json({ users: [] });
+
+    const limit = Math.min(50, parseInt(req.query.limit || '20', 10));
+    const users = await searchUsers(q, limit);
+    return res.json({ users });
   } catch (err) {
-    res.status(500).json({ message: 'Server error', error: err.message });
+    console.error('[userController] search error:', err && err.stack ? err.stack : err);
+    return res.status(500).json({ message: 'Server error' });
   }
 };
 
-const updateUserRole = async (req, res) => {
-  try {
-    const { role } = req.body;
-    const { id } = req.params;
-
-    const { rows } = await pool.query(
-      'UPDATE users SET role=$1, updated_at=NOW() WHERE id=$2 RETURNING id, name, email, role',
-      [role, id]
-    );
-
-    // Optional: log the action
-    await pool.query(
-      'INSERT INTO audit_logs (admin_id, user_id, action) VALUES ($1, $2, $3)',
-      [req.user.id, id, `Changed role to ${role}`]
-    );
-
-    res.json(rows[0]);
-  } catch (err) {
-    res.status(500).json({ message: 'Server error', error: err.message });
-  }
-};
-
-const blockUser = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { rows } = await pool.query(
-      'UPDATE users SET is_active=FALSE, updated_at=NOW() WHERE id=$1 RETURNING id, name, email, is_active',
-      [id]
-    );
-    res.json(rows[0]);
-  } catch (err) {
-    res.status(500).json({ message: 'Server error', error: err.message });
-  }
-};
-
-module.exports = { getUsers, updateUserRole, blockUser };
+module.exports = { handleSearchUsers };
