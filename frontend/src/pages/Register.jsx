@@ -1,9 +1,9 @@
 import React, { useState, useContext, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
+import { FiEye, FiEyeOff } from "react-icons/fi";
 
-// Modern registration page component using Tailwind v4 classes
-// Expects AuthContext.register(name, username, email, password) and AuthContext.checkUsername(username)
+
 
 export default function RegisterPage() {
   const { register, checkUsername } = useContext(AuthContext);
@@ -210,8 +210,12 @@ export default function RegisterPage() {
                 placeholder="Create a strong password"
                 autoComplete="new-password"
               />
-              <button type="button" onClick={() => setShowPassword(s => !s)} className="absolute right-2 top-2 text-xs text-gray-500">
-                {showPassword ? 'Hide' : 'Show'}
+              <button
+                type="button"
+                onClick={() => setShowPassword((s) => !s)}
+                className="absolute right-2 top-2 text-gray-500 hover:text-gray-700"
+              >
+                {showPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
               </button>
             </div>
             <div className="mt-2">

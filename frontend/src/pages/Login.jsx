@@ -2,6 +2,7 @@
 import { useState, useContext } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import { FiEye, FiEyeOff } from "react-icons/fi";
 
 export default function Login() {
   const { login } = useContext(AuthContext);
@@ -9,6 +10,7 @@ export default function Login() {
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [fieldErrors, setFieldErrors] = useState({});
   const [loading, setLoading] = useState(false);
   const [serverError, setServerError] = useState('');
@@ -123,20 +125,30 @@ export default function Login() {
             {fieldErrors.email && <p className="text-xs text-red-600 mt-1">{fieldErrors.email}</p>}
           </div>
 
-          <div>
+          <div className="relative">
             <label className="block text-sm font-medium text-gray-700">Password</label>
             <input
-              type="password"
+              type={showPassword ? "text" : "password"}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               disabled={loading}
               className={`mt-1 block w-full px-4 py-2 rounded-lg border ${
-                fieldErrors.password ? 'border-red-400' : 'border-gray-200'
-              } focus:outline-none focus:ring-2 focus:ring-indigo-200`}
+                fieldErrors.password ? "border-red-400" : "border-gray-200"
+                } focus:outline-none focus:ring-2 focus:ring-indigo-200`}
               placeholder="••••••••"
             />
-            {fieldErrors.password && <p className="text-xs text-red-600 mt-1">{fieldErrors.password}</p>}
+            <button
+              type="button"
+              onClick={() => setShowPassword((s) => !s)}
+              className="absolute right-3 top-9 text-gray-500 hover:text-gray-700"
+            >
+              {showPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
+            </button>
+            {fieldErrors.password && (
+              <p className="text-xs text-red-600 mt-1">{fieldErrors.password}</p>
+            )}
           </div>
+
 
           <div className="flex items-center justify-between">
             <label className="inline-flex items-center gap-2">
