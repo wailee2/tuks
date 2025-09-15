@@ -58,15 +58,16 @@ export default function ChatWindow({ user, selectedUser, messages = [], loading,
 
       <div ref={listRef} className="flex-1 overflow-y-auto p-4 space-y-3">
         {loading && <div className="text-sm text-gray-500">Loading messages...</div>}
-        {messages.map((m) => (
+        {messages.map((m, idx) => (
           <MessageItem
-            key={m.id}
+            key={`${m.id ?? 'noid'}-${new Date(m.created_at || m.edited_at || '').getTime() || idx}`}
             message={m}
             mine={String(m.sender_id) === String(user?.id)}
             onEdit={(newText) => onEdit(m.id, newText)}
             onDelete={() => onDelete(m.id)}
           />
         ))}
+
       </div>
 
       <div className="p-3 border-t">

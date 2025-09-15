@@ -20,17 +20,19 @@ const createMessage = async (senderId, receiverId, content, type = 'text') => {
  */
 const getMessagesBetweenUsers = async (userAId, userBId, limit = 50, offset = 0) => {
   const q = `
-    SELECT * FROM messages
+    SELECT *
+    FROM messages
     WHERE (
       (sender_id = $1 AND receiver_id = $2)
       OR (sender_id = $2 AND receiver_id = $1)
     ) AND (is_deleted IS NOT TRUE)
-    ORDER BY created_at ASC
+    ORDER BY created_at ASC, id ASC
     LIMIT $3 OFFSET $4;
   `;
   const r = await pool.query(q, [userAId, userBId, limit, offset]);
   return r.rows;
 };
+
 
 /**
  * Mark as delivered for all unread/undelivered messages that match

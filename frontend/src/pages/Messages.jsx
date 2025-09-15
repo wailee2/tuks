@@ -57,25 +57,26 @@ export default function Messages() {
 
   // load conversation when selectedUser changes
   useEffect(() => {
-    if (!selectedUser) return;
-    let cancelled = false;
-    async function load() {
-      setLoadingMessages(true);
-      try {
-        const { messages: msgs } = await fetchMessages(selectedUser.username, { limit: 200, page: 0 });
-        if (!cancelled) {
-          setMessages(msgs);
-          await markRead(selectedUser.username); // mark read when opened
-        }
-      } catch (err) {
-        console.error('Failed to load messages', err);
-      } finally {
-        if (!cancelled) setLoadingMessages(false);
+  if (!selectedUser) return;
+  let cancelled = false;
+  async function load() {
+    setLoadingMessages(true);
+    try {
+      const { messages: msgs } = await fetchMessages(selectedUser.username, { limit: 200, page: 0 });
+      if (!cancelled) {
+        setMessages(msgs || []);
+        await markRead(selectedUser.username);
       }
+    } catch (err) {
+      console.error('Failed to load messages', err, err.response?.data, err.response?.status);
+    } finally {
+      if (!cancelled) setLoadingMessages(false);
     }
-    load();
-    return () => (cancelled = true);
-  }, [selectedUser]);
+  }
+  load();
+  return () => (cancelled = true);
+}, [selectedUser]);
+
 
   // when "Send a message to start chat" pressed -> focus sidebar searchbar
   function focusSearch() {

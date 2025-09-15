@@ -67,20 +67,36 @@ const fetchMessages = async (req, res) => {
     const page = Math.max(0, parseInt(req.query.page || '0', 10));
     const offset = page * limit;
 
-    const other = await getUserByUsername(otherUsername);
-    if (!other) return res.status(404).json({ message: 'User not found' });
+    console.log(`[fetchMessages] user=${userId} other=${otherUsername} limit=${limit} page=${page} offset=${offset}`);
 
+    const other = await getUserByUsername(otherUsername);
+    if (!other) {
+      console.warn(`[fetchMessages] other user not found: ${otherUsername}`);
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // get message rows
     const messages = await getMessagesBetweenUsers(userId, other.id, limit, offset);
+
+    // defensive: ensure messages is an array
+    if (!Array.isArray(messages)) {
+      console.error('[fetchMessages] getMessagesBetweenUsers returned non-array:', messages);
+      return res.status(500).json({ message: 'Server error: invalid messages result' });
+    }
 
     // mark delivered for messages where current user is receiver
     await markMessagesDelivered(userId, other.id);
 
+    // return messages
     res.json({ messages });
   } catch (err) {
-    console.error('fetchMessages error', err);
-    res.status(500).json({ message: 'Server error' });
+    // LOG FULL ERROR (stack) to server console for debugging
+    console.error('[fetchMessages] ERROR:', err && err.stack ? err.stack : err);
+    // send a generic message to client to avoid leaking internals
+    return res.status(500).json({ message: 'Server error while fetching messages' });
   }
 };
+
 
 /* ---------- markRead ---------- */
 const markRead = async (req, res) => {
