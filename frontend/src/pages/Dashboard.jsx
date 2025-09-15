@@ -1,6 +1,6 @@
 import { useContext } from 'react';
 import { AuthContext } from '../context/AuthContext';
-import Sidebar from '../components/Sidebar.jsx';
+
 
 export default function Dashboard() {
   const { user, logout } = useContext(AuthContext);
@@ -9,7 +9,6 @@ export default function Dashboard() {
 
   return (
     <div className="flex min-h-screen bg-gray-50">
-      <Sidebar />
       <main className="flex-1 p-6">
         <header className="flex justify-between items-center mb-6">
           <h1 className="text-3xl font-bold">Welcome, {user.name}</h1>

@@ -2,7 +2,6 @@
 import { useContext, useEffect, useState } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import { getAllUsers, updateUserRole, disableUser } from '../services/admin.js';
-import Sidebar from '../components/Sidebar.jsx';
 import SearchBar from '../components/SearchBar.jsx';
 import { paginate } from '../utils/pagination.js';
 
@@ -95,7 +94,6 @@ export default function ManageUsers() {
 
   return (
     <div className="flex min-h-screen bg-gray-50">
-      <Sidebar />
       <main className="flex-1 p-6">
         <h1 className="text-3xl font-bold mb-4">Admin User Management</h1>
 
