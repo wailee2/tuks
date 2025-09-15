@@ -71,20 +71,27 @@ function Sidebar() {
 
       {/* Nav: horizontal on small, vertical from md up */}
       <nav className="flex md:flex-col md:space-y-2">
-        {navItems.map((item) => (
-          <NavLink
-            key={item.path}
-            to={item.path}
-            title={item.name}
-            className={({ isActive }) =>
-              `flex items-center ${linkJustifyClass} ${spacingClass} px-4 py-2 rounded hover:bg-green-200 transition-all duration-150
-               ${isActive ? "bg-green-500 text-white" : "text-gray-700"} flex-1 md:flex-none`
-            }
-          >
-            <span className="text-2xl flex-shrink-0">{item.icon}</span>
-            <span className={`${textVisibilityClass} text-left`}>{item.name}</span>
-          </NavLink>
-        ))}
+        {navItems.map((item) => {
+          const hideOnSmall = ["Notifications", "Inventory", "Orders", "Marketplace", "Cart", "Analytics"].includes(item.name);
+          const baseLayout = hideOnSmall ? "hidden md:flex" : "flex";
+
+          return (
+            <NavLink
+              key={item.path}
+              to={item.path}
+              title={item.name}
+              className={({ isActive }) =>
+                `${baseLayout} items-center ${linkJustifyClass} ${spacingClass} px-4 py-2 rounded hover:bg-green-200 transition-all duration-150 ${
+                  isActive ? "bg-green-500 text-white" : "text-gray-700"
+                } flex-1 md:flex-none`
+              }
+            >
+              <span className="text-2xl flex-shrink-0">{item.icon}</span>
+              <span className={`${textVisibilityClass} text-left`}>{item.name}</span>
+            </NavLink>
+          );
+        })}
+
       </nav>
     </aside>
   );

@@ -28,7 +28,7 @@ export default function AppRoutes() {
           <Sidebar />
         </div>
         
-        <main className='flex-1 overflow-auto pb-20 md:pb-0'>
+        <main className='flex-1 overflow-y-auto pb-20 md:pb-0'>
           <Routes>
             <Route path="/" element={user ? <Navigate to="/dashboard" /> : <Login />} />
             <Route path="/login" element={<Login />} />
