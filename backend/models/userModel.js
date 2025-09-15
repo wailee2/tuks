@@ -1,3 +1,4 @@
+
 // models/userModel.js
 const pool = require('../config/db');
 
@@ -19,7 +20,6 @@ const createUser = async (name, username, email, password) => {
   );
   return res.rows[0];
 };
-
 
 /* --- new: searchUsers --- */
 /**
@@ -46,9 +46,26 @@ const searchUsers = async (query, limit = 20) => {
   return r.rows;
 };
 
+/* --- new helpers for disable feature --- */
+const getUserById = async (id) => {
+  const res = await pool.query('SELECT id, name, email, username, role, disabled, created_at FROM users WHERE id = $1', [id]);
+  return res.rows[0];
+};
+
+const setUserDisabled = async (id, disabled) => {
+  const res = await pool.query(
+    'UPDATE users SET disabled = $1 WHERE id = $2 RETURNING id, name, email, username, role, disabled, created_at',
+    [disabled, id]
+  );
+  return res.rows[0];
+};
+
 module.exports = {
   getUserByEmail,
   getUserByUsername,
   createUser,
   searchUsers, // <- exported so controllers can use it
+  getUserById,
+  setUserDisabled
 };
+

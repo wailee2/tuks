@@ -1,10 +1,12 @@
+// controllers/adminController.js
 const pool = require('../config/db');
+const { getUserById, setUserDisabled } = require('../models/userModel');
 
-// GET all users (already exists)
+// GET all users (already exists) - include disabled flag
 const getAllUsers = async (req, res) => {
   try {
     const result = await pool.query(
-      'SELECT id, name, email, role, created_at FROM users ORDER BY id ASC'
+      'SELECT id, name, email, username, role, disabled, created_at FROM users ORDER BY id ASC'
     );
     res.status(200).json(result.rows);
   } catch (err) {
@@ -30,7 +32,7 @@ const updateUserRole = async (req, res) => {
     }
 
     const result = await pool.query(
-      'UPDATE users SET role = $1 WHERE id = $2 RETURNING id, name, email, role, created_at',
+      'UPDATE users SET role = $1 WHERE id = $2 RETURNING id, name, email, username, role, disabled, created_at',
       [role, userId]
     );
 
@@ -43,4 +45,46 @@ const updateUserRole = async (req, res) => {
   }
 };
 
-module.exports = { getAllUsers, updateUserRole };
+/**
+ * Disable or enable a user account.
+ * Request body: { userId, disable: true|false }
+ * Rules:
+ *  - Cannot change your own disabled state.
+ *  - MODERATOR cannot disable/enable an ADMIN.
+ */
+const disableUser = async (req, res) => {
+  try {
+    const { userId, disable } = req.body;
+    const actor = req.user; // { id, role, ... }
+
+    if (!userId || typeof disable !== 'boolean') {
+      return res.status(400).json({ message: 'Invalid userId or disable flag' });
+    }
+
+    // prevent self disable/enable
+    if (actor.id === parseInt(userId)) {
+      return res.status(400).json({ message: 'Cannot change your own disabled status' });
+    }
+
+    const target = await getUserById(userId);
+    if (!target) return res.status(404).json({ message: 'User not found' });
+
+    // moderators cannot disable/enable admins
+    if (actor.role === 'MODERATOR' && target.role === 'ADMIN') {
+      return res.status(403).json({ message: 'Insufficient permissions to modify an ADMIN account' });
+    }
+
+    // perform update
+    const updated = await setUserDisabled(userId, disable);
+
+    res.status(200).json({
+      message: disable ? 'User disabled successfully' : 'User enabled successfully',
+      user: updated
+    });
+  } catch (err) {
+    console.error('Disable User Error:', err);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+module.exports = { getAllUsers, updateUserRole, disableUser };

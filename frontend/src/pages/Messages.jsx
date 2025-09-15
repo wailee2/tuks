@@ -1,4 +1,4 @@
-// src/components/Messages.jsx
+// src/pages/Messages.jsx
 import React, { useContext, useEffect, useRef, useState } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import { initSocket, subscribe } from '../services/socket';
