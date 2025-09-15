@@ -33,7 +33,6 @@ const register = async (req, res) => {
   }
 };
 
-
 // LOGIN
 const login = async (req, res) => {
   try {
@@ -41,19 +40,39 @@ const login = async (req, res) => {
     if (!email || !password)
       return res.status(400).json({ message: 'Email and password are required' });
 
+    // single DB read returns user row (including disabled)
     const user = await getUserByEmail(email);
     if (!user) return res.status(400).json({ message: 'Invalid credentials' });
 
+    // verify password (bcrypt.compare is the expensive op)
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) return res.status(400).json({ message: 'Invalid credentials' });
 
+    // After verifying credentials, check disabled flag
+    if (user.disabled) {
+      // 403 indicates the account is intentionally disabled
+      return res.status(403).json({ message: 'Account disabled. Contact support to appeal.' });
+    }
+
     const token = jwt.sign({ id: user.id, role: user.role }, process.env.JWT_SECRET, { expiresIn: '7d' });
-    res.status(200).json({ user, token });
+
+    // Don't accidentally leak the hashed password in response
+    const safeUser = {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      username: user.username,
+      role: user.role,
+      created_at: user.created_at
+    };
+
+    res.status(200).json({ user: safeUser, token });
   } catch (err) {
     console.error('Login Error:', err);
     res.status(500).json({ message: 'Server error' });
   }
 };
+
 
 
 // CHECK USERNAME AVAILABILITY
@@ -75,3 +94,4 @@ const checkUsername = async (req, res) => {
 };
 
 module.exports = { register, login, checkUsername /* plus any other exports you already had */ };
+

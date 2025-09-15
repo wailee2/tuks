@@ -1,5 +1,3 @@
-
-
 // middleware/authMiddleware.js
 const jwt = require('jsonwebtoken');
 const { getUserById } = require('../models/userModel');
@@ -12,23 +10,28 @@ const authMiddleware = async (req, res, next) => {
     }
 
     const token = authHeader.split(' ')[1];
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    let decoded;
+    try {
+      decoded = jwt.verify(token, process.env.JWT_SECRET);
+    } catch (err) {
+      return res.status(401).json({ message: 'Invalid or expired token' });
+    }
 
-    // get user from DB (fresh) to check role and disabled state
+    // Load fresh user row to check role and disabled flag.
     const user = await getUserById(decoded.id);
     if (!user) return res.status(401).json({ message: 'Invalid token: user not found' });
 
-    // block disabled users
+    // IMPORTANT: block disabled users on every request (this blocks existing tokens)
     if (user.disabled) {
       return res.status(403).json({ message: 'Account disabled. Contact support to appeal.' });
     }
 
-    // attach minimal user object to req
+    // attach minimal user info
     req.user = {
       id: user.id,
       role: user.role,
-      name: user.name,
-      email: user.email
+      email: user.email,
+      name: user.name
     };
 
     next();
