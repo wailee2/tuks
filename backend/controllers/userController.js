@@ -1,5 +1,5 @@
 // controllers/userController.js
-const { searchUsers } = require('../models/userModel');
+const { searchUsers, getUserByUsername } = require('../models/userModel');
 
 const handleSearchUsers = async (req, res) => {
   try {
@@ -16,4 +16,29 @@ const handleSearchUsers = async (req, res) => {
   }
 };
 
-module.exports = { handleSearchUsers };
+
+const lookupUserByUsername = async (req, res) => {
+  try {
+    const username = (req.query.username || '').trim();
+    if (!username) return res.status(400).json({ message: 'username query param required' });
+
+    const user = await getUserByUsername(username);
+    if (!user) return res.status(404).json({ message: 'User not found' });
+
+    // return id, username, name, role (do not return sensitive fields)
+    res.json({
+      id: user.id,
+      username: user.username,
+      name: user.name,
+      role: user.role,
+      disabled: !!user.disabled
+    });
+  } catch (err) {
+    console.error('lookupUserByUsername', err);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+
+
+module.exports = { handleSearchUsers, lookupUserByUsername };

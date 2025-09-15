@@ -1,7 +1,7 @@
 // pages/Login.jsx
 import { useState, useContext } from 'react';
 import { AuthContext } from '../context/AuthContext';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 
 export default function Login() {
   const { login } = useContext(AuthContext);
@@ -9,38 +9,79 @@ export default function Login() {
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-
+  const [fieldErrors, setFieldErrors] = useState({});
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(''); // general error
-  const [fieldErrors, setFieldErrors] = useState({}); // per-field validation errors
+  const [serverError, setServerError] = useState('');
+  const [notice, setNotice] = useState(''); // used to show immediate notices like "disabled -> redirecting"
 
+  // validate fields quickly
   const validate = () => {
     const errs = {};
     if (!email) errs.email = 'Email is required';
-    else if (!/^\S+@\S+\.\S+$/.test(email)) errs.email = 'Invalid email';
+    else if (!/^\S+@\S+\.\S+$/.test(email)) errs.email = 'Enter a valid email';
     if (!password) errs.password = 'Password is required';
     setFieldErrors(errs);
     return Object.keys(errs).length === 0;
   };
 
+  // small polling helper: try reading localStorage "user" up to ~500ms
+  const readLocalUserWithTimeout = async (timeoutMs = 500, stepMs = 50) => {
+    const deadline = Date.now() + timeoutMs;
+    while (Date.now() <= deadline) {
+      const raw = localStorage.getItem('user');
+      if (raw) {
+        try {
+          return JSON.parse(raw);
+        } catch (e) {
+          return null;
+        }
+      }
+      // eslint-disable-next-line no-await-in-loop
+      await new Promise((r) => setTimeout(r, stepMs));
+    }
+    return null;
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
+    setServerError('');
+    setNotice('');
     if (!validate()) return;
 
     try {
       setLoading(true);
+
+      // perform login via AuthContext (which sets user/token in context & localStorage)
       await login(email.trim(), password);
+
+      // read localStorage.user (AuthContext writes it); wait a short time until it's available
+      const localUser = await readLocalUserWithTimeout(500, 50);
+
+      // If we couldn't read it, fallback to normal dashboard (safe fallback)
+      if (!localUser) {
+        navigate('/dashboard');
+        return;
+      }
+
+      // If account disabled -> show message and redirect to Support
+      if (localUser.disabled) {
+        setNotice('Your account has been disabled. Redirecting you to Support so you can submit an appeal...');
+        // redirect to /support and pass a small state so Support page can show a context-aware message
+        navigate('/support', {
+          state: {
+            from: 'disabled-login',
+            message: 'Your account is disabled. Please open a ticket to appeal this decision.'
+          }
+        });
+        return;
+      }
+
+      // Otherwise go to normal dashboard
       navigate('/dashboard');
     } catch (err) {
-      // normalize error handling from axios / fetch
+      // unify axios/fetch error shapes
       const msg = err?.response?.data?.message || err?.message || 'Login failed';
-      // If account disabled we show the explicit message and a link to support
-      if (err?.response?.status === 403) {
-        setError('Your account has been disabled. You can appeal via the Support page.');
-      } else {
-        setError(msg);
-      }
+      setServerError(msg);
     } finally {
       setLoading(false);
     }
@@ -52,22 +93,23 @@ export default function Login() {
         <h1 className="text-2xl font-semibold mb-1 text-gray-800">Welcome back</h1>
         <p className="text-sm text-gray-500 mb-6">Sign in to continue to your account</p>
 
-        {error && (
+        {/* Server errors */}
+        {serverError && (
           <div className="mb-4 text-sm text-red-700 bg-red-100 p-3 rounded">
-            {error}
-            {error.toLowerCase().includes('disabled') && (
-              <div className="mt-2">
-                <Link to="/support" className="font-medium text-blue-600 hover:underline">
-                  Submit an appeal
-                </Link>
-              </div>
-            )}
+            {serverError}
+          </div>
+        )}
+
+        {/* Notice (e.g., disabled -> redirecting) */}
+        {notice && (
+          <div className="mb-4 text-sm text-yellow-800 bg-yellow-100 p-3 rounded">
+            {notice}
           </div>
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          <label className="block">
-            <span className="text-sm font-medium text-gray-700">Email</span>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Email</label>
             <input
               type="email"
               value={email}
@@ -79,10 +121,10 @@ export default function Login() {
               placeholder="you@example.com"
             />
             {fieldErrors.email && <p className="text-xs text-red-600 mt-1">{fieldErrors.email}</p>}
-          </label>
+          </div>
 
-          <label className="block">
-            <span className="text-sm font-medium text-gray-700">Password</span>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Password</label>
             <input
               type="password"
               value={password}
@@ -94,16 +136,14 @@ export default function Login() {
               placeholder="••••••••"
             />
             {fieldErrors.password && <p className="text-xs text-red-600 mt-1">{fieldErrors.password}</p>}
-          </label>
+          </div>
 
           <div className="flex items-center justify-between">
             <label className="inline-flex items-center gap-2">
               <input type="checkbox" className="form-checkbox h-4 w-4 text-indigo-600" />
               <span className="text-sm text-gray-600">Remember me</span>
             </label>
-            <Link to="/forgot-password" className="text-sm text-indigo-600 hover:underline">
-              Forgot password?
-            </Link>
+            <a href="/forgot-password" className="text-sm text-indigo-600 hover:underline">Forgot?</a>
           </div>
 
           <button
@@ -126,10 +166,7 @@ export default function Login() {
         </form>
 
         <p className="mt-6 text-center text-sm text-gray-600">
-          Don’t have an account?{' '}
-          <Link to="/register" className="text-indigo-600 font-medium hover:underline">
-            Sign up
-          </Link>
+          Don’t have an account? <a href="/register" className="text-indigo-600 font-medium hover:underline">Sign up</a>
         </p>
       </div>
     </div>

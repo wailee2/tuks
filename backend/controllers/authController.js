@@ -34,6 +34,9 @@ const register = async (req, res) => {
 };
 
 // LOGIN
+
+
+
 const login = async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -44,34 +47,32 @@ const login = async (req, res) => {
     const user = await getUserByEmail(email);
     if (!user) return res.status(400).json({ message: 'Invalid credentials' });
 
-    // verify password (bcrypt.compare is the expensive op)
+    // verify password
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) return res.status(400).json({ message: 'Invalid credentials' });
 
-    // After verifying credentials, check disabled flag
-    if (user.disabled) {
-      // 403 indicates the account is intentionally disabled
-      return res.status(403).json({ message: 'Account disabled. Contact support to appeal.' });
-    }
-
+    // Issue token even if user.disabled === true so they can access support routes.
     const token = jwt.sign({ id: user.id, role: user.role }, process.env.JWT_SECRET, { expiresIn: '7d' });
 
-    // Don't accidentally leak the hashed password in response
+    // Safe user payload
     const safeUser = {
       id: user.id,
       name: user.name,
       email: user.email,
       username: user.username,
       role: user.role,
+      disabled: !!user.disabled,
       created_at: user.created_at
     };
 
+    // If disabled, respond with 200 but include disabled flag — frontend should show a friendly message and route them to support
     res.status(200).json({ user: safeUser, token });
   } catch (err) {
     console.error('Login Error:', err);
     res.status(500).json({ message: 'Server error' });
   }
 };
+
 
 
 

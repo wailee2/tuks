@@ -12,7 +12,7 @@ import OrderDetails from './pages/OrderDetails.jsx';
 import Cart from './pages/Cart.jsx';
 import Messages from './pages/Messages.jsx';
 import Notifications from './pages/Notifications.jsx';
-import MessagesPage from './pages/MessagesPage.jsx';
+import Support from './pages/Support.jsx'
 import PageNotFound from './pages/PageNotFound';
 import ErrorBoundary from './components/ErrorBoundary';
 
@@ -28,7 +28,7 @@ export default function AppRoutes() {
         <Route path="/inventory" element={user ? <Inventory /> : <Navigate to="/login" />} />
         <Route path="/marketplace" element={<Marketplace />} />
         <Route
-          path="/admin/users"
+          path="/manage-users"
           element={user?.role === 'ADMIN' ? <AdminUsers /> : <Navigate to="/dashboard" />}
         />
         <Route path="/orders" element={<OrdersList />} />
@@ -46,6 +46,9 @@ export default function AppRoutes() {
           }
         />
 
+
+        <Route path="/support" element={<Support />} />
+        
 
 
         <Route path="/notifications" element={user ? <Notifications /> : <Navigate to="/login" />} />

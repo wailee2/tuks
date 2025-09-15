@@ -15,9 +15,10 @@ export default function Sidebar() {
     {name: 'Messages', path: '/messages' },
     {name: 'Notifications', path: '/notifications' },
     {name: 'Cart', path: '/cart' },
+    { name: 'Support', path: '/support' },
     // Only visible to admins
     ...(user?.role === 'ADMIN'
-      ? [{ name: 'Admin Users', path: '/admin/users' }]
+      ? [{ name: 'Manage Users', path: '/manage-users' }]
       : [])
   ];
 

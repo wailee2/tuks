@@ -2,6 +2,8 @@
 const jwt = require('jsonwebtoken');
 const { getUserById } = require('../models/userModel');
 
+const SUPPORT_WHITELIST_PREFIX = '/api/support'; // whitelist support endpoints
+
 const authMiddleware = async (req, res, next) => {
   try {
     const authHeader = req.headers.authorization || req.headers.Authorization;
@@ -21,12 +23,25 @@ const authMiddleware = async (req, res, next) => {
     const user = await getUserById(decoded.id);
     if (!user) return res.status(401).json({ message: 'Invalid token: user not found' });
 
-    // IMPORTANT: block disabled users on every request (this blocks existing tokens)
+    // If user is disabled, allow only support endpoints (so they can appeal)
     if (user.disabled) {
+      // If request path starts with the support prefix, allow
+      if (req.originalUrl && req.originalUrl.startsWith(SUPPORT_WHITELIST_PREFIX)) {
+        // attach minimal user info and continue
+        req.user = {
+          id: user.id,
+          role: user.role,
+          email: user.email,
+          name: user.name,
+          disabled: true
+        };
+        return next();
+      }
+      // otherwise block
       return res.status(403).json({ message: 'Account disabled. Contact support to appeal.' });
     }
 
-    // attach minimal user info
+    // Normal, active user: attach minimal user info and continue
     req.user = {
       id: user.id,
       role: user.role,
