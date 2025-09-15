@@ -1,92 +1,92 @@
 // src/components/Messages.jsx
 import React, { useContext, useEffect, useRef, useState } from 'react';
 import { AuthContext } from '../context/AuthContext';
-import { initSocket, disconnectSocket, subscribe, getSocket } from '../services/socket';
+import { initSocket, subscribe } from '../services/socket';
 import { sendMessage, fetchMessages, searchUsers, markRead, editMessage, deleteMessage } from '../services/messages';
 
 import Sidebar from '../components/messages/Sidebar';
 import ChatWindow from '../components/messages/ChatWindow';
 
-/**
- * Messages page — main layout: Sidebar + Main chat area.
- * It uses AuthContext (you requested this).
- */
 export default function Messages() {
   const { user, token } = useContext(AuthContext);
   const [selectedUser, setSelectedUser] = useState(null); // { id, username, name }
-  const [messages, setMessages] = useState([]); // current conversation
-  const [convos, setConvos] = useState([]); // previousconversations, simple local list
+  const [messages, setMessages] = useState([]);
+  const [convos, setConvos] = useState([]);
   const [loadingMessages, setLoadingMessages] = useState(false);
 
-  // ref for sidebar search input focus control
   const sidebarSearchRef = useRef(null);
 
-  // initialize socket when token available
+  // --- Subscribe socket once (not per selectedUser) ---
   useEffect(() => {
     if (!token) return;
     const s = initSocket(token);
 
-    // subscribe to private messages
     const unsubMsg = subscribe('private_message', (msg) => {
-      // when server pushes new message, if it's for or from current selectedUser, update UI
       setMessages((prev) => {
+        // prevent duplicates
+        if (prev.some((m) => String(m.id) === String(msg.id))) return prev;
+
+        // only append if msg is part of current chat
         if (!selectedUser) return prev;
-        // msg has sender_id, receiver_id etc.
-        const participantIds = [msg.sender_id, msg.receiver_id].map(String);
-        const selectedId = String(selectedUser.id);
-        if (participantIds.includes(selectedId)) {
+        const participants = [msg.sender_id, msg.receiver_id].map(String);
+        if (participants.includes(String(selectedUser.id))) {
           return [...prev, msg];
         }
         return prev;
       });
-      // optionally update convo list / play sound
     });
 
     const unsubNotif = subscribe('notification', (n) => {
-      // could update notification dropdown - left as an exercise
       console.log('notification', n);
     });
 
     return () => {
       unsubMsg();
       unsubNotif();
-      // keep socket open if you want global socket; if you want to close:
-      // disconnectSocket();
     };
-  }, [token, selectedUser]);
+  }, [token, selectedUser]); // keep selectedUser so filtering still works
 
-  // load conversation when selectedUser changes
+  // --- Load conversation when selectedUser changes ---
   useEffect(() => {
-  if (!selectedUser) return;
-  let cancelled = false;
-  async function load() {
-    setLoadingMessages(true);
-    try {
-      const { messages: msgs } = await fetchMessages(selectedUser.username, { limit: 200, page: 0 });
-      if (!cancelled) {
-        setMessages(msgs || []);
-        await markRead(selectedUser.username);
+    if (!selectedUser || !selectedUser.username) return;
+    let cancelled = false;
+
+    async function load() {
+      setLoadingMessages(true);
+      try {
+        const resp = await fetchMessages(selectedUser.username, { limit: 200, page: 0 });
+        const msgs = resp?.messages ?? [];
+        if (!cancelled) {
+          // dedupe by id
+          const uniqueMsgs = Array.from(new Map(msgs.map((m) => [String(m.id), m])).values());
+          setMessages(uniqueMsgs);
+          try {
+            await markRead(selectedUser.username);
+          } catch (e) {
+            console.warn('markRead failed', e);
+          }
+        }
+      } catch (err) {
+        console.error('Failed to load messages', err, err?.response?.status, err?.response?.data);
+      } finally {
+        if (!cancelled) setLoadingMessages(false);
       }
-    } catch (err) {
-      console.error('Failed to load messages', err, err.response?.data, err.response?.status);
-    } finally {
-      if (!cancelled) setLoadingMessages(false);
     }
-  }
-  load();
-  return () => (cancelled = true);
-}, [selectedUser]);
 
+    load();
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedUser]);
 
-  // when "Send a message to start chat" pressed -> focus sidebar searchbar
+  // --- Focus searchbar from main panel ---
   function focusSearch() {
     sidebarSearchRef.current?.focus?.();
   }
 
-  // handler when user selected in sidebar
+  // --- When a user is selected from sidebar ---
   function handleSelectUser(userObj) {
     setSelectedUser(userObj);
-    // optionally update recent convos
     setConvos((prev) => {
       const exists = prev.find((p) => String(p.id) === String(userObj.id));
       if (exists) return prev;
@@ -94,24 +94,26 @@ export default function Messages() {
     });
   }
 
-  // handle sending message (from ChatWindow)
+  // --- Handle sending message ---
   async function handleSend(content) {
     if (!selectedUser) return;
     try {
-      const res = await sendMessage(selectedUser.username, content);
-      // server will broadcast message; optimistically append
-      if (res?.message) setMessages((m) => [...m, res.message]);
+      await sendMessage(selectedUser.username, content);
+      // ⛔ don’t append manually — socket will push it
     } catch (err) {
       console.error('send failed', err);
-      // TODO: show UI error / retry
     }
   }
 
-  // handlers for edit/delete (call API then update local state)
+  // --- Edit & Delete handlers ---
   async function handleEditMessage(messageId, newText) {
     try {
       await editMessage(messageId, newText);
-      setMessages((prev) => prev.map((m) => (String(m.id) === String(messageId) ? { ...m, content: newText, edited: true } : m)));
+      setMessages((prev) =>
+        prev.map((m) =>
+          String(m.id) === String(messageId) ? { ...m, content: newText, edited: true } : m
+        )
+      );
     } catch (err) {
       console.error('edit failed', err);
     }

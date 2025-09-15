@@ -14,6 +14,7 @@ import Messages from './pages/Messages.jsx';
 import Notifications from './pages/Notifications.jsx';
 import MessagesPage from './pages/MessagesPage.jsx';
 import PageNotFound from './pages/PageNotFound';
+import ErrorBoundary from './components/ErrorBoundary';
 
 export default function AppRoutes() {
   const { user } = useContext(AuthContext);
@@ -33,10 +34,22 @@ export default function AppRoutes() {
         <Route path="/orders" element={<OrdersList />} />
         <Route path="/orders/:id" element={<OrderDetails />} />
         <Route path="/cart" element={<Cart />} />
-        <Route path="/messages" element={user ? <Messages /> : <Navigate to="/login" />} />
+
+
+        // in routes.jsx: replace both message route lines with this
+        <Route
+          path="/messages/*"
+          element={
+            <ErrorBoundary fallback={<div className="p-4">Messages failed to load — try refreshing.</div>}>
+              <Messages />
+            </ErrorBoundary>
+          }
+        />
+
+
+
         <Route path="/notifications" element={user ? <Notifications /> : <Navigate to="/login" />} />
 
-        <Route path="/messages/:username" element={user ? <MessagesPage /> : <Navigate to="/login" />} />
 
 
         <Route path="*" element={<PageNotFound />} />

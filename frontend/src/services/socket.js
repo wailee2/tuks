@@ -6,35 +6,32 @@ const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || 'http://localhost:5000';
 let socket = null;
 
 /**
- * Initialize socket for the given token.
- * - If socket exists and connected, returns it.
- * - If socket exists but not connected, re-configures auth and connects.
- * - Attaches useful debug listeners (connect_error, connect, disconnect).
- *
- * Usage:
- *   const s = initSocket(token);
- *   // ensures handlers attached and socket.connect() is triggered.
+ * Initialize or re-init socket with token.
+ * Attaches debug listeners before connecting.
  */
 export function initSocket(token) {
-  // if there's an existing socket and token changed, disconnect and recreate
+  // If same token and already connected, return existing socket
+  if (socket && socket.auth?.token === token && socket.connected) return socket;
+
+  // Clean up old socket safely
   if (socket) {
-    const currentToken = socket?.auth?.token;
-    if (currentToken === token && socket.connected) {
-      return socket;
+    try {
+      socket.off(); // safe when socket exists
+      socket.disconnect();
+    } catch (e) {
+      console.warn('[socket] cleanup old instance failed', e);
     }
-    // clean up old instance
-    try { socket.off(); socket.disconnect(); } catch (e) {}
     socket = null;
   }
 
-  // Create socket but do NOT auto-connect yet.
+  // create new socket but do NOT autoConnect true/false depending on your preference
   socket = io(SOCKET_URL, {
-    autoConnect: false,
-    auth: { token },
     transports: ['websocket', 'polling'],
+    auth: { token },
+    autoConnect: false,
   });
 
-  // attach listeners BEFORE connecting
+  // important: attach listeners BEFORE calling connect()
   socket.on('connect', () => {
     console.log('[socket] connected', socket.id);
   });
@@ -43,15 +40,8 @@ export function initSocket(token) {
     console.log('[socket] disconnected', reason);
   });
 
-  // critical: surface server-side auth errors/reasons
   socket.on('connect_error', (err) => {
-    // err.message often contains server-provided reason
     console.warn('[socket] connect_error:', err && err.message ? err.message : err);
-    // optional: show user-facing toast for auth failure
-  });
-
-  socket.on('reconnect_attempt', (count) => {
-    console.log('[socket] reconnect attempt', count);
   });
 
   // finally connect
@@ -64,28 +54,45 @@ export function initSocket(token) {
   return socket;
 }
 
+/** Return current socket (may be null) */
 export function getSocket() {
   return socket;
 }
 
+/** Disconnect and cleanup safely */
 export function disconnectSocket() {
   if (!socket) return;
   try {
-    socket.off();
+    socket.off(); // remove all listeners
     socket.disconnect();
   } catch (e) {
-    console.warn('[socket] disconnect error', e);
+    console.warn('[socket] disconnect failed', e);
   } finally {
     socket = null;
   }
 }
 
+/**
+ * Subscribe to an event; returns unsubscribe function.
+ * This is safe even if the socket is null.
+ */
 export function subscribe(event, handler) {
-  if (!socket) return () => {};
+  if (!socket) {
+    // return noop unsubscribe to make cleanup easy
+    return () => {};
+  }
   socket.on(event, handler);
-  return () => socket.off(event, handler);
+  return () => {
+    try {
+      socket.off(event, handler);
+    } catch (e) {
+      // defensive: ignore if socket is gone
+      console.warn('[socket] off failed during unsubscribe', e);
+    }
+  };
 }
 
+/** Emit with optional ack */
 export function emit(event, payload, ack) {
   if (!socket || !socket.connected) return;
   socket.emit(event, payload, ack);
