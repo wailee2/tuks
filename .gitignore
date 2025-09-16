@@ -2,4 +2,48 @@ frontend/.env
 
 backend/.env
 
+
+# === Dependencies ===
+frontend/node_modules/
+backend/node_modules/
+
+# === Build output ===
+frontend/dist/
+backend/dist/
+frontend/build/
+backend/build/
+
+# Vite, React, Next.js, etc.
+frontend/.vite/
+frontend/.next/
+frontend/out/
+
+# === Env files ===
+frontend/.env
+frontend/.env.local
+frontend/.env.*.local
+backend/.env
+backend/.env.local
+backend/.env.*.local
 *.env
+
+# === Logs ===
+*.log
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+
+# === IDE & System ===
+.vscode/
+.idea/
+!.vscode/extensions.json
+.DS_Store
+Thumbs.db
+
+# === Testing / coverage ===
+frontend/coverage/
+backend/coverage/
+
+# === Cache ===
+frontend/.cache/
+backend/.cache/
