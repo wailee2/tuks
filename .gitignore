@@ -48,5 +48,7 @@ frontend/coverage/
 backend/coverage/
 
 # === Cache ===
+.cache/
+.parcel-cache/
 frontend/.cache/
 backend/.cache/

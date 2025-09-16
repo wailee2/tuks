@@ -8,6 +8,8 @@ const helmet = require('helmet');
 const { Server } = require('socket.io');
 const startCleanup = require('./scripts/cleanupMessages');
 const jwt = require('jsonwebtoken');
+const path = require('path');
+
 
 // route imports (make sure these files exist as per previous steps)
 const userRoutes = require('./routes/userRoutes');
@@ -18,7 +20,7 @@ const orderRoutes = require('./routes/orderRoutes');
 const messageRoutes = require('./routes/messageRoutes');
 const notificationRoutes = require('./routes/notificationRoutes');
 const supportRoutes = require('./routes/supportRoutes');
-
+const profileRoutes = require('./routes/profileRoutes');
 
 
 
@@ -32,6 +34,14 @@ app.use(express.json());
 const CLIENT_ORIGIN = process.env.CLIENT_ORIGIN || '*';
 app.use(cors({ origin: CLIENT_ORIGIN, credentials: true }));
 
+//app.use('/uploads', express.static(path.join(__dirname, 'public', 'uploads')));
+
+
+// serve uploads
+app.use('/uploads', express.static(path.join(__dirname, 'public', 'uploads')));
+
+
+
 // Optional health check
 app.get('/health', (req, res) => res.json({ ok: true, time: new Date().toISOString() }));
 
@@ -44,6 +54,7 @@ app.use('/api/orders', orderRoutes);
 app.use('/api/messages', messageRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/support', supportRoutes);
+app.use('/api/profile', profileRoutes);
 
 
 // Generic error handler (simple)

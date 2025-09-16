@@ -88,5 +88,3 @@ module.exports = {
   searchUsers,
   findUserByUsername
 };
-
-/** */

@@ -15,6 +15,7 @@ import Cart from './pages/Cart.jsx';
 import Messages from './pages/Messages.jsx';
 import Notifications from './pages/Notifications.jsx';
 import Support from './pages/Support.jsx'
+import ProfilePage from './pages/Profile.jsx';
 import PageNotFound from './pages/PageNotFound';
 import ErrorBoundary from './components/ErrorBoundary';
 
@@ -44,7 +45,6 @@ export default function AppRoutes() {
             <Route path="/cart" element={<Cart />} />
 
 
-            // in routes.jsx: replace both message route lines with this
             <Route
               path="/messages/*"
               element={
@@ -54,8 +54,10 @@ export default function AppRoutes() {
               }
             />
 
-
+              
             <Route path="/support" element={<Support />} />
+
+           <Route path="/:username" element={<ProfilePage />} />
             
 
 
