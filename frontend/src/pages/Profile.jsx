@@ -157,7 +157,7 @@ export default function ProfilePage() {
                     {/* settings icon (keeps existing modal behavior) */}
                     <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none"> ... </svg>
                   </button>
-                   <button onClick={() => setSettingsOpen(true)} className="text-gray-600"><svg className="w-6 h-6" viewBox="0 0 24 24" fill="none"><path d="M12 15.5a3.5 3.5 0 100-7 3.5 3.5 0 000 7z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"></path><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 11-4 0v-.09a1.65 1.65 0 00-1-1.51 1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 110-4h.09a1.65 1.65 0 001.51-1 1.65 1.65 0 00-.33-1.82L4.2 4.2A2 2 0 116 1.36l.06.06a1.65 1.65 0 001.82.33H8.1A1.65 1.65 0 009.1.09V0a2 2 0 114 0v.09c.28.05.55.18.76.38l.06.06a1.65 1.65 0 001.82.33l.06-.06A2 2 0 1119.4 4.2l-.06.06a1.65 1.65 0 00-.33 1.82V8.1c.01.5.39.93.9 1z" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"></path></svg></button>
+                   <button onClick={() => setSettingsOpen(true)} className="text-gray-600">settings</button>
                 </>
               ) : (
                 <>

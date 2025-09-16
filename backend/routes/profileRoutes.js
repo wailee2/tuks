@@ -41,6 +41,8 @@ const upload = multer({
     cb(null, true);
   }
 });
+// Check username
+router.get('/check-username', authMiddleware, checkUsername);
 
 // Public profile by username
 router.get('/:username', authMiddleware, getProfile);
@@ -51,8 +53,7 @@ router.put('/', authMiddleware, updateProfileValidator, updateProfileController)
 // ✅ Upload avatar (direct to /public/uploads/avatars)
 router.post('/avatar', authMiddleware, upload.single('avatar'), uploadAvatar);
 
-// Check username
-router.get('/check-username', authMiddleware, checkUsername);
+
 
 // Follow/unfollow
 router.post('/:username/follow', authMiddleware, follow);
