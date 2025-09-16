@@ -4,10 +4,13 @@ backend/.env
 
 
 # === Dependencies ===
+node_modules/
 frontend/node_modules/
 backend/node_modules/
 
 # === Build output ===
+dist/
+build/
 frontend/dist/
 backend/dist/
 frontend/build/

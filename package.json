@@ -1,0 +1,25 @@
+{
+  "name": "tuks",
+  "version": "1.0.0",
+  "description": "\"# tuks\"",
+  "main": "index.js",
+  "scripts": {
+    "dev": "concurrently \"npm run dev --prefix frontend\" \"npm run dev --prefix backend\"",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/wailee2/tuks.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/wailee2/tuks/issues"
+  },
+  "homepage": "https://github.com/wailee2/tuks#readme",
+  "devDependencies": {
+    "concurrently": "^9.2.1"
+  }
+}
