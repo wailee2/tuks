@@ -8,40 +8,40 @@ export const getProfile = async (username, token) => {
   return res.data;
 };
 
-export const updateProfile = async (token, payload) => {
-  const res = await api.put('/profile', payload, {
+export async function updateProfile(token, data) {
+  const res = await api.put('/profile', data, {
     headers: { Authorization: `Bearer ${token}` }
   });
   return res.data;
-};
+}
 
 
-export const uploadAvatar = async (token, fileOrFormData) => {
-  let form;
-  if (fileOrFormData instanceof FormData) {
-    form = fileOrFormData;
-  } else {
-    form = new FormData();
-    form.append('avatar', fileOrFormData);
-  }
+export const uploadAvatar = async (token, file) => {
+  if (!file) throw new Error('No file provided');
 
-  // debug: inspect entries (safe to remove later)
-  for (const pair of form.entries()) {
-    console.log('uploadAvatar formdata:', pair[0], pair[1]);
-  }
+  const form = new FormData();
+  form.append('avatar', file);
 
   const res = await api.post('/profile/avatar', form, {
-    headers: { Authorization: `Bearer ${token}` },
+    headers: {
+      Authorization: `Bearer ${token}`,
+      // IMPORTANT: don't manually set Content-Type here. Let the browser
+      // set it with the multipart boundary (axios will do that when FormData is passed).
+    },
+    // Extra safety: if your api axios instance sets a default content-type header
+    // you can ensure it is removed for this request so the browser sets it properly:
     transformRequest: [(data, headers) => {
-      // ensure no pre-set Content-Type (so browser sets boundary)
-      if (headers && headers['Content-Type']) delete headers['Content-Type'];
+      // remove content-type so browser sets "multipart/form-data; boundary=----..."
+      if (headers) {
+        delete headers['Content-Type'];
+        delete headers['content-type'];
+      }
       return data;
     }]
   });
 
   return res.data;
 };
-
 
 export const checkUsername = async (token, username) => {
   const res = await api.get('/profile/check-username', {
@@ -86,3 +86,4 @@ export const requestDelete = async (token) => {
   });
   return res.data;
 };
+

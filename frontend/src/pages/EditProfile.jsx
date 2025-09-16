@@ -151,7 +151,6 @@ export default function EditProfilePage() {
   const validate = () => {
     const e = {};
     if (!form.username || !USERNAME_RE.test(form.username)) e.username = '3–30 chars: letters, numbers, ._-';
-    if (!form.email || !EMAIL_RE.test(form.email)) e.email = 'Please enter a valid email';
     if (form.website && !/^https?:\/\//i.test(form.website) && !/^$/.test(form.website)) {
       e.website = 'Website must start with http:// or https://';
     }
@@ -179,9 +178,15 @@ export default function EditProfilePage() {
       // 1) Upload avatar if a file was selected (pass File directly)
       if (avatarFile) {
         const upRes = await uploadAvatar(token, avatarFile);
-        if (upRes && upRes.profile_pic) {
-          setForm(f => ({ ...f, profile_pic: upRes.profile_pic }));
+        if (upRes) {
+        // prefer the busted URL if provided by server so the browser fetches the new file immediately
+        const pic = upRes.profile_pic_busted || upRes.profile_pic || upRes.user?.profile_pic;
+        if (pic) {
+          setForm(f => ({ ...f, profile_pic: pic }));
+          setAvatarPreview(pic); // ensure local preview updates to the same URL
         }
+      }
+
       }
 
       // 2) Normalize website input: add protocol if missing

@@ -1,4 +1,4 @@
-// controllers/profileController.js
+// backend/controllers/profileController.js
 const path = require('path');
 const fs = require('fs/promises');
 const { validationResult } = require('express-validator');
@@ -15,12 +15,12 @@ const {
   unblockUser,
   isBlocked,
   requestAccountDeletion,
-  insertAuditLog // we'll add this to model
+  insertAuditLog
 } = require('../models/userProfileModel');
 
 const pool = require('../config/db');
 
-// GET profile (optionalAuth should have attached req.user if present)
+// GET profile
 const getProfile = async (req, res) => {
   try {
     const username = req.params.username;
@@ -28,7 +28,6 @@ const getProfile = async (req, res) => {
     const profile = await getPublicProfileByUsername(username, viewerId);
     if (!profile) return res.status(404).json({ message: 'User not found' });
 
-    // is_following/is_block flags
     if (viewerId) {
       profile.is_following = await isFollowing(viewerId, profile.id);
       profile.is_blocked_by_viewer = await isBlocked(viewerId, profile.id);
@@ -46,33 +45,49 @@ const getProfile = async (req, res) => {
   }
 };
 
-// Update profile -- server-side validation via express-validator in route
+
+
 const updateProfileController = async (req, res) => {
   try {
     const errors = validationResult(req);
-    if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
+    if (!errors.isEmpty()) {
+      // Log full errors for debugging
+      console.warn('[updateProfile] validation failed for uid=', req.user?.id, 'errors=', errors.array());
+      // Return helpful JSON for client (production can hide details if desired)
+      return res.status(400).json({ message: 'Validation failed', errors: errors.array() });
+    }
 
     const uid = req.user.id;
+    console.log('[updateProfile] uid=', uid);
+    // Only allow certain keys
     const allowed = [
       'username','name','profile_pic','bio','website','dob','dob_visible',
-      'email','email_visible','location','location_visible'
+      'email_visible','location','location_visible'
     ];
     const payload = {};
     for (const k of allowed) {
-      if (Object.prototype.hasOwnProperty.call(req.body, k)) payload[k] = req.body[k];
+      if (Object.prototype.hasOwnProperty.call(req.body, k)) {
+        payload[k] = req.body[k];
+      }
     }
 
-    // username change check
+    console.log('[updateProfile] incoming payload keys/values:', payload);
+    // Optional: do additional server-side normalization
+    if (payload.website && typeof payload.website === 'string') {
+      payload.website = payload.website.trim() === '' ? null : payload.website.trim();
+    }
+
+    // If username present, check uniqueness
     if (payload.username) {
       const taken = await isUsernameTaken(payload.username, uid);
       if (taken) return res.status(400).json({ message: 'Username already taken' });
     }
 
-    // perform update
+    // Save before/after for audit
     const before = await getUserById(uid);
     const updated = await updateUserProfile(uid, payload);
 
-    // audit log if username changed or email changed
+    // Audit logs (username/email changes)
     if (payload.username && payload.username !== before.username) {
       await insertAuditLog({
         event_type: 'username_changed',
@@ -81,7 +96,6 @@ const updateProfileController = async (req, res) => {
         meta: { from: before.username, to: payload.username }
       });
     }
-
     if (payload.email && payload.email !== before.email) {
       await insertAuditLog({
         event_type: 'email_changed',
@@ -91,84 +105,46 @@ const updateProfileController = async (req, res) => {
       });
     }
 
-    res.json({ message: 'Profile updated', user: updated });
+    // Return updated user row
+    return res.json({ message: 'Profile updated', user: updated });
   } catch (err) {
     console.error('updateProfile error', err);
-    // DEV: return detailed error to client so you can debug quickly (remove in prod)
     if (process.env.NODE_ENV !== 'production') {
       return res.status(500).json({ message: err.message, stack: err.stack });
     }
-    res.status(500).json({ message: 'Server error' });
+    return res.status(500).json({ message: 'Server error' });
   }
-
 };
 
 
-/**
- * Upload avatar:
- * - multer will place file into tmp upload location (we configure storage in route as diskStorage)
- * - we validate MIME and extension in multer fileFilter
- * - we then process via sharp to produce small/medium/large
- */
+
+
+// upload avatar
 const uploadAvatar = async (req, res) => {
   try {
-    if (!req.file) return res.status(400).json({ message: 'No file uploaded' });
-
-    // secure directories
-    const uploadsDir = path.join(__dirname, '..', 'public', 'uploads', 'avatars');
-    await fs.mkdir(uploadsDir, { recursive: true });
-
-    const uid = req.user.id;
-    const file = req.file; // multer info
-    const ext = path.extname(file.originalname).toLowerCase();
-    const baseName = `avatar_${uid}_${Date.now()}`;
-
-    // Sizes: small(64), med(256), large(1024)
-    const sizes = [
-      { name: 'sm', size: 64 },
-      { name: 'md', size: 256 },
-      { name: 'lg', size: 1024 }
-    ];
-
-    const publicPaths = {};
-
-    // Process & write each size using sharp
-    for (const s of sizes) {
-      const filename = `${baseName}_${s.name}.jpg`; // normalize to jpg
-      const outPath = path.join(uploadsDir, filename);
-
-      // sharp pipeline: resize, jpeg compress
-      await sharp(file.path)
-        .resize(s.size, s.size, { fit: 'cover' })
-        .jpeg({ quality: 80 })
-        .toFile(outPath);
-
-      publicPaths[s.name] = `/uploads/avatars/${filename}`;
+    if (!req.file) {
+      return res.status(400).json({ message: 'No file uploaded' });
     }
 
-    // remove tmp original
-    try { await fs.unlink(file.path); } catch (e) { /* ignore */ }
+    // Build public URL for the uploaded file
+    const fileUrl = `/uploads/avatars/${req.file.filename}`;
 
-    // update DB to set profile_pic as medium path (you can store object if desired)
-    const updated = await updateUserProfile(uid, { profile_pic: publicPaths.md });
+    // Save `fileUrl` to DB (example)
+    // await updateUserProfile(req.user.id, { profile_pic: fileUrl });
 
-    // record audit
-    await insertAuditLog({
-      event_type: 'avatar_changed',
-      user_id: uid,
-      actor_id: uid,
-      meta: { paths: publicPaths }
+    res.json({
+      message: 'Avatar uploaded successfully',
+      url: fileUrl
     });
-
-    res.json({ message: 'Uploaded', profile_pic: publicPaths.md, sizes: publicPaths, user: updated });
   } catch (err) {
-    console.error('uploadAvatar error', err);
+    console.error(err);
     res.status(500).json({ message: 'Server error' });
   }
 };
 
-// Check username availability (GET /check-username?username=..)
-// allow optional auth so client can pass token and exclude themselves
+
+
+// checkUsername
 const checkUsernameController = async (req, res) => {
   try {
     const username = (req.query.username || '').trim();
@@ -193,7 +169,6 @@ const follow = async (req, res) => {
     const followeeId = followee.rows[0].id;
     if (followeeId === followerId) return res.status(400).json({ message: "Can't follow yourself" });
 
-    // don't follow if blocker relation exists
     const blocked = await isBlocked(followeeId, followerId);
     if (blocked) return res.status(403).json({ message: 'You are blocked by this user' });
 
@@ -227,7 +202,6 @@ const block = async (req, res) => {
     const blockedUser = await pool.query('SELECT id FROM users WHERE LOWER(username) = LOWER($1) LIMIT 1', [blockedUsername]);
     if (!blockedUser.rows[0]) return res.status(404).json({ message: 'User not found' });
     await blockUser(blockerId, blockedUser.rows[0].id);
-    // also remove follow relations both ways
     await pool.query('DELETE FROM follows WHERE (follower_id=$1 AND followee_id=$2) OR (follower_id=$2 AND followee_id=$1)', [blockerId, blockedUser.rows[0].id]);
     res.json({ message: 'User blocked' });
   } catch (err) {
@@ -268,7 +242,7 @@ const requestDelete = async (req, res) => {
 };
 
 module.exports = {
- getProfile,
+  getProfile,
   updateProfile: updateProfileController,
   uploadAvatar,
   checkUsername: checkUsernameController,
@@ -278,5 +252,4 @@ module.exports = {
   unblock,
   requestDelete
 };
-
 
