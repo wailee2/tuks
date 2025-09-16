@@ -1,3 +1,4 @@
+// components/Sidebar.jsx
 import React from "react";
 import { NavLink, useLocation } from "react-router-dom";
 import { useContext } from "react";
@@ -29,8 +30,6 @@ function Sidebar() {
   // pages where nav should be hidden completely
   const noNav = ["/login", "/register"].includes(location.pathname);
 
-
-
   const navItems = [
     { name: "Dashboard", path: "/dashboard", icon: <FiHome aria-hidden /> },
     { name: "Inventory", path: "/inventory", icon: <FiBox aria-hidden /> },
@@ -59,18 +58,21 @@ function Sidebar() {
   // spacing: gap appears at lg
   const spacingClass = iconOnlyMode ? "space-x-0" : "space-x-0 lg:space-x-3";
 
+  const avatarSrc = user?.profile_pic || "/default-avatar.png"; // adjust default path as needed
+  const displayName = user?.name || user?.username || "Guest";
+
   return (
     <aside
       className={`${sidebarWidthClass} ${hideNavPages ? "hidden md:flex" : ""} ${noNav ? "hidden" : ""} bg-green-200 md:h-screen p-4 shadow-lg flex flex-col transition-all duration-200 ease-in-out overflow-hidden fixed bottom-0 left-0 right-0 md:sticky md:top-0 z-50`}
     >
       {/* Logo */}
-      <div className={`hidden  md:flex items-center mb-4 ${iconOnlyMode ? "justify-center" : "justify-center lg:justify-start"}`}>
+      <div className={`hidden md:flex items-center mb-4 ${iconOnlyMode ? "justify-center" : "justify-center lg:justify-start"}`}>
         <FiHeart className="text-red-500 w-6 h-6" aria-hidden />
         <span className={`font-bold text-xl ml-2 ${textVisibilityClass}`}>Tuks</span>
       </div>
 
       {/* Nav: horizontal on small, vertical from md up */}
-      <nav className="flex md:flex-col md:space-y-2">
+      <nav className="flex md:flex-col md:space-y-2 flex-1">
         {navItems.map((item) => {
           const hideOnSmall = ["Notifications", "Inventory", "Orders", "Marketplace", "Cart", "Analytics"].includes(item.name);
           const baseLayout = hideOnSmall ? "hidden md:flex" : "flex";
@@ -91,8 +93,43 @@ function Sidebar() {
             </NavLink>
           );
         })}
-
       </nav>
+
+      {/* Divider */}
+      <div className="hidden lg:block border-t border-green-300 my-3" />
+
+      {/* Profile / guest area */}
+      <div className={`mt-2 ${iconOnlyMode ? "flex items-center justify-center" : "flex items-center gap-3 lg:justify-start lg:items-center"}`}>
+        {user ? (
+          // logged-in user -> clicking goes to /:username
+          <NavLink
+            to={`/${encodeURIComponent(user.username)}`}
+            className="flex items-center gap-3 hover:bg-green-100 px-2 py-1 rounded w-full"
+            title={`View profile @${user.username}`}
+          >
+            <img
+              src={avatarSrc}
+              alt={user.username ? `${user.username}'s avatar` : "Profile avatar"}
+              className="w-10 h-10 rounded-full object-cover flex-shrink-0"
+            />
+            <div className={`flex-1 ${textVisibilityClass}`}>
+              <div className="text-sm font-medium truncate">{displayName}</div>
+              <div className="text-xs text-gray-600">@{user.username}</div>
+            </div>
+          </NavLink>
+        ) : (
+          // guest -> link to login/register
+          <div className={`flex items-center gap-3 px-2 py-1 rounded w-full ${iconOnlyMode ? "justify-center" : ""}`}>
+            <NavLink to="/login" className="flex items-center gap-3 hover:bg-green-100 px-2 py-1 rounded w-full">
+              <img src="/default-avatar.png" alt="Guest avatar" className="w-10 h-10 rounded-full object-cover flex-shrink-0" />
+              <div className={`flex-1 ${textVisibilityClass}`}>
+                <div className="text-sm font-medium">Sign in</div>
+                <div className="text-xs text-gray-600">Access your profile</div>
+              </div>
+            </NavLink>
+          </div>
+        )}
+      </div>
     </aside>
   );
 }

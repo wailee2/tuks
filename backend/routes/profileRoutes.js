@@ -2,6 +2,7 @@
 const express = require('express');
 const multer = require('multer');
 const path = require('path');
+const { body } = require('express-validator');
 const {
   getProfile,
   updateProfile,
@@ -17,28 +18,62 @@ const { authMiddleware, optionalAuth } = require('../middleware/authMiddleware')
 
 const router = express.Router();
 
-// multer setup (same as yours)
+// tmp dir for multer (NOT public)
+const tmpDir = path.join(__dirname, '..', 'tmp');
 const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, path.join(__dirname, '..', 'public', 'uploads')),
+  destination: (req, file, cb) => cb(null, tmpDir),
   filename: (req, file, cb) => {
-    const ext = path.extname(file.originalname);
-    const name = `avatar_${req.user?.id || 'anon'}_${Date.now()}${ext}`;
-    cb(null, name);
+    const ext = path.extname(file.originalname).toLowerCase();
+    const safe = `upload_${Date.now()}_${Math.random().toString(36).slice(2,8)}${ext}`;
+    cb(null, safe);
   }
 });
-const upload = multer({ storage, limits: { fileSize: 5 * 1024 * 1024 } }); // 5MB
+const imageMimeTypes = ['image/jpeg', 'image/png', 'image/webp'];
+const fileFilter = (req, file, cb) => {
+  if (!imageMimeTypes.includes(file.mimetype)) {
+    return cb(new Error('Only JPEG/PNG/WebP images allowed'));
+  }
+  cb(null, true);
+};
+const upload = multer({ storage, fileFilter, limits: { fileSize: 1 * 1024 * 1024 } }); // 1MB
 
-// Public profile by username (GET /:username) — optionalAuth allows guest view
-router.get('/:username', optionalAuth, getProfile);
+// --- Important: explicit routes first (so they are not captured by /:username) ---
 
-// Update own profile (requires auth)
-router.put('/', authMiddleware, updateProfile);
+// check username availability (optional auth)
+router.get('/check-username', optionalAuth, checkUsername);
 
-// upload avatar (requires auth)
+// upload avatar
 router.post('/avatar', authMiddleware, upload.single('avatar'), uploadAvatar);
 
-// check username availability (optional auth or auth — here we require auth so we can exclude current user)
-router.get('/check-username', optionalAuth, checkUsername);
+// Update own profile (validate + sanitize)
+router.put(
+  '/',
+  authMiddleware,
+  [
+    body('username')
+      .optional()
+      .isLength({ min: 3, max: 30 })
+      .matches(/^[a-zA-Z0-9._-]+$/).withMessage('Invalid username format'),
+    body('name').optional().isLength({ max: 60 }),
+    body('bio').optional().isLength({ max: 1000 }),
+    // sanitize website: if user provided without protocol, prepend https://, then validate
+    body('website')
+      .optional({ nullable: true })
+      .customSanitizer((value) => {
+        if (!value) return value;
+        const v = String(value).trim();
+        if (!/^https?:\/\//i.test(v)) return 'https://' + v;
+        return v;
+      })
+      .isURL().withMessage('Website must be a valid URL'),
+    body('email').optional().isEmail(),
+    body('dob').optional().isISO8601().toDate()
+  ],
+  updateProfile
+);
+
+// request delete account
+router.post('/request-delete', authMiddleware, requestDelete);
 
 // follow/unfollow (auth)
 router.post('/:username/follow', authMiddleware, follow);
@@ -48,7 +83,7 @@ router.post('/:username/unfollow', authMiddleware, unfollow);
 router.post('/:username/block', authMiddleware, block);
 router.post('/:username/unblock', authMiddleware, unblock);
 
-// request delete account
-router.post('/request-delete', authMiddleware, requestDelete);
+// Public profile by username (must come last)
+router.get('/:username', optionalAuth, getProfile);
 
 module.exports = router;

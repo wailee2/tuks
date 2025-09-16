@@ -37,8 +37,8 @@ app.use(cors({ origin: CLIENT_ORIGIN, credentials: true }));
 //app.use('/uploads', express.static(path.join(__dirname, 'public', 'uploads')));
 
 
-// serve uploads
-app.use('/uploads', express.static(path.join(__dirname, 'public', 'uploads')));
+// serve uploads but do NOT allow directory listing (index: false)
+app.use('/uploads', express.static(path.join(__dirname, 'public', 'uploads'), { index: false }));
 
 
 

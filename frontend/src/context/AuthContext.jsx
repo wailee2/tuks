@@ -107,6 +107,7 @@ export const AuthProvider = ({ children }) => {
       setSocket(null);
     }
   }, [token]);
+  
 
   const login = async (email, password) => {
     const { user: u, token: t } = await loginUser(email, password);
@@ -124,9 +125,26 @@ export const AuthProvider = ({ children }) => {
     return await checkUsernameApi(username);
   };
 
+  
+  const refreshUser = async () => {
+    try {
+      if (!token) return null;
+      const res = await api.get('/auth/me', { headers: { Authorization: `Bearer ${token}` } });
+      setUser(res.data);
+      return res.data;
+    } catch (err) {
+      // If token invalid/403, log out client
+      if (err.response?.status === 401 || err.response?.status === 403) {
+        logout();
+      }
+      console.error('refreshUser failed', err);
+      return null;
+    }
+  };
+
   return (
     <AuthContext.Provider
-      value={{ user, token, socket, login, register, logout, checkUsername }}
+      value={{ user, token, socket, login, register, logout, checkUsername, refreshUser }}
     >
       {children}
     </AuthContext.Provider>

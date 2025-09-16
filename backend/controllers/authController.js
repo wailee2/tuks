@@ -1,7 +1,7 @@
 // controllers/authController.js
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-const { createUser, getUserByEmail, getUserByUsername } = require('../models/userModel');
+const { createUser, getUserByEmail, getUserByUsername, getUserById } = require('../models/userModel');
 
 
 // REGISTER
@@ -34,9 +34,6 @@ const register = async (req, res) => {
 };
 
 // LOGIN
-
-
-
 const login = async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -73,9 +70,6 @@ const login = async (req, res) => {
   }
 };
 
-
-
-
 // CHECK USERNAME AVAILABILITY
 const checkUsername = async (req, res) => {
   try {
@@ -94,5 +88,16 @@ const checkUsername = async (req, res) => {
   }
 };
 
-module.exports = { register, login, checkUsername /* plus any other exports you already had */ };
 
+const me = async (req, res) => {
+  try {
+    const uid = req.user.id;
+    const user = await getUserById(uid);
+    if (!user) return res.status(404).json({ message: 'User not found' });
+    res.json(user);
+  } catch (err) {
+    console.error('me error', err);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+module.exports = { register, login, checkUsername, me };

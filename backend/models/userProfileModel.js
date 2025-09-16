@@ -1,6 +1,13 @@
 // backend/models/userProfileModel.js
 const pool = require('../config/db');
 
+const insertAuditLog = async ({ event_type, user_id, actor_id = null, meta = {} }) => {
+  const q = `INSERT INTO audit_logs (event_type, user_id, actor_id, meta) VALUES ($1, $2, $3, $4) RETURNING *`;
+  const r = await pool.query(q, [event_type, user_id, actor_id, meta]);
+  return r.rows[0];
+};
+
+
 /**
  * Get public profile by username.
  * Tries to include posts_count. If posts table doesn't exist,
@@ -174,5 +181,6 @@ module.exports = {
   blockUser,
   unblockUser,
   isBlocked,
-  requestAccountDeletion
+  requestAccountDeletion,
+  insertAuditLog
 };
