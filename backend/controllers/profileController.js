@@ -3,6 +3,8 @@ const path = require('path');
 const fs = require('fs/promises');
 const { validationResult } = require('express-validator');
 const sharp = require('sharp');
+
+const { buildFullUrl } = require('../helpers/url');
 const {
   getPublicProfileByUsername,
   getUserById,
@@ -28,6 +30,13 @@ const getProfile = async (req, res) => {
     const profile = await getPublicProfileByUsername(username, viewerId);
     if (!profile) return res.status(404).json({ message: 'User not found' });
 
+    // prefix profile_pic with full URL if present (DB stores relative path)
+    if (profile.profile_pic) {
+      profile.profile_pic = profile.profile_pic.startsWith('http')
+        ? profile.profile_pic
+        : buildFullUrl(req, profile.profile_pic);
+    }
+
     if (viewerId) {
       profile.is_following = await isFollowing(viewerId, profile.id);
       profile.is_blocked_by_viewer = await isBlocked(viewerId, profile.id);
@@ -45,20 +54,16 @@ const getProfile = async (req, res) => {
   }
 };
 
-
-
+// Update profile
 const updateProfileController = async (req, res) => {
   try {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      // Log full errors for debugging
       console.warn('[updateProfile] validation failed for uid=', req.user?.id, 'errors=', errors.array());
-      // Return helpful JSON for client (production can hide details if desired)
       return res.status(400).json({ message: 'Validation failed', errors: errors.array() });
     }
 
     const uid = req.user.id;
-    console.log('[updateProfile] uid=', uid);
     // Only allow certain keys
     const allowed = [
       'username','name','profile_pic','bio','website','dob','dob_visible',
@@ -71,23 +76,21 @@ const updateProfileController = async (req, res) => {
       }
     }
 
-    console.log('[updateProfile] incoming payload keys/values:', payload);
-    // Optional: do additional server-side normalization
+    // server-side normalization
     if (payload.website && typeof payload.website === 'string') {
       payload.website = payload.website.trim() === '' ? null : payload.website.trim();
     }
 
-    // If username present, check uniqueness
+    // username uniqueness
     if (payload.username) {
       const taken = await isUsernameTaken(payload.username, uid);
       if (taken) return res.status(400).json({ message: 'Username already taken' });
     }
 
-    // Save before/after for audit
     const before = await getUserById(uid);
     const updated = await updateUserProfile(uid, payload);
 
-    // Audit logs (username/email changes)
+    // Audit logs
     if (payload.username && payload.username !== before.username) {
       await insertAuditLog({
         event_type: 'username_changed',
@@ -105,7 +108,11 @@ const updateProfileController = async (req, res) => {
       });
     }
 
-    // Return updated user row
+    // ensure returned user.profile_pic is a full URL for client convenience
+    if (updated && updated.profile_pic) {
+      updated.profile_pic = updated.profile_pic.startsWith('http') ? updated.profile_pic : buildFullUrl(req, updated.profile_pic);
+    }
+
     return res.json({ message: 'Profile updated', user: updated });
   } catch (err) {
     console.error('updateProfile error', err);
@@ -116,30 +123,50 @@ const updateProfileController = async (req, res) => {
   }
 };
 
-
-
-
+// Upload avatar
 const uploadAvatar = async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ message: 'No file uploaded' });
     }
 
-    // Build public URL for the uploaded file
-    const fileUrl = `/uploads/avatars/${req.file.filename}`;
+    // Paths
+    const uploadsDirRelative = '/uploads/avatars';
+    const savedFilename = req.file.filename; // multer already created filename
+    const savedRelativePath = `${uploadsDirRelative}/${savedFilename}`;
+    const savedFullPath = path.join(__dirname, '..', 'public', 'uploads', 'avatars', savedFilename);
 
-    // Persist to DB (uncomment / use your model helper)
-    // updateUserProfile should return the updated user row if you want to return it.
-    const updatedUser = await updateUserProfile(req.user.id, { profile_pic: fileUrl });
+    // Optional: sanitize/resize with sharp (overwrite file)
+    try {
+      await sharp(savedFullPath)
+        .resize({ width: 512, height: 512, fit: 'cover' })
+        .toFile(`${savedFullPath}.tmp`);
+      // replace original file with resized
+      await fs.rename(`${savedFullPath}.tmp`, savedFullPath);
+    } catch (imgErr) {
+      // if sharp fails, just continue with the uploaded file
+      console.warn('sharp processing failed for avatar - continuing with original file', imgErr);
+    }
 
-    // Provide a cache-busted URL for immediate client use
-    const busted = `${fileUrl}?t=${Date.now()}`;
+    // Persist relative path to DB
+    const updatedUser = await updateUserProfile(req.user.id, { profile_pic: savedRelativePath });
+
+    // Return full URLs to client (cache-busted)
+    const full = buildFullUrl(req, savedRelativePath);
+    const busted = `${full}?t=${Date.now()}`;
+
+    // also ensure returned user.profile_pic is full URL
+    if (updatedUser && updatedUser.profile_pic) {
+      updatedUser.profile_pic = updatedUser.profile_pic.startsWith('http')
+        ? updatedUser.profile_pic
+        : buildFullUrl(req, updatedUser.profile_pic);
+    }
 
     return res.json({
       message: 'Avatar uploaded successfully',
-      profile_pic: fileUrl,
+      profile_pic: full,
       profile_pic_busted: busted,
-      user: updatedUser // optional (handy if updateUserProfile returns row)
+      user: updatedUser
     });
   } catch (err) {
     console.error('uploadAvatar error', err);
@@ -147,10 +174,8 @@ const uploadAvatar = async (req, res) => {
   }
 };
 
+// remaining controllers unchanged (checkUsername, follow, unfollow, block, unblock, requestDelete)...
 
-
-
-// checkUsername
 const checkUsernameController = async (req, res) => {
   try {
     const username = (req.query.username || '').trim();
@@ -258,4 +283,3 @@ module.exports = {
   unblock,
   requestDelete
 };
-

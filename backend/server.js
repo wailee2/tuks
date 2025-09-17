@@ -27,7 +27,11 @@ const profileRoutes = require('./routes/profileRoutes');
 const app = express();
 
 // Basic middleware
-app.use(helmet());
+app.use(
+  helmet({
+    crossOriginResourcePolicy: { policy: "cross-origin" }, // allow avatars to be used from other origins
+  })
+);
 app.use(express.json());
 
 // CORS: allow your client origin (set CLIENT_ORIGIN in .env)
