@@ -67,8 +67,9 @@ export default function AppRoutes() {
 
 
 
-            <Route path="*" element={<PageNotFound />} />
+            
             <Route path="/dashboard" element={user ? <Dashboard /> : <Navigate to="/login" />} />
+            <Route path="*" element={<PageNotFound />} />
           </Routes>
         </main>
       </div>

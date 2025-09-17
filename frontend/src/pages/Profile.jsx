@@ -142,10 +142,10 @@ export default function ProfilePage() {
               </div>
 
               <div className="mt-3 space-y-1 text-sm text-gray-700">
-                {profile.location && <div>📍 {profile.location}</div>}
+                {/*{profile.location && <div>📍 {profile.location}</div>}*/}
                 {profile.website && <div>🔗 <a href={profile.website} target="_blank" rel="noreferrer" className="text-blue-600 hover:underline">{profile.website}</a></div>}
                 {profile.email && <div>✉️ {profile.email}</div>}
-                {profile.dob && <div>🎂 {profile.dob}</div>}
+                {/*{profile.dob && <div>🎂 {profile.dob}</div>}*/}
               </div>
             </div>
 

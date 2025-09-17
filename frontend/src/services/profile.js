@@ -17,6 +17,7 @@ export async function updateProfile(token, data) {
 
 
 
+
 export async function uploadAvatar(token, file) {
   const fd = new FormData();
   fd.append('avatar', file); // matches upload.single('avatar') on the server

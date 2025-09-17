@@ -1,7 +1,7 @@
 // components/Sidebar.jsx
-import React from "react";
+import React, { useContext, useEffect, useState } from "react";
+import { getProfile } from "../services/profile";
 import { NavLink, useLocation } from "react-router-dom";
-import { useContext } from "react";
 import { AuthContext } from "../context/AuthContext";
 import {
   FiHome,
@@ -18,7 +18,8 @@ import {
 } from "react-icons/fi";
 
 function Sidebar() {
-  const { user } = useContext(AuthContext);
+  const { user, token } = useContext(AuthContext);
+  const [profile, setProfile] = useState(null);
   const location = useLocation();
 
   // icon-only pages
@@ -34,12 +35,12 @@ function Sidebar() {
     { name: "Dashboard", path: "/dashboard", icon: <FiHome aria-hidden /> },
     { name: "Inventory", path: "/inventory", icon: <FiBox aria-hidden /> },
     { name: "Orders", path: "/orders", icon: <FiShoppingBag aria-hidden /> },
-    { name: "Feed", path: "/feed", icon: <FiRss aria-hidden /> },
-    { name: "Analytics", path: "/analytics", icon: <FiBarChart2 aria-hidden /> },
+    //{ name: "Feed", path: "/feed", icon: <FiRss aria-hidden /> },
+    //{ name: "Analytics", path: "/analytics", icon: <FiBarChart2 aria-hidden /> },
     { name: "Marketplace", path: "/marketplace", icon: <FiShoppingCart aria-hidden /> },
     { name: "Messages", path: "/messages", icon: <FiMessageSquare aria-hidden /> },
     { name: "Notifications", path: "/notifications", icon: <FiBell aria-hidden /> },
-    { name: "Cart", path: "/cart", icon: <FiShoppingCart aria-hidden /> },
+    //{ name: "Cart", path: "/cart", icon: <FiShoppingCart aria-hidden /> },
     { name: "Support", path: "/support", icon: <FiHelpCircle aria-hidden /> },
     ...(user?.role === "ADMIN"
       ? [{ name: "Manage Users", path: "/manage-users", icon: <FiUsers aria-hidden /> }]
@@ -58,8 +59,22 @@ function Sidebar() {
   // spacing: gap appears at lg
   const spacingClass = iconOnlyMode ? "space-x-0" : "space-x-0 lg:space-x-3";
 
-  const avatarSrc = user?.profile_pic || "/default-avatar.png"; // adjust default path as needed
+  const avatar = profile?.profile_pic || "/default-avatar.png"; // adjust default path as needed
   const displayName = user?.name || user?.username || "Guest";
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      if (!user?.username || !token) return;
+      try {
+        const data = await getProfile(user.username, token); // same API call Profile.jsx uses
+        setProfile(data);
+      } catch (err) {
+        console.error("Sidebar fetch profile failed", err);
+      }
+    };
+
+    fetchProfile();
+  }, [user, token]);
 
   return (
     <aside
@@ -108,9 +123,13 @@ function Sidebar() {
             title={`View profile @${user.username}`}
           >
             <img
-              src={avatarSrc}
-              alt={user.username ? `${user.username}'s avatar` : "Profile avatar"}
-              className="w-10 h-10 rounded-full object-cover flex-shrink-0"
+              src={avatar}
+              alt={profile?.username || "User"}
+              className="w-10 h-10 rounded-full object-cover"
+              onError={(e) => {
+                e.currentTarget.onerror = null;
+                e.currentTarget.src = "/default-avatar.png";
+              }}
             />
             <div className={`flex-1 ${textVisibilityClass}`}>
               <div className="text-sm font-medium truncate">{displayName}</div>
