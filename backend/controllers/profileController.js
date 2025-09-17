@@ -119,7 +119,6 @@ const updateProfileController = async (req, res) => {
 
 
 
-// upload avatar
 const uploadAvatar = async (req, res) => {
   try {
     if (!req.file) {
@@ -129,18 +128,25 @@ const uploadAvatar = async (req, res) => {
     // Build public URL for the uploaded file
     const fileUrl = `/uploads/avatars/${req.file.filename}`;
 
-    // Save `fileUrl` to DB (example)
-    // await updateUserProfile(req.user.id, { profile_pic: fileUrl });
+    // Persist to DB (uncomment / use your model helper)
+    // updateUserProfile should return the updated user row if you want to return it.
+    const updatedUser = await updateUserProfile(req.user.id, { profile_pic: fileUrl });
 
-    res.json({
+    // Provide a cache-busted URL for immediate client use
+    const busted = `${fileUrl}?t=${Date.now()}`;
+
+    return res.json({
       message: 'Avatar uploaded successfully',
-      url: fileUrl
+      profile_pic: fileUrl,
+      profile_pic_busted: busted,
+      user: updatedUser // optional (handy if updateUserProfile returns row)
     });
   } catch (err) {
-    console.error(err);
+    console.error('uploadAvatar error', err);
     res.status(500).json({ message: 'Server error' });
   }
 };
+
 
 
 

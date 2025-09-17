@@ -1,3 +1,4 @@
+// pages/EditProfile
 import React, { useContext, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { checkUsername as apiCheckUsername, getProfile, updateProfile, uploadAvatar } from '../services/profile';
@@ -5,7 +6,7 @@ import { AuthContext } from '../context/AuthContext';
 import { useToasts } from '../context/ToastContext';
 
 const USERNAME_RE = /^[a-zA-Z0-9._-]{3,30}$/;
-const MAX_BIO = 1000;
+const MAX_BIO = 200;
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export default function EditProfilePage() {
@@ -174,35 +175,38 @@ export default function EditProfilePage() {
 
     setSaving(true);
     setErrors({});
+
     try {
-      // 1) Upload avatar if a file was selected (pass File directly)
+      // 1) Upload avatar if a file was selected (use avatarFile state)
+      // We keep the uploaded URL in a local var so we don't rely on setForm sync.
+      let uploadedProfilePic = null;
       if (avatarFile) {
         const upRes = await uploadAvatar(token, avatarFile);
-        if (upRes) {
-        // prefer the busted URL if provided by server so the browser fetches the new file immediately
-        const pic = upRes.profile_pic_busted || upRes.profile_pic || upRes.user?.profile_pic;
-        if (pic) {
-          setForm(f => ({ ...f, profile_pic: pic }));
-          setAvatarPreview(pic); // ensure local preview updates to the same URL
+        uploadedProfilePic = upRes?.profile_pic_busted || upRes?.profile_pic || null;
+
+        // update UI state immediately
+        if (uploadedProfilePic) {
+          setForm(prev => ({ ...prev, profile_pic: uploadedProfilePic }));
         }
+        // clear selection after successful upload
+        setAvatarFile(null);
+        setAvatarPreview(null);
       }
 
-      }
-
-      // 2) Normalize website input: add protocol if missing
+      // 2) Normalize website input
       const rawWebsite = (form.website || '').trim();
       const normalizedWebsite = rawWebsite
         ? (/^https?:\/\//i.test(rawWebsite) ? rawWebsite : `https://${rawWebsite}`)
         : undefined;
 
-      // only send username if user intentionally unlocked edit and changed it
+      // 3) usernameToSend logic (only if user unlocked and changed it)
       const usernameToSend = (usernameEditable &&
         form.username &&
         form.username.trim().toLowerCase() !== (user.username || '').toLowerCase())
         ? form.username.trim()
         : undefined;
 
-      // Build payload defensively (omit email value; include email_visible toggle)
+      // 4) Build payload - use uploadedProfilePic if present, otherwise current form.profile_pic
       const payloadRaw = {
         username: usernameToSend,
         name: form.name?.trim() || undefined,
@@ -213,10 +217,10 @@ export default function EditProfilePage() {
         email_visible: typeof form.email_visible === 'boolean' ? !!form.email_visible : undefined,
         location: form.location?.trim() || undefined,
         location_visible: typeof form.location_visible === 'boolean' ? !!form.location_visible : undefined,
-        profile_pic: form.profile_pic || undefined
+        profile_pic: uploadedProfilePic ?? (form.profile_pic && form.profile_pic.trim() !== '' ? form.profile_pic : undefined)
       };
 
-      // strip undefined keys and convert blank strings to null
+      // 5) strip undefined keys and convert blank strings to null
       const payload = {};
       Object.entries(payloadRaw).forEach(([k, v]) => {
         if (typeof v === 'undefined') return;
@@ -226,8 +230,9 @@ export default function EditProfilePage() {
 
       console.log('Profile update payload:', payload);
 
-      // 3) Call update endpoint
-      await updateProfile(token, payload);
+      // 6) Call update endpoint
+      const res = await updateProfile(token, payload);
+      console.log('updateProfile response', res);
 
       addToast('Profile updated', 'success');
 
@@ -236,11 +241,10 @@ export default function EditProfilePage() {
         await refreshUser();
       }
 
-      // navigate to profile (use new username if changed)
+      // navigate to profile (use returned username if backend changed it)
       const newUsername = payload.username || form.username || user.username;
       navigate(`/${encodeURIComponent(newUsername)}`);
     } catch (err) {
-      // improved logging and mapping of express-validator errors
       console.error('save profile - full error', err);
       console.error('err.response?.status', err?.response?.status);
       console.error('err.response?.data', err?.response?.data);
@@ -248,7 +252,7 @@ export default function EditProfilePage() {
       const data = err?.response?.data;
       if (data?.errors && Array.isArray(data.errors)) {
         const map = {};
-        data.errors.forEach(x => map[x.param || 'server'] = x.msg || x.msg);
+        data.errors.forEach(x => map[x.param || 'server'] = x.msg || x);
         setErrors(map);
         addToast('Fix the highlighted errors', 'error');
       } else if (data?.message) {
@@ -260,6 +264,7 @@ export default function EditProfilePage() {
       setSaving(false);
     }
   };
+
 
 
 

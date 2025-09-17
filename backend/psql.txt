@@ -4,3 +4,5 @@ WHERE delete_requested_at IS NOT NULL
   AND delete_requested_at <= NOW() - INTERVAL '30 days';
 
   psql -U postgres -d tuks
+
+  
