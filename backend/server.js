@@ -1,149 +1,150 @@
-
 // server.js
-require('dotenv').config();
-const express = require('express');
-const http = require('http');
-const cors = require('cors');
-const helmet = require('helmet');
-const { Server } = require('socket.io');
-const startCleanup = require('./scripts/cleanupMessages');
-const jwt = require('jsonwebtoken');
-const path = require('path');
+require("dotenv").config();
+const express = require("express");
+const http = require("http");
+const cors = require("cors");
+const helmet = require("helmet");
+const { Server } = require("socket.io");
+const startCleanup = require("./scripts/cleanupMessages");
+const jwt = require("jsonwebtoken");
+const path = require("path");
 
-
-// route imports (make sure these files exist as per previous steps)
-const userRoutes = require('./routes/userRoutes');
-const authRoutes = require('./routes/authRoutes');
-const adminRoutes = require('./routes/adminRoutes');
-const inventoryRoutes = require('./routes/inventoryRoutes');
-const orderRoutes = require('./routes/orderRoutes');
-const messageRoutes = require('./routes/messageRoutes');
-const notificationRoutes = require('./routes/notificationRoutes');
-const supportRoutes = require('./routes/supportRoutes');
-const profileRoutes = require('./routes/profileRoutes');
-
-
+// route imports
+const userRoutes = require("./routes/userRoutes");
+const authRoutes = require("./routes/authRoutes");
+const adminRoutes = require("./routes/adminRoutes");
+const inventoryRoutes = require("./routes/inventoryRoutes");
+const orderRoutes = require("./routes/orderRoutes");
+const messageRoutes = require("./routes/messageRoutes");
+const notificationRoutes = require("./routes/notificationRoutes");
+const supportRoutes = require("./routes/supportRoutes");
+const profileRoutes = require("./routes/profileRoutes");
 
 const app = express();
 
-// Basic middleware
+// Detect environment (default: development)
+const NODE_ENV = process.env.NODE_ENV || "development";
+const isProd = NODE_ENV === "production";
+
+/* ---------- Middleware ---------- */
 app.use(
   helmet({
-    crossOriginResourcePolicy: { policy: "cross-origin" }, // allow avatars to be used from other origins
+    crossOriginResourcePolicy: { policy: "cross-origin" }, // allow avatars
   })
 );
+
 app.use(express.json());
 
-// CORS: allow your client origin (set CLIENT_ORIGIN in .env)
-const CLIENT_ORIGIN = process.env.CLIENT_ORIGIN || '*';
-app.use(cors({ origin: CLIENT_ORIGIN, credentials: true }));
+// CORS
+const CLIENT_ORIGIN = process.env.CLIENT_ORIGIN || "*";
+app.use(
+  cors({
+    origin: CLIENT_ORIGIN,
+    credentials: true,
+  })
+);
 
-//app.use('/uploads', express.static(path.join(__dirname, 'public', 'uploads')));
-
-
-// serve uploads but do NOT allow directory listing (index: false)
-app.use('/uploads', express.static(path.join(__dirname, 'public', 'uploads'), { index: false }));
-
-
+// Serve uploads securely (no directory listing)
+app.use(
+  "/uploads",
+  express.static(path.join(__dirname, "public", "uploads"), { index: false })
+);
 
 // Optional health check
-app.get('/health', (req, res) => res.json({ ok: true, time: new Date().toISOString() }));
+app.get("/health", (req, res) =>
+  res.json({
+    ok: true,
+    env: NODE_ENV,
+    time: new Date().toISOString(),
+  })
+);
 
-// API routes (prefix with /api)
-app.use('/api/users', userRoutes);
-app.use('/api/auth', authRoutes);
-app.use('/api/admin', adminRoutes);
-app.use('/api/inventory', inventoryRoutes);
-app.use('/api/orders', orderRoutes);
-app.use('/api/messages', messageRoutes);
-app.use('/api/notifications', notificationRoutes);
-app.use('/api/support', supportRoutes);
-app.use('/api/profile', profileRoutes);
+/* ---------- API Routes ---------- */
+app.use("/api/users", userRoutes);
+app.use("/api/auth", authRoutes);
+app.use("/api/admin", adminRoutes);
+app.use("/api/inventory", inventoryRoutes);
+app.use("/api/orders", orderRoutes);
+app.use("/api/messages", messageRoutes);
+app.use("/api/notifications", notificationRoutes);
+app.use("/api/support", supportRoutes);
+app.use("/api/profile", profileRoutes);
 
-
-// Generic error handler (simple)
+/* ---------- Error Handler ---------- */
 app.use((err, req, res, next) => {
-  console.error('Unhandled error:', err);
-  res.status(500).json({ message: 'Server error' });
+  console.error("Unhandled error:", err);
+  res.status(500).json({
+    message: "Server error",
+    ...(isProd ? {} : { error: err.message, stack: err.stack }), // hide details in prod
+  });
 });
 
-/* ---------- HTTP + Socket.IO setup ---------- */
+/* ---------- HTTP + Socket.IO ---------- */
 const server = http.createServer(app);
 
 const io = new Server(server, {
   cors: {
     origin: CLIENT_ORIGIN,
-    methods: ['GET', 'POST'],
-    credentials: true
+    methods: ["GET", "POST"],
+    credentials: true,
   },
-  // optional transports config:
-  transports: ['websocket', 'polling']
+  transports: ["websocket", "polling"],
 });
 
-// expose io to controllers via app.get('io')
-app.set('io', io);
+// Attach io to app
+app.set("io", io);
 
-// Keep track of connected sockets per user (optional, helpful)
+// Track online users
 const onlineUsers = new Map(); // userId -> Set(socketId)
 
-// Socket auth middleware: expects client to connect with { auth: { token } }
-// server.js (socket auth middleware snippet)
+// Socket auth middleware
 io.use((socket, next) => {
   try {
     const token = socket.handshake.auth?.token;
-    if (!token) {
-      return next(new Error('not-authenticated')); // client will see this
-    }
+    if (!token) return next(new Error("not-authenticated"));
     const payload = jwt.verify(token, process.env.JWT_SECRET);
     socket.userId = payload.id ?? payload.userId ?? payload.user?.id;
-    if (!socket.userId) return next(new Error('invalid-token-payload'));
-    return next();
+    if (!socket.userId) return next(new Error("invalid-token-payload"));
+    next();
   } catch (err) {
-    console.warn('Socket auth failed:', err.message);
-    return next(new Error('invalid-token'));
+    console.warn("Socket auth failed:", err.message);
+    next(new Error("invalid-token"));
   }
 });
 
-
-io.on('connection', (socket) => {
+// Socket connection handling
+io.on("connection", (socket) => {
   const uid = socket.userId;
   if (!uid) {
-    // precaution
     socket.disconnect(true);
     return;
   }
 
-  // record socket
+  // Track user sockets
   const set = onlineUsers.get(uid) || new Set();
   set.add(socket.id);
   onlineUsers.set(uid, set);
 
-  // join user room
   socket.join(`user_${uid}`);
+  console.log(
+    `🔌 Socket connected: user=${uid} socketId=${socket.id} totalDevices=${set.size}`
+  );
 
-  console.log(`Socket connected: user=${uid} socketId=${socket.id} totalDevices=${set.size}`);
-
-  // optional: handle incoming client socket events (if you want)
-  socket.on('disconnect', (reason) => {
+  socket.on("disconnect", (reason) => {
     const s = onlineUsers.get(uid);
     if (s) {
       s.delete(socket.id);
       if (s.size === 0) onlineUsers.delete(uid);
       else onlineUsers.set(uid, s);
     }
-    console.log(`Socket disconnected: user=${uid} socketId=${socket.id} reason=${reason}`);
+    console.log(`❌ Socket disconnected: user=${uid} reason=${reason}`);
   });
-
-  // If you want to allow clients to emit messages through socket (instead of REST),
-  // add handlers here similar to your REST controllers. Example:
-  // socket.on('private_message', async (payload, ack) => { ... })
 });
 
-/* ---------- Start server ---------- */
+/* ---------- Start Server ---------- */
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, () => {
-  console.log(`✅ Server listening on port ${PORT}`);
+  console.log(`✅ Server running in ${NODE_ENV} mode`);
+  console.log(`✅ Listening on port ${PORT}`);
   console.log(`✅ CORS origin: ${CLIENT_ORIGIN}`);
 });
-
-
