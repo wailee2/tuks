@@ -23,7 +23,7 @@ function Sidebar() {
   const location = useLocation();
 
   // icon-only pages
-  const iconOnlyMode = ["/messages", "/support"].includes(location.pathname);
+  const iconOnlyMode = ["/messages", "/support", "/manage-users" ].includes(location.pathname);
 
   // pages where nav should be hidden by default, visible on large
   const hideNavPages = ["/messages", "/support"].includes(location.pathname);
@@ -48,10 +48,10 @@ function Sidebar() {
   ];
 
   // responsive sizing: full-width bottom on small, narrow at md, larger at lg
-  const sidebarWidthClass = iconOnlyMode ? "w-full md:w-20" : "w-full md:w-20 lg:w-64";
+  const sidebarWidthClass = iconOnlyMode ? "w-full md:w-15" : "w-full md:w-15 lg:w-69";
 
   // alignment: centered icons by default, left-justify from md
-  const linkJustifyClass = iconOnlyMode ? "justify-center" : "justify-center lg:justify-start";
+  const linkJustifyClass = iconOnlyMode ? "justify-center" : " md:justify-center lg:justify-start";
 
   // show text at lg (per your request); iconOnlyMode keeps labels sr-only
   const textVisibilityClass = iconOnlyMode ? "sr-only" : "hidden lg:inline";
@@ -78,10 +78,15 @@ function Sidebar() {
 
   return (
     <aside
-      className={`${sidebarWidthClass} ${hideNavPages ? "hidden md:flex" : ""} ${noNav ? "hidden" : ""} bg-green-200 md:h-screen p-4 shadow-lg flex flex-col transition-all duration-200 ease-in-out overflow-hidden fixed bottom-0 left-0 right-0 md:sticky md:top-0 z-50`}
+      className={`
+        ${sidebarWidthClass}
+        ${hideNavPages ? "hidden md:flex" : ""}
+        ${noNav ? "hidden" : ""} 
+        bg-green-200 md:h-screen md:py-4 px-4 md:px-1 shadow-lg flex md:flex-col items-center justify-between transition-all duration-200 ease-in-out overflow-hidden fixed bottom-0 left-0 right-0 md:sticky md:top-0 z-50
+      `}
     >
       {/* Logo */}
-      <div className={`hidden md:flex items-center mb-4 ${iconOnlyMode ? "justify-center" : "justify-center lg:justify-start"}`}>
+      <div className={`hidden md:flex items-center mb-4 ${iconOnlyMode ? "justify-center ml-4" : "justify-center lg:justify-start lg:ml-4"}`}>
         <FiHeart className="text-red-500 w-6 h-6" aria-hidden />
         <span className={`font-bold text-xl ml-2 ${textVisibilityClass}`}>Tuks</span>
       </div>
@@ -98,7 +103,7 @@ function Sidebar() {
               to={item.path}
               title={item.name}
               className={({ isActive }) =>
-                `${baseLayout} items-center ${linkJustifyClass} ${spacingClass} px-4 py-2 rounded hover:bg-green-200 transition-all duration-150 ${
+                `${baseLayout} items-center ${linkJustifyClass} ${spacingClass} md:px-4 py-2 rounded hover:bg-green-200 transition-all duration-150 ${
                   isActive ? "bg-green-500 text-white" : "text-gray-700"
                 } flex-1 md:flex-none`
               }
@@ -122,15 +127,17 @@ function Sidebar() {
             className="flex items-center gap-3 hover:bg-green-100 px-2 py-1 rounded w-full"
             title={`View profile @${user.username}`}
           >
-            <img
-              src={avatar}
-              alt={profile?.username || "User"}
-              className="w-10 h-10 rounded-full object-cover"
-              onError={(e) => {
-                e.currentTarget.onerror = null;
-                e.currentTarget.src = "/default-avatar.png";
-              }}
-            />
+            <div className="w-11 h-11 overflow-hidden relativ rounded-full">
+              <img
+                src={avatar}
+                alt={profile?.username || "User"}
+                className="w-full h-full  object-cover"
+                onError={(e) => {
+                  e.currentTarget.onerror = null;
+                  e.currentTarget.src = "/default-avatar.png";
+                }}
+              />
+            </div>
             <div className={`flex-1 ${textVisibilityClass}`}>
               <div className="text-sm font-medium truncate">{displayName}</div>
               <div className="text-xs text-gray-600">@{user.username}</div>

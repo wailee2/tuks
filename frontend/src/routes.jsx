@@ -6,7 +6,7 @@ import Sidebar from './components/Sidebar.jsx';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
-import AdminUsers from './pages/AdminUsers.jsx';
+import ManageUsers from './pages/ManageUsers.jsx';
 import Inventory from './pages/Inventory.jsx';
 import Marketplace from './pages/Marketplace.jsx';
 import OrdersList from './components/OrdersList.jsx';
@@ -19,6 +19,7 @@ import ProfilePage from './pages/Profile.jsx';
 import EditProfilePage from './pages/EditProfile';
 import PageNotFound from './pages/PageNotFound';
 import ErrorBoundary from './components/ErrorBoundary';
+
 
 export default function AppRoutes() {
   const { user } = useContext(AuthContext);
@@ -39,7 +40,7 @@ export default function AppRoutes() {
             <Route path="/marketplace" element={<Marketplace />} />
             <Route
               path="/manage-users"
-              element={user?.role === 'ADMIN' ? <AdminUsers /> : <Navigate to="/dashboard" />}
+              element={user?.role === 'ADMIN' ? <ManageUsers /> : <Navigate to="/dashboard" />}
             />
             <Route path="/orders" element={<OrdersList />} />
             <Route path="/orders/:id" element={<OrderDetails />} />
