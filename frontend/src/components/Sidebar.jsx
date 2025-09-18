@@ -128,7 +128,7 @@ function Sidebar() {
           // logged-in user -> clicking goes to /:username
           <NavLink
             to={`/${encodeURIComponent(user.username)}`}
-            className="flex items-center justify-center gap-3 hover:bg-green-100 py-1 rounded w-full"
+            className="flex items-center justify-center gap-3 hover:bg-green-100 xl:px-2 py-1 rounded w-full"
             title={`View profile @${user.username}`}
           >
             <div className="w-10 h-10 overflow-hidden rounded-full">
