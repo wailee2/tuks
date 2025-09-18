@@ -53,9 +53,17 @@ const getPublicProfileByUsername = async (username, viewerId = null) => {
       following_count: Number(p.following_count || 0),
     };
 
+    // include fields only if allowed for the viewer
     if (isOwner || p.email_visible) result.email = p.email || null;
     if (isOwner || p.dob_visible) result.dob = p.dob ? p.dob.toISOString().split('T')[0] : null;
     if (isOwner || p.location_visible) result.location = p.location || null;
+
+    // include visibility flags for the owner so edit page can bind toggles
+    if (isOwner) {
+      result.dob_visible = !!p.dob_visible;
+      result.email_visible = !!p.email_visible;
+      result.location_visible = !!p.location_visible;
+    }
 
     return result;
   } catch (err) {
@@ -82,6 +90,12 @@ const getPublicProfileByUsername = async (username, viewerId = null) => {
       if (isOwner || p.email_visible) result.email = p.email || null;
       if (isOwner || p.dob_visible) result.dob = p.dob ? p.dob.toISOString().split('T')[0] : null;
       if (isOwner || p.location_visible) result.location = p.location || null;
+
+      if (isOwner) {
+        result.dob_visible = !!p.dob_visible;
+        result.email_visible = !!p.email_visible;
+        result.location_visible = !!p.location_visible;
+      }
 
       return result;
     }

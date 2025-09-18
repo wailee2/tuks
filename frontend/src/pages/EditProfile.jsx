@@ -106,6 +106,34 @@ export default function EditProfilePage() {
       {label}
     </div>
   );
+  // small, accessible toggle switch (place above the component return or at top of file)
+  const ToggleSwitch = ({ checked, onChange, label, ariaLabel, className = '' }) => (
+    <label className={`inline-flex items-center gap-3 mt-1 cursor-pointer ${className}`}>
+      <span className="text-xs">{label}</span>
+
+      <div className="relative w-10 h-6">
+        {/* the real clickable element: spans the whole toggle area, accessible */}
+        <input
+          type="checkbox"
+          checked={!!checked}
+          onChange={e => onChange(e.target.checked)}
+          aria-label={ariaLabel}
+          className="absolute inset-0 w-full h-full opacity-0 z-20"
+        />
+
+        {/* track */}
+        <div className={`w-full h-full rounded-full transition ${checked ? 'bg-indigo-600' : 'bg-gray-200'}`} />
+
+        {/* knob */}
+        <div
+          className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transform transition ${
+            checked ? 'translate-x-4' : ''
+          }`}
+        />
+      </div>
+    </label>
+  );
+
 
   // debounce username check
   const handleUsernameChange = (value) => {
@@ -313,7 +341,6 @@ export default function EditProfilePage() {
 
         {/* Form */}
         <div className="mt-6 space-y-5">
-          {/* Name (moved to top — highest importance) */}
           <div>
             <label className="block text-sm font-medium text-gray-700">Name</label>
             <input
@@ -406,29 +433,45 @@ export default function EditProfilePage() {
 
           {/* DOB & Location */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* old DOB toggle block -> replace with: */}
             <div>
               <label className="block text-sm font-medium text-gray-700">Date of birth</label>
               <input type="date" value={form.dob || ''} onChange={e => setForm(f => ({ ...f, dob: e.target.value }))} className="mt-1 block w-full rounded-md border-gray-200 shadow-sm px-3 py-2" />
-              <label className="inline-flex items-center gap-2 text-xs mt-1">
-                <input type="checkbox" checked={form.dob_visible} onChange={e => setForm(f => ({ ...f, dob_visible: e.target.checked }))} /> Make DOB visible
-              </label>
+
+              <ToggleSwitch
+                checked={form.dob_visible}
+                onChange={(val) => setForm(f => ({ ...f, dob_visible: val }))}
+                label="Make DOB visible"
+                ariaLabel="Make date of birth visible"
+              />
             </div>
 
+
+            {/* Location field */}
             <div>
               <label className="block text-sm font-medium text-gray-700">Location</label>
               <input value={form.location || ''} onChange={e => setForm(f => ({ ...f, location: e.target.value }))} className="mt-1 block w-full rounded-md border-gray-200 shadow-sm px-3 py-2" />
-              <label className="inline-flex items-center gap-2 text-xs mt-1">
-                <input type="checkbox" checked={form.location_visible} onChange={e => setForm(f => ({ ...f, location_visible: e.target.checked }))} /> Show location
-              </label>
+
+              <ToggleSwitch
+                checked={form.location_visible}
+                onChange={(val) => setForm(f => ({ ...f, location_visible: val }))}
+                label="Show location"
+                ariaLabel="Show location"
+              />
             </div>
+
           </div>
 
           {/* Email visibility */}
           <div>
-            <label className="inline-flex items-center gap-2 text-sm text-gray-700">
-              <input type="checkbox" checked={form.email_visible} onChange={e => setForm(f => ({ ...f, email_visible: e.target.checked }))} /> Make email visible to others
-            </label>
+            <ToggleSwitch
+              checked={form.email_visible}
+              onChange={(val) => setForm(f => ({ ...f, email_visible: val }))}
+              label="Make email visible to others"
+              ariaLabel="Make email visible to others"
+            />
           </div>
+
 
           {/* Actions */}
           <div className="flex justify-end gap-3">

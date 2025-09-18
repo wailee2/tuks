@@ -26,6 +26,17 @@ export default function ProfilePage() {
 
   const isOwner = user && user.username && user.username.toLowerCase() === (username || '').toLowerCase();
 
+  const isVisible = (field) => {
+    if (isOwner) return true;
+    // common shapes: profile.email_visible, profile.visibility?.email, profile.visibility?.email_visible
+    return !!(
+      profile?.[`${field}_visible`] ||
+      profile?.visibility?.[field] ||
+      profile?.visibility?.[`${field}_visible`]
+    );
+  };
+
+
   useEffect(() => {
     fetch();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -36,6 +47,8 @@ export default function ProfilePage() {
       setLoading(true);
       const data = await getProfile(username, token);
       setProfile(data);
+      console.log('fetched profile', data);
+      
     } catch (err) {
       console.error('fetch profile', err);
       addToast(err?.response?.data?.message || 'Failed to load profile', 'error');
@@ -142,10 +155,21 @@ export default function ProfilePage() {
               </div>
 
               <div className="mt-3 space-y-1 text-sm text-gray-700">
-                {/*{profile.location && <div>📍 {profile.location}</div>}*/}
-                {profile.website && <div>🔗 <a href={profile.website} target="_blank" rel="noreferrer" className="text-blue-600 hover:underline">{profile.website}</a></div>}
-                {profile.email && <div>✉️ {profile.email}</div>}
-                {/*{profile.dob && <div>🎂 {profile.dob}</div>}*/}
+                {profile.website && (
+                  <div>🔗 <a href={profile.website} target="_blank" rel="noreferrer" className="text-blue-600 hover:underline">{profile.website}</a></div>
+                )}
+
+                {profile.email && isVisible('email') && (
+                  <div>✉️ {profile.email}</div>
+                )}
+
+                {profile.dob && isVisible('dob') && (
+                  <div>🎂 {profile.dob}</div>
+                )}
+
+                {profile.location && isVisible('location') && (
+                  <div>📍 {profile.location}</div>
+                )}
               </div>
             </div>
 

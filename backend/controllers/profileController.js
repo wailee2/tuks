@@ -23,10 +23,13 @@ const {
 const pool = require('../config/db');
 
 // GET profile
+// GET profile
 const getProfile = async (req, res) => {
   try {
     const username = req.params.username;
     const viewerId = req.user ? req.user.id : null;
+
+    // use model helper which already selects dob_visible / email_visible / location_visible
     const profile = await getPublicProfileByUsername(username, viewerId);
     if (!profile) return res.status(404).json({ message: 'User not found' });
 
@@ -47,13 +50,15 @@ const getProfile = async (req, res) => {
       profile.has_blocked_viewer = false;
     }
 
-    res.json(profile);
+    return res.json(profile);
   } catch (err) {
     console.error('getProfile error', err);
-    res.status(500).json({ message: 'Server error' });
+    return res.status(500).json({ message: 'Server error' });
   }
 };
 
+
+// Update profile
 // Update profile
 const updateProfileController = async (req, res) => {
   try {
@@ -67,7 +72,7 @@ const updateProfileController = async (req, res) => {
     // Only allow certain keys
     const allowed = [
       'username','name','profile_pic','bio','website','dob','dob_visible',
-      'email_visible','location','location_visible'
+      'email_visible','location','location_visible','email'
     ];
     const payload = {};
     for (const k of allowed) {
@@ -88,6 +93,8 @@ const updateProfileController = async (req, res) => {
     }
 
     const before = await getUserById(uid);
+
+    // Persist via model (model returns the canonical updated row)
     const updated = await updateUserProfile(uid, payload);
 
     // Audit logs
@@ -110,10 +117,30 @@ const updateProfileController = async (req, res) => {
 
     // ensure returned user.profile_pic is a full URL for client convenience
     if (updated && updated.profile_pic) {
-      updated.profile_pic = updated.profile_pic.startsWith('http') ? updated.profile_pic : buildFullUrl(req, updated.profile_pic);
+      updated.profile_pic = updated.profile_pic.startsWith('http') 
+      ? updated.profile_pic
+      : buildFullUrl(req, updated.profile_pic);
     }
 
-    return res.json({ message: 'Profile updated', user: updated });
+    return res.json({
+      message: 'Profile updated',
+      user: {
+        id: updated.id,
+        username: updated.username,
+        name: updated.name,
+        profile_pic: updated.profile_pic,
+        bio: updated.bio,
+        website: updated.website,
+        dob: updated.dob,
+        dob_visible: updated.dob_visible,
+        email: updated.email,
+        email_visible: updated.email_visible,
+        location: updated.location,
+        location_visible: updated.location_visible,
+        created_at: updated.created_at,
+        updated_at: updated.updated_at
+      }
+    });
   } catch (err) {
     console.error('updateProfile error', err);
     if (process.env.NODE_ENV !== 'production') {
@@ -122,6 +149,7 @@ const updateProfileController = async (req, res) => {
     return res.status(500).json({ message: 'Server error' });
   }
 };
+
 
 // Upload avatar
 const uploadAvatar = async (req, res) => {
