@@ -123,12 +123,12 @@ function Sidebar() {
       </nav>
 
       {/* Profile / guest area */}
-      <div className={` ${iconOnlyMode ? "w-full flex items-center justify-center" : "flex items-center lg:justify-start lg:items-center px-4 md:px-0"}`}>
+      <div className={` ${iconOnlyMode ? "w-full flex items-center justify-center  " : "flex items-center lg:justify-start lg:items-center  md:px-0 xl:px-2 xl:py-2 xl:hover:bg-green-900 rounded"}`}>
         {user ? (
           // logged-in user -> clicking goes to /:username
           <NavLink
             to={`/${encodeURIComponent(user.username)}`}
-            className="flex items-center justify-center gap-3 hover:bg-green-100 xl:px-2 py-1 rounded w-full"
+            className="flex items-center justify-center gap-3 w-full"
             title={`View profile @${user.username}`}
           >
             <div className="w-10 h-10 overflow-hidden rounded-full">

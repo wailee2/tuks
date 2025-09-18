@@ -1,24 +1,37 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { deleteProduct } from '../services/inventory';
+import { useToasts } from '../context/ToastContext';
+import LoadingSpinner from "../components/LoadingSpinner";
 
 export default function InventoryList({ products, setEditingProduct, fetchProducts }) {
+  const { addToast } = useToasts();
+  const [loading, setLoading] = useState(false);
+
   const handleDelete = async (id) => {
     if (!window.confirm('Are you sure you want to delete this product?')) return;
 
     try {
+      setLoading(true);
       await deleteProduct(id);
       fetchProducts();
     } catch (err) {
       console.error('Error deleting product:', err);
-      alert('Failed to delete product');
+      //alert('Failed to delete product');
+      addToast('Failed to delete product', 'error');
+    } finally {
+      setLoading(false); // stop spinner
     }
   };
+
+  if (loading) {
+    return <LoadingSpinner message="." />;
+  }
 
   return (
     <div className="bg-white p-4 rounded shadow">
       <h2 className="text-xl font-bold mb-4">Your Inventory</h2>
       {products.length === 0 ? (
-        <p>No products found.</p>
+        <p>No products added.</p>
       ) : (
         <table className="w-full border-collapse">
           <thead>

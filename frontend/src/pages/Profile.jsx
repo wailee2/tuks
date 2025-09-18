@@ -14,6 +14,7 @@ import ProfileSettingsModal from '../components/ProfileSettingsModal';
 import { useToasts } from '../context/ToastContext';
 import AvatarModal from '../components/AvatarModal';
 import NotFoundPlaceholder from "../components/NotFoundPlaceholder";
+import LoadingSpinner from "../components/LoadingSpinner";
 
 export default function ProfilePage() {
   const { username } = useParams();
@@ -160,7 +161,7 @@ export default function ProfilePage() {
     }
   };
 
-  if (loading) return <div className="p-6">Loading...</div>;
+  if (loading) return <LoadingSpinner message="." />;
   if (!profile) {
     return (
       <NotFoundPlaceholder

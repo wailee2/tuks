@@ -4,6 +4,7 @@ import { AuthContext } from '../context/AuthContext';
 import { getTickets, getTicket, updateTicket, postComment, claimTicket } from '../services/support';
 import { getUsersByRole } from '../services/users';
 import { useToasts } from '../context/ToastContext';
+import LoadingSpinner from "../components/LoadingSpinner";
 
 export default function SupportDashboard() {
   const { user, token } = useContext(AuthContext);
@@ -174,7 +175,7 @@ export default function SupportDashboard() {
         </div>
 
         <div className="max-h-[60vh] overflow-auto divide-y">
-          {loading ? <p>Loading...</p> : tickets.map(t => (
+          {loading ? <LoadingSpinner message="." />: tickets.map(t => (
             <div key={t.id} className="py-2 cursor-pointer hover:bg-gray-50" onClick={() => openTicket(t.id)}>
               <div className="flex justify-between items-start">
                 <div>

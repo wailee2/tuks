@@ -4,6 +4,8 @@ import { AuthContext } from '../context/AuthContext';
 import { getAllUsers, updateUserRole, disableUser } from '../services/admin.js';
 import SearchBar from '../components/SearchBar.jsx';
 import { paginate } from '../utils/pagination.js';
+import { useToasts } from '../context/ToastContext';
+import LoadingSpinner from "../components/LoadingSpinner";
 
 const roleColors = {
   USER: 'bg-gray-200 text-gray-800',
@@ -14,11 +16,12 @@ const roleColors = {
 };
 
 export default function ManageUsers() {
-  const { user, token, logout } = useContext(AuthContext);
+  const { user, token } = useContext(AuthContext);
   const [users, setUsers] = useState([]);
   const [filteredUsers, setFilteredUsers] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
+  const { addToast } = useToasts();
   const [error, setError] = useState('');
 
   // Pagination
@@ -54,7 +57,8 @@ export default function ManageUsers() {
       setUsers(data);
       setFilteredUsers(data);
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to fetch users');
+      //setError(err.response?.data?.message || 'Failed to fetch users');
+      addToast('Failed to fetch users', 'error');
     } finally {
       setLoading(false);
     }
@@ -65,19 +69,18 @@ export default function ManageUsers() {
       await updateUserRole(token, userId, newRole);
       fetchUsers();
     } catch (err) {
-      alert(err.response?.data?.message || 'Failed to update role');
+      //alert(err.response?.data?.message || 'Failed to update role');
+      addToast('Failed to update role', 'error');
     }
   };
 
   const handleDisableToggle = async (targetUserId, disableFlag) => {
     try {
       await disableUser(token, targetUserId, disableFlag);
-      // if the current user was disabled (unlikely since actors cannot self-disable),
-      // we could force logout. But the middleware will prevent access anyway.
-      // Refresh list
       fetchUsers();
     } catch (err) {
-      alert(err.response?.data?.message || 'Failed to update disabled status');
+      //alert(err.response?.data?.message || 'Failed to update disabled status');
+      addToast('Failed to update disabled status', 'error');
     }
   };
 
@@ -118,7 +121,7 @@ export default function ManageUsers() {
         </div>
 
         {loading ? (
-          <p>Loading users...</p>
+          <LoadingSpinner message="." />
         ) : error ? (
           <p className="text-red-500">{error}</p>
         ) : (
