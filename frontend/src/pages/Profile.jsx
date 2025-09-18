@@ -28,13 +28,20 @@ export default function ProfilePage() {
 
   const isVisible = (field) => {
     if (isOwner) return true;
-    // common shapes: profile.email_visible, profile.visibility?.email, profile.visibility?.email_visible
+
+    // If server already included the field (e.g. profile.email or profile.dob),
+    // show it — the server includes fields only when allowed.
+    const fieldVal = profile?.[field];
+    if (typeof fieldVal !== 'undefined' && fieldVal !== null && fieldVal !== '') return true;
+
+    // otherwise fall back to checking visibility flags / object shapes
     return !!(
       profile?.[`${field}_visible`] ||
       profile?.visibility?.[field] ||
       profile?.visibility?.[`${field}_visible`]
     );
   };
+
 
 
   useEffect(() => {
