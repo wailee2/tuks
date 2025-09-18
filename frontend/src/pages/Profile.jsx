@@ -24,25 +24,24 @@ export default function ProfilePage() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [blocking, setBlocking] = useState(false);
 
+  // NEW: image modal state + focus restore ref
+  const [imageModalOpen, setImageModalOpen] = useState(false);
+  const lastFocusedEl = useRef(null);
+
   const isOwner = user && user.username && user.username.toLowerCase() === (username || '').toLowerCase();
 
   const isVisible = (field) => {
     if (isOwner) return true;
 
-    // If server already included the field (e.g. profile.email or profile.dob),
-    // show it — the server includes fields only when allowed.
     const fieldVal = profile?.[field];
     if (typeof fieldVal !== 'undefined' && fieldVal !== null && fieldVal !== '') return true;
 
-    // otherwise fall back to checking visibility flags / object shapes
     return !!(
       profile?.[`${field}_visible`] ||
       profile?.visibility?.[field] ||
       profile?.visibility?.[`${field}_visible`]
     );
   };
-
-
 
   useEffect(() => {
     fetch();
@@ -55,7 +54,6 @@ export default function ProfilePage() {
       const data = await getProfile(username, token);
       setProfile(data);
       console.log('fetched profile', data);
-      
     } catch (err) {
       console.error('fetch profile', err);
       addToast(err?.response?.data?.message || 'Failed to load profile', 'error');
@@ -63,6 +61,29 @@ export default function ProfilePage() {
       setLoading(false);
     }
   };
+
+  // --- Image modal helpers ---
+  useEffect(() => {
+    if (imageModalOpen) {
+      // save focus and lock scroll
+      lastFocusedEl.current = document.activeElement;
+      document.body.style.overflow = 'hidden';
+
+      const onKey = (e) => {
+        if (e.key === 'Escape') setImageModalOpen(false);
+      };
+      window.addEventListener('keydown', onKey);
+      return () => {
+        window.removeEventListener('keydown', onKey);
+        document.body.style.overflow = '';
+        // restore focus
+        try { lastFocusedEl.current?.focus?.(); } catch (err) { /* ignore */ }
+      };
+    }
+  }, [imageModalOpen]);
+
+  const openImageModal = () => setImageModalOpen(true);
+  const closeImageModal = () => setImageModalOpen(false);
 
   const handleFollow = async () => {
     try {
@@ -111,12 +132,10 @@ export default function ProfilePage() {
   };
 
   const handleMessage = () => {
-    // navigate to chat with that user
     navigate(`/messages?with=${encodeURIComponent(username)}`);
   };
 
   const handleReport = () => {
-    // redirect to support page with prefilled message
     navigate('/support', { state: { from: 'report', reported: username, message: `Reporting user ${username}` } });
   };
 
@@ -124,7 +143,6 @@ export default function ProfilePage() {
     try {
       await navigator.share?.({ title: `${profile.name} on Tuks`, url: window.location.href });
     } catch (err) {
-      // fallback: copy to clipboard
       await navigator.clipboard?.writeText(window.location.href);
       addToast('Profile link copied', 'success');
     }
@@ -134,7 +152,6 @@ export default function ProfilePage() {
     try {
       await requestDelete(token);
       addToast('Account deletion requested. You will be logged out.', 'success');
-      // immediate front-end logout & redirect
       logout();
       navigate('/login');
     } catch (err) {
@@ -148,7 +165,16 @@ export default function ProfilePage() {
   return (
     <div className="max-w-4xl mx-auto p-6">
       <div className="bg-white rounded-lg shadow p-6 flex gap-6">
-        <img src={profile.profile_pic || '/default-avatar.png'} alt={profile.username} className="w-28 h-28 rounded-full object-cover" />
+        {/* clickable avatar */}
+        <img
+          src={profile.profile_pic || '/default-avatar.png'}
+          alt={`${profile.name || profile.username}'s avatar`}
+          className="w-28 h-28 rounded-full object-cover cursor-pointer"
+          onClick={openImageModal}
+          role="button"
+          aria-label="Open profile picture"
+        />
+
         <div className="flex-1">
           <div className="flex items-start justify-between">
             <div>
@@ -185,7 +211,6 @@ export default function ProfilePage() {
                 <>
                   <button onClick={() => navigate(`/settings/edit-profile`)} className="px-3 py-1 bg-indigo-600 text-white rounded">Edit profile</button>
                   <button onClick={() => setSettingsOpen(true)} className="text-gray-600">
-                    {/* settings icon (keeps existing modal behavior) */}
                     <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none"> ... </svg>
                   </button>
                    <button onClick={() => setSettingsOpen(true)} className="text-gray-600">settings</button>
@@ -217,7 +242,38 @@ export default function ProfilePage() {
         </div>
       </div>
 
-      
+      {/* Image modal */}
+      {imageModalOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60 p-4"
+          onClick={closeImageModal}
+          role="dialog"
+          aria-modal="true"
+          aria-label="Profile picture preview"
+        >
+          <div
+            className="max-w-full max-h-full rounded-lg shadow-lg overflow-hidden relative"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Close button */}
+            <button
+              onClick={closeImageModal}
+              className="absolute top-3 right-3 z-40 bg-white bg-opacity-90 rounded-full p-2 shadow hover:opacity-90"
+              aria-label="Close image preview"
+            >
+              ✕
+            </button>
+
+            {/* Full-size image (contain so it fits in viewport) */}
+            <img
+              src={profile.profile_pic || '/default-avatar.png'}
+              alt={`${profile.name || profile.username}'s full profile picture`}
+              className="block max-w-[90vw] max-h-[90vh] object-contain bg-white"
+              loading="eager"
+            />
+          </div>
+        </div>
+      )}
 
       {/* Settings modal */}
       {settingsOpen && <ProfileSettingsModal onClose={() => setSettingsOpen(false)} onRequestDelete={handleDeleteRequest} />}
