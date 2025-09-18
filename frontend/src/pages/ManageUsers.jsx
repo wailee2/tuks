@@ -1,5 +1,5 @@
 // pages/ManageUsers.jsx
-import { useContext, useEffect, useState } from 'react';
+import { useContext, useEffect, useState, useRef } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import { getAllUsers, updateUserRole, disableUser } from '../services/admin.js';
 import SearchBar from '../components/SearchBar.jsx';
@@ -7,6 +7,9 @@ import { paginate } from '../utils/pagination.js';
 import { useToasts } from '../context/ToastContext';
 import LoadingSpinner from "../components/LoadingSpinner";
 import { EllipsisVertical } from "lucide-react";
+import { motion } from "framer-motion";
+import { Link } from "react-router-dom";
+
 
 const roleColors = {
   USER: 'bg-gray-200 text-gray-800',
@@ -24,7 +27,24 @@ export default function ManageUsers() {
   const [loading, setLoading] = useState(true);
   const { addToast } = useToasts();
   const [error, setError] = useState('');
-  const [selectedTable, setSelectedTable] = useState("Users");
+  
+  const [dropdownOpen, setDropdownOpen] = useState(false); // ✅ add this
+  const [visibleFields, setVisibleFields] = useState(["name", "profile_pic", "email", "role"]); // example
+  const allFields = ["id", "profile_pic", "name", "email", "role", "website", "dob", "location"];
+
+  const dropdownRef = useRef(null);
+
+  useEffect(() => {
+  function handleClickOutside(event) {
+    if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+      setDropdownOpen(false);
+    }
+  }
+
+  document.addEventListener("mousedown", handleClickOutside);
+  return () => document.removeEventListener("mousedown", handleClickOutside);
+}, []);
+
 
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
@@ -100,25 +120,77 @@ export default function ManageUsers() {
   return (
     <div className="flex min-h-screen bg-gray-50">
       <main className="flex-1 p-6 overflow-x-hidden">
-        <h1 className="text-3xl font-bold mb-4">Admin User Management</h1>
-
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-4">
-          <SearchBar
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder="Search by name, username, email, or role"
-          />
-          <div className="flex items-center gap-2">
-            <label className="font-medium">Users per page:</label>
-            <select
-              value={pageSize}
-              onChange={(e) => setPageSize(Number(e.target.value))}
-              className="border px-2 py-1 rounded"
+        
+        <div className="flex items-center justify-between">
+          <h1 className="text-3xl font-bold mb-4">Admin User Management</h1>
+          {/* Table selector */}
+          <div className="relative inline-block text-left" ref={dropdownRef}>
+            <button
+              onClick={() => setDropdownOpen(!dropdownOpen)}
+              className="px-3 py-1.5 rounded-lg border bg-white shadow-sm hover:bg-gray-50"
             >
-              {[1, 5, 10, 20, 50].map(size => (
-                <option key={size} value={size}>{size}</option>
-              ))}
-            </select>
+              Select Fields
+            </button>
+
+            {dropdownOpen && (
+              <div className="absolute mt-2 w-56 rounded-lg bg-white shadow-lg border p-2 z-50">
+                {/* ✅ Select/Deselect All Toggle */}
+                <button
+                  onClick={() => {
+                    if (visibleFields.length === allFields.length) {
+                      setVisibleFields([]); // deselect all
+                    } else {
+                      setVisibleFields(allFields); // select all
+                    }
+                  }}
+                  className="w-full text-sm font-medium mb-2 px-3 py-1.5 rounded-md 
+                            bg-green-100 text-green-700 hover:bg-green-200 transition"
+                >
+                  {visibleFields.length === allFields.length ? "Deselect All" : "Select All"}
+                </button>
+
+                <div className="max-h-48 overflow-y-auto space-y-1">
+                  {allFields.map((f) => (
+                    <label key={f} className="flex items-center gap-2 px-2 py-1 hover:bg-gray-50 rounded-md cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={visibleFields.includes(f)}
+                        onChange={() =>
+                          setVisibleFields((prev) =>
+                            prev.includes(f) ? prev.filter((v) => v !== f) : [...prev, f]
+                          )
+                        }
+                        className="rounded text-green-600 focus:ring-green-500"
+                      />
+                      <span className="text-sm">{f}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+
+
+
+
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-4">
+            <SearchBar
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="Search by name, username, email, or role"
+            />
+            <div className="flex items-center gap-2">
+              <label className="font-medium">Users per page:</label>
+              <select
+                value={pageSize}
+                onChange={(e) => setPageSize(Number(e.target.value))}
+                className="border px-2 py-1 rounded"
+              >
+                {[1, 5, 10, 20, 50].map(size => (
+                  <option key={size} value={size}>{size}</option>
+                ))}
+              </select>
+            </div>
           </div>
         </div>
 
@@ -127,13 +199,17 @@ export default function ManageUsers() {
         ) : error ? (
           <p className="text-red-500">{error}</p>
         ) : (
-          <div className='overflow-x-hidden bg-red-700 relative'>
+          <div className='overflow-x-hidden '>
             <div className="overflow-x-scroll bg-white shadow rounded-lg p-4">
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50">
                   <tr>
-                    <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">ID</th>
-                    <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Profile</th>
+                    {visibleFields.includes("id") && (
+                      <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">ID</th>
+                    )}
+                    {visibleFields.includes("profile_pic") && (
+                      <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Profile</th>
+                    )}
                     <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Name</th>
                     <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Email</th>
                     <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Role</th>
@@ -147,18 +223,34 @@ export default function ManageUsers() {
                 <tbody className="divide-y divide-gray-100">
                   {paginatedUsers.map(u => (
                     <tr key={u.id}>
-                      <td className="px-4 py-2">{u.id}</td>
-                      <td className="px-4 py-2">
-                        {u.profile_pic ? (
-                          <img
-                            src={u.profile_pic}
-                            alt={`${u.name || u.username}'s avatar`}
-                            className="h-10 w-10 rounded-full object-cover"
-                          />
-                        ) : (
-                          <span className="text-gray-400 italic">No pic</span>
-                        )}
-                      </td>
+                      {visibleFields.includes("id") && <td className="px-4 py-2">{u.id}</td>}
+                      {visibleFields.includes("profile_pic") && (
+                        <td className="px-4 py-2">
+                          <Link to={`/${u.username}`} className="flex items-center justify-center">
+                            {u.profile_pic ? (
+                              <motion.img
+                                src={u.profile_pic}
+                                alt={`${u.name || u.username}'s avatar`}
+                                className="h-12 w-12 rounded-full object-cover 
+                                          backdrop-blur-md bg-white/20 border border-white/30 shadow-lg
+                                          cursor-pointer"
+                                whileTap={{ scale: 1.2, opacity: 0.9 }}
+                                transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                              />
+                            ) : (
+                              <div
+                                className="h-12 w-12 flex items-center justify-center rounded-full 
+                                          bg-gray-300 text-gray-700 font-semibold shadow-inner 
+                                          cursor-pointer select-none"
+                              >
+                                {(u.name || u.username || "U").charAt(0).toUpperCase()}
+                              </div>
+                            )}
+                          </Link>
+                        </td>
+
+                      )}
+
                       <td className="px-4 py-2">{u.name}</td>
                       <td className="px-4 py-2">{u.email}</td>
                       <td className="px-4 py-2">

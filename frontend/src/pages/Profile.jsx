@@ -176,14 +176,25 @@ export default function ProfilePage() {
     <div className="max-w-4xl mx-auto p-6">
       <div className="bg-white rounded-lg shadow p-6 flex gap-6">
         {/* clickable avatar */}
-        <img
-          src={profile.profile_pic || '/default-avatar.png'}
-          alt={`${profile.name || profile.username}'s avatar`}
-          className="w-28 h-28 rounded-full object-cover cursor-pointer"
-          onClick={openImageModal}
-          role="button"
-          aria-label="Open profile picture"
-        />
+        {profile.profile_pic ? (
+          <img
+            src={profile.profile_pic}
+            alt={`${profile.name || profile.username}'s avatar`}
+            className="w-28 h-28 rounded-full object-cover cursor-pointer"
+            onClick={openImageModal}
+            role="button"
+            aria-label="Open profile picture"
+          />
+        ) : (
+          <div
+            className="w-28 h-28 flex items-center justify-center rounded-full 
+                      bg-gray-300 text-gray-700 text-3xl font-semibold select-none"
+            aria-label="Default profile picture"
+          >
+            {(profile.name || profile.username || "U").charAt(0).toUpperCase()}
+          </div>
+        )}
+
 
         <div className="flex-1">
           <div className="flex items-start justify-between">
