@@ -1,5 +1,5 @@
 // controllers/userController.js
-const { pool } = require('../config/db'); // if pool export; or require pool as earlier
+const { pool } = require('../config/db');
 const { searchUsers, getUserByUsername, findUsersByRole } = require('../models/userModel');
 const poolConn = require('../config/db'); // adapt to your pool import style
 const poolRef = poolConn; // if pool is default export
@@ -20,9 +20,6 @@ const handleSearchUsers = async (req, res) => {
 };
 
 
-
-
-// Re-using getUserByUsername for lookup (already implemented)
 // Add getUsersByRole:
 const getUsersByRole = async (req, res) => {
   try {

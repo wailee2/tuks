@@ -2,7 +2,7 @@
 const pool = require('../config/db');
 const { getUserById, setUserDisabled } = require('../models/userModel');
 
-// GET all users (already exists) - include disabled flag
+// GET all users
 const getAllUsers = async (req, res) => {
   try {
     const result = await pool.query(
