@@ -13,6 +13,7 @@ import {
 import ProfileSettingsModal from '../components/ProfileSettingsModal';
 import { useToasts } from '../context/ToastContext';
 import AvatarModal from '../components/AvatarModal';
+import NotFoundPlaceholder from "../components/NotFoundPlaceholder";
 
 export default function ProfilePage() {
   const { username } = useParams();
@@ -160,7 +161,15 @@ export default function ProfilePage() {
   };
 
   if (loading) return <div className="p-6">Loading...</div>;
-  if (!profile) return <div className="p-6">Profile not found</div>;
+  if (!profile) {
+    return (
+      <NotFoundPlaceholder
+        title="Profile Not Found"
+        message={`"${username}" does not exist.`}
+        actionLabel="Back to Home"
+      />
+    );
+  }
 
   return (
     <div className="max-w-4xl mx-auto p-6">
