@@ -30,7 +30,7 @@ export default function ManageUsers() {
   const [error, setError] = useState('');
   
   const [dropdownOpen, setDropdownOpen] = useState(false); // ✅ add this
-  const [visibleFields, setVisibleFields] = useState(["name", "username", "profile_pic", "role"]); // example
+  const [visibleFields, setVisibleFields] = useState(["id", "name", "username", "profile_pic", "role"]); // example
   const allFields = ["id", "profile_pic", "name", "username", "email", "role", "website", "dob", "location"];
 
   // For role modal
@@ -235,14 +235,21 @@ export default function ManageUsers() {
                     {visibleFields.includes("email") && (
                       <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Email</th>
                     )}
-
-
-                    <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Role</th>
-                    <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Status</th>
-                    <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Actions</th>
-                    <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Website</th>
-                    <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">DOB</th>
-                    <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Location</th>
+                    {visibleFields.includes("role") && (
+                      <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Role</th>
+                    )}
+                    {visibleFields.includes("status") && (
+                      <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Status</th>
+                    )}
+                    {visibleFields.includes("website") && (
+                      <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Website</th>
+                    )}
+                    {visibleFields.includes("dob") && (
+                      <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">DOB</th>
+                    )}
+                    {visibleFields.includes("location") && (
+                      <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Location</th>
+                    )}
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
@@ -251,7 +258,7 @@ export default function ManageUsers() {
                       {visibleFields.includes("id") && <td className="px-4 py-2">{u.id}</td>}
                       {visibleFields.includes("profile_pic") && (
                         <td className="px-4 py-2">
-                          <Link to={`/${u.username}`} className="flex items-center justify-center">
+                          <Link to={`/${u.username}`} className="flex items-center justify-start">
                             {u.profile_pic ? (
                               <motion.img
                                 src={u.profile_pic}
@@ -274,9 +281,30 @@ export default function ManageUsers() {
                           </Link>
                         </td>
                       )}
-                      {visibleFields.includes("name") && <td className="px-4 py-2">{u.name}</td>}
-                      {visibleFields.includes("username") && <td className="px-4 py-2">{u.username}</td>}
-                      {visibleFields.includes("email") && <td className="px-4 py-2">{u.email}</td>}
+                      {visibleFields.includes("name") && (
+                        <td className="px-4 py-2">
+                          <span title={u.name} className="cursor-default">
+                            {u.name && u.name.length > 10 ? u.name.slice(0, 10) + '…' : u.name}
+                          </span>
+                        </td>
+                      )}
+                      {visibleFields.includes("username") && (
+                        <td className="px-4 py-2">
+                          <span title={u.username} className="cursor-default">
+                            {u.username && u.username.length > 10 ? u.username.slice(0, 10) + '…' : u.username}
+                          </span>
+                        </td>
+                      )}
+                      {visibleFields.includes("email") && (
+                        <td className="px-4 py-2">
+                          <span
+                            className="cursor-default"
+                            title={u.email}
+                          >
+                            {u.email.length > 15 ? u.email.slice(0, 15) + '…' : u.email}
+                          </span>
+                        </td>
+                      )}
                       {visibleFields.includes("role") && (
                         <td
                           className="px-4 py-2 cursor-pointer"
@@ -289,52 +317,60 @@ export default function ManageUsers() {
                           </span>
                         </td>
                       )}
-
-                    
-{visibleFields.includes("status") && (
-      <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Status</th>
-    )}
-                      
-                      <td className="px-4 py-2 flex items-center gap-2">
-                        {u.id !== user.id && user.role === "ADMIN" && (
-                          <>
-                            {!u.disabled ? (
-                              <motion.button
-                                whileTap={{ scale: 0.9 }}
-                                whileHover={{ scale: 1.1 }}
-                                onClick={() => handleDisableToggle(u.id, true)}
-                                className="flex items-center gap-1 px-3 py-1 text-green-500 hover:text-green-600 transition"
-                              >
-                                <CheckCircle className="h-5 w-5" />
-                                <span className="text-sm">Active</span>
-                              </motion.button>
-                            ) : (
-                              <motion.button
-                                whileTap={{ scale: 0.9 }}
-                                whileHover={{ scale: 1.1 }}
-                                onClick={() => handleDisableToggle(u.id, false)}
-                                className="flex items-center gap-1 px-3 py-1 text-red-500 hover:text-red-600 transition"
-                              >
-                                <XCircle className="h-5 w-5" />
-                                <span className="text-sm">Disabled</span>
-                              </motion.button>
-                            )}
-                          </>
-                        )}
-                      </td>
-
-
-                      <td className="px-4 py-2">
-                        {u.website ? (
-                          <a href={u.website} target="_blank" rel="noreferrer" className="text-blue-500 underline">
-                            {u.website}
-                          </a>
-                        ) : (
-                          <span className="text-gray-400 italic">—</span>
-                        )}
-                      </td>
-                      <td className="px-4 py-2">{u.dob || '—'}</td>
-                      <td className="px-4 py-2">{u.location || '—'}</td>
+                      {visibleFields.includes("status") && (
+                        <td className="px-4 py-2 flex items-center gap-2">
+                          {u.id !== user.id && user.role === "ADMIN" && (
+                            <>
+                              {!u.disabled ? (
+                                <motion.button
+                                  whileTap={{ scale: 0.9 }}
+                                  whileHover={{ scale: 1.1 }}
+                                  onClick={() => handleDisableToggle(u.id, true)}
+                                  className="flex items-center gap-1 px-3 py-1 text-green-500 hover:text-green-600 transition"
+                                >
+                                  <CheckCircle className="h-5 w-5" />
+                                  <span className="text-sm">Active</span>
+                                </motion.button>
+                              ) : (
+                                <motion.button
+                                  whileTap={{ scale: 0.9 }}
+                                  whileHover={{ scale: 1.1 }}
+                                  onClick={() => handleDisableToggle(u.id, false)}
+                                  className="flex items-center gap-1 px-3 py-1 text-red-500 hover:text-red-600 transition"
+                                >
+                                  <XCircle className="h-5 w-5" />
+                                  <span className="text-sm">Disabled</span>
+                                </motion.button>
+                              )}
+                            </>
+                          )}
+                        </td>
+                      )}
+                      {visibleFields.includes("website") && (
+                        <td className="px-4 py-2">
+                          {u.website ? (
+                            <a
+                              href={u.website}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="text-blue-500 underline"
+                              title={u.website} // show full website on hover
+                            >
+                              {u.website.length > 20 ? u.website.slice(0, 20) + '…' : u.website}
+                            </a>
+                          ) : (
+                            <span className="text-gray-400 italic">—</span>
+                          )}
+                        </td>
+                      )}
+                      {visibleFields.includes("dob") && <td className="px-4 py-2">{u.dob || '—'}</td>}
+                      {visibleFields.includes("location") && (
+                        <td className="px-4 py-2">
+                          <span title={u.location || '—'} className="cursor-default">
+                            {u.location && u.location.length > 20 ? u.location.slice(0, 20) + '…' : (u.location || '—')}
+                          </span>
+                        </td>
+                      )}
                     </tr>
                   ))}
                 </tbody>
