@@ -353,7 +353,7 @@ export default function ManageUsers() {
                               href={u.website}
                               target="_blank"
                               rel="noreferrer"
-                              className="text-blue-500 underline"
+                              className="text-blue-500"
                               title={u.website} // show full website on hover
                             >
                               {u.website.length > 20 ? u.website.slice(0, 20) + '…' : u.website}
@@ -363,7 +363,20 @@ export default function ManageUsers() {
                           )}
                         </td>
                       )}
-                      {visibleFields.includes("dob") && <td className="px-4 py-2">{u.dob || '—'}</td>}
+                      {visibleFields.includes("dob") && (
+                        <td className="px-4 py-2">
+                          {u.dob ? (
+                            <span
+                              title={new Date(u.dob).toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+                              className="cursor-default"
+                            >
+                              {new Date(u.dob).toLocaleDateString(undefined, { day: 'numeric', month: 'long', year: 'numeric' }).slice(0, 20) + (new Date(u.dob).toLocaleDateString().length > 20 ? '…' : '')}
+                            </span>
+                          ) : (
+                            <span className="text-gray-400 italic">—</span>
+                          )}
+                        </td>
+                      )}
                       {visibleFields.includes("location") && (
                         <td className="px-4 py-2">
                           <span title={u.location || '—'} className="cursor-default">
