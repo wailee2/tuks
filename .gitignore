@@ -3,6 +3,11 @@ frontend/.env
 backend/.env
 psql.txt
 
+backend/public/uploads/
+
+/public/uploads/
+
+
 # === Dependencies ===
 node_modules/
 frontend/node_modules/
