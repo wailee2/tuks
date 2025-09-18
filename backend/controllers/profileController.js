@@ -23,7 +23,6 @@ const {
 const pool = require('../config/db');
 
 // GET profile
-// GET profile
 const getProfile = async (req, res) => {
   try {
     const username = req.params.username;
@@ -58,7 +57,6 @@ const getProfile = async (req, res) => {
 };
 
 
-// Update profile
 // Update profile
 const updateProfileController = async (req, res) => {
   try {
@@ -152,11 +150,14 @@ const updateProfileController = async (req, res) => {
 
 
 // Upload avatar
+// Upload avatar
 const uploadAvatar = async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ message: 'No file uploaded' });
     }
+
+    const NODE_ENV = process.env.NODE_ENV || "development";
 
     // Paths
     const uploadsDirRelative = '/uploads/avatars';
@@ -169,21 +170,24 @@ const uploadAvatar = async (req, res) => {
       await sharp(savedFullPath)
         .resize({ width: 512, height: 512, fit: 'cover' })
         .toFile(`${savedFullPath}.tmp`);
-      // replace original file with resized
       await fs.rename(`${savedFullPath}.tmp`, savedFullPath);
     } catch (imgErr) {
-      // if sharp fails, just continue with the uploaded file
       console.warn('sharp processing failed for avatar - continuing with original file', imgErr);
     }
 
-    // Persist relative path to DB
-    const updatedUser = await updateUserProfile(req.user.id, { profile_pic: savedRelativePath });
+    // Pick URL format depending on environment
+    const avatarUrl =
+      NODE_ENV === "production"
+        ? `/api/profile/avatar/${savedFilename}` // secure proxy route
+        : savedRelativePath; // dev: serve static file directly
 
-    // Return full URLs to client (cache-busted)
-    const full = buildFullUrl(req, savedRelativePath);
+    // Persist relative/proxy path to DB
+    const updatedUser = await updateUserProfile(req.user.id, { profile_pic: avatarUrl });
+
+    // Full URL + busted version for client
+    const full = buildFullUrl(req, avatarUrl);
     const busted = `${full}?t=${Date.now()}`;
 
-    // also ensure returned user.profile_pic is full URL
     if (updatedUser && updatedUser.profile_pic) {
       updatedUser.profile_pic = updatedUser.profile_pic.startsWith('http')
         ? updatedUser.profile_pic
@@ -202,7 +206,6 @@ const uploadAvatar = async (req, res) => {
   }
 };
 
-// remaining controllers unchanged (checkUsername, follow, unfollow, block, unblock, requestDelete)...
 
 const checkUsernameController = async (req, res) => {
   try {

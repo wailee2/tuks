@@ -8,6 +8,7 @@ const { Server } = require("socket.io");
 const startCleanup = require("./scripts/cleanupMessages");
 const jwt = require("jsonwebtoken");
 const path = require("path");
+const rateLimit = require("express-rate-limit");
 
 // route imports
 const userRoutes = require("./routes/userRoutes");
@@ -22,6 +23,7 @@ const profileRoutes = require("./routes/profileRoutes");
 
 const app = express();
 
+
 // Detect environment (default: development)
 const NODE_ENV = process.env.NODE_ENV || "development";
 const isProd = NODE_ENV === "production";
@@ -29,9 +31,11 @@ const isProd = NODE_ENV === "production";
 /* ---------- Middleware ---------- */
 app.use(
   helmet({
-    crossOriginResourcePolicy: { policy: "cross-origin" }, // allow avatars
+    crossOriginResourcePolicy: { policy: "cross-origin" },
+    contentSecurityPolicy: isProd ? undefined : false, // disable CSP in dev
   })
 );
+
 
 app.use(express.json());
 
@@ -44,20 +48,38 @@ app.use(
   })
 );
 
+
 // Serve uploads securely (no directory listing)
-app.use(
-  "/uploads",
-  express.static(path.join(__dirname, "public", "uploads"), { index: false })
-);
+const uploadsPath = path.join(__dirname, "public", "uploads", "avatars");
+
+if (!isProd) {
+  // In dev: serve uploads directly
+  app.use("/uploads", express.static(path.join(__dirname, "public", "uploads"), { index: false }));
+} else {
+  // In prod: DO NOT serve uploads directly
+  console.log("🚫 Direct static serving of /uploads disabled in production");
+}
+
 
 // Optional health check
 app.get("/health", (req, res) =>
-  res.json({
-    ok: true,
-    env: NODE_ENV,
-    time: new Date().toISOString(),
-  })
+  res.json({ ok: true, time: new Date().toISOString() })
 );
+
+
+//Prevent brute-force login or spam API calls:
+const apiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 min
+  max: 100, // limit each IP
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+app.use("/api", apiLimiter);
+
+//Prevent DoS via JSON
+app.use(express.json({ limit: "1mb" }));
+
 
 /* ---------- API Routes ---------- */
 app.use("/api/users", userRoutes);
