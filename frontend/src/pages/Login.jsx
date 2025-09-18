@@ -50,25 +50,20 @@ export default function Login() {
     setNotice('');
     if (!validate()) return;
 
+    // in Login.jsx
     try {
       setLoading(true);
 
-      // perform login via AuthContext (which sets user/token in context & localStorage)
-      await login(email.trim(), password);
+      const { user: localUser } = await login(email.trim(), password); // now login returns user
 
-      // read localStorage.user (AuthContext writes it); wait a short time until it's available
-      const localUser = await readLocalUserWithTimeout(500, 50);
-
-      // If we couldn't read it, fallback to normal dashboard (safe fallback)
       if (!localUser) {
+        // fallback
         navigate('/dashboard');
         return;
       }
 
-      // If account disabled -> show message and redirect to Support
       if (localUser.disabled) {
         setNotice('Your account has been disabled. Redirecting you to Support so you can submit an appeal...');
-        // redirect to /support and pass a small state so Support page can show a context-aware message
         navigate('/support', {
           state: {
             from: 'disabled-login',
@@ -78,9 +73,8 @@ export default function Login() {
         return;
       }
 
-      // Otherwise go to normal dashboard
       navigate('/dashboard');
-    } catch (err) {
+    }catch (err) {
       // unify axios/fetch error shapes
       const msg = err?.response?.data?.message || err?.message || 'Login failed';
       setServerError(msg);

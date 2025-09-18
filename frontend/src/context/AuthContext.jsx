@@ -30,24 +30,28 @@ export const AuthProvider = ({ children }) => {
     setSocket(null);
     localStorage.removeItem('user');
     localStorage.removeItem('token');
+
+    // remove axios default auth header
+    try { delete api.defaults.headers.common['Authorization']; } catch (e) { /* ignore */ }
   };
+
 
   // Setup axios interceptor once (for 403 handling)
   useEffect(() => {
-    const interceptor = api.interceptors.response.use(
-      (response) => response,
-      (error) => {
-        if (error.response && error.response.status === 403) {
-          console.warn('[AuthContext] 403 detected -> forcing logout');
-          logout();
-        }
-        return Promise.reject(error);
+  const interceptor = api.interceptors.response.use(
+    (response) => response,
+    (error) => {
+      const status = error?.response?.status;
+      if (status === 401 || status === 403) {
+        console.warn('[AuthContext] unauthorized/forbidden -> forcing logout', status);
+        logout();
       }
-    );
-    return () => {
-      api.interceptors.response.eject(interceptor);
-    };
-  }, []); // run once
+      return Promise.reject(error);
+    }
+  );
+  return () => api.interceptors.response.eject(interceptor);
+}, []);
+
 
   useEffect(() => {
     if (token) localStorage.setItem('token', token);
@@ -111,9 +115,22 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (email, password) => {
     const { user: u, token: t } = await loginUser(email, password);
-    setUser(u);
+
+    // Immediately persist to localStorage (synchronous)
+    if (t) localStorage.setItem('token', t);
+    if (u) localStorage.setItem('user', JSON.stringify(u));
+
+    // Set axios default header immediately so subsequent requests are authenticated
+    if (t) api.defaults.headers.common['Authorization'] = `Bearer ${t}`;
+
+    // Update state
     setToken(t);
+    setUser(u);
+
+    // Return the user so callers don't need to poll localStorage
+    return { user: u, token: t };
   };
+
 
   const register = async (name, username, email, password) => {
     const { user: u, token: t } = await registerUser(name, username, email, password);

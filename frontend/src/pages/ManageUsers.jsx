@@ -7,6 +7,7 @@ import { paginate } from '../utils/pagination.js';
 import { useToasts } from '../context/ToastContext';
 import LoadingSpinner from "../components/LoadingSpinner";
 import { EllipsisVertical } from "lucide-react";
+import { CheckCircle, XCircle, Power, PowerOff } from "lucide-react";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 
@@ -29,8 +30,23 @@ export default function ManageUsers() {
   const [error, setError] = useState('');
   
   const [dropdownOpen, setDropdownOpen] = useState(false); // ✅ add this
-  const [visibleFields, setVisibleFields] = useState(["name", "profile_pic", "email", "role"]); // example
-  const allFields = ["id", "profile_pic", "name", "email", "role", "website", "dob", "location"];
+  const [visibleFields, setVisibleFields] = useState(["name", "username", "profile_pic", "role"]); // example
+  const allFields = ["id", "profile_pic", "name", "username", "email", "role", "website", "dob", "location"];
+
+  // For role modal
+  const [selectedUser, setSelectedUser] = useState(null);
+  const [roleModalOpen, setRoleModalOpen] = useState(false);
+
+  const openUserModal = (u) => {
+    setSelectedUser(u);
+    setRoleModalOpen(true);
+  };
+
+  const closeUserModal = () => {
+    setSelectedUser(null);
+    setRoleModalOpen(false);
+  };
+
 
   const dropdownRef = useRef(null);
 
@@ -208,10 +224,19 @@ export default function ManageUsers() {
                       <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">ID</th>
                     )}
                     {visibleFields.includes("profile_pic") && (
-                      <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Profile</th>
+                      <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Profile_Pic</th>
                     )}
-                    <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Name</th>
-                    <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Email</th>
+                    {visibleFields.includes("name") && (
+                      <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Name</th>
+                    )}
+                    {visibleFields.includes("username") && (
+                      <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Username</th>
+                    )}
+                    {visibleFields.includes("email") && (
+                      <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Email</th>
+                    )}
+
+
                     <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Role</th>
                     <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Status</th>
                     <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Actions</th>
@@ -248,70 +273,57 @@ export default function ManageUsers() {
                             )}
                           </Link>
                         </td>
-
+                      )}
+                      {visibleFields.includes("name") && <td className="px-4 py-2">{u.name}</td>}
+                      {visibleFields.includes("username") && <td className="px-4 py-2">{u.username}</td>}
+                      {visibleFields.includes("email") && <td className="px-4 py-2">{u.email}</td>}
+                      {visibleFields.includes("role") && (
+                        <td
+                          className="px-4 py-2 cursor-pointer"
+                          onClick={() => openUserModal(u)}
+                        >
+                          <span
+                            className={`px-2 py-1 rounded-full text-sm font-medium ${roleColors[u.role] || 'bg-gray-200 text-gray-800'}`}
+                          >
+                            {u.role}{u.disabled ? " (Disabled)" : ""}
+                          </span>
+                        </td>
                       )}
 
-                      <td className="px-4 py-2">{u.name}</td>
-                      <td className="px-4 py-2">{u.email}</td>
-                      <td className="px-4 py-2">
-                        <span className={`px-2 py-1 rounded-full text-sm font-medium ${roleColors[u.role] || 'bg-gray-200 text-gray-800'}`}>
-                          {u.role}
-                        </span>
-                      </td>
-                      <td className="px-4 py-2">
-                        {u.disabled ? (
-                          <span className="text-sm px-2 py-1 rounded bg-gray-800 text-white">Disabled</span>
-                        ) : (
-                          <span className="text-sm px-2 py-1 rounded bg-green-100 text-green-800">Active</span>
-                        )}
-                      </td>
+                    
+{visibleFields.includes("status") && (
+      <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Status</th>
+    )}
+                      
                       <td className="px-4 py-2 flex items-center gap-2">
-                        {/* Role change - only ADMIN can change roles */}
-                        {user.role === 'ADMIN' && u.id !== user.id && (
-                          <select
-                            value={u.role}
-                            onChange={(e) => handleRoleChange(u.id, e.target.value)}
-                            className="border px-2 py-1 rounded text-sm"
-                          >
-                            {['USER', 'MODERATOR', 'SUPPORT', 'ANALYST', 'ADMIN'].map(r => (
-                              <option key={r} value={r}>{r}</option>
-                            ))}
-                          </select>
-                        )}
-
-                        {/* Disable / Enable controls */}
-                        {u.id !== user.id && (
+                        {u.id !== user.id && user.role === "ADMIN" && (
                           <>
-                            {/* Moderators cannot disable admins */}
-                            {user.role === 'MODERATOR' && u.role === 'ADMIN' ? (
-                              <span className="text-xs italic text-gray-500">Cannot modify admin</span>
+                            {!u.disabled ? (
+                              <motion.button
+                                whileTap={{ scale: 0.9 }}
+                                whileHover={{ scale: 1.1 }}
+                                onClick={() => handleDisableToggle(u.id, true)}
+                                className="flex items-center gap-1 px-3 py-1 text-green-500 hover:text-green-600 transition"
+                              >
+                                <CheckCircle className="h-5 w-5" />
+                                <span className="text-sm">Active</span>
+                              </motion.button>
                             ) : (
-                              <>
-                                {!u.disabled ? (
-                                  <button
-                                    onClick={() => handleDisableToggle(u.id, true)}
-                                    className="px-3 py-1 bg-red-500 text-white rounded text-sm hover:bg-red-600"
-                                  >
-                                    Disable
-                                  </button>
-                                ) : (
-                                  // Only ADMIN can enable a disabled user (moderator cannot re-enable)
-                                  user.role === 'ADMIN' ? (
-                                    <button
-                                      onClick={() => handleDisableToggle(u.id, false)}
-                                      className="px-3 py-1 bg-green-500 text-white rounded text-sm hover:bg-green-600"
-                                    >
-                                      Enable
-                                    </button>
-                                  ) : (
-                                    <span className="text-xs italic text-gray-500">Disabled</span>
-                                  )
-                                )}
-                              </>
+                              <motion.button
+                                whileTap={{ scale: 0.9 }}
+                                whileHover={{ scale: 1.1 }}
+                                onClick={() => handleDisableToggle(u.id, false)}
+                                className="flex items-center gap-1 px-3 py-1 text-red-500 hover:text-red-600 transition"
+                              >
+                                <XCircle className="h-5 w-5" />
+                                <span className="text-sm">Disabled</span>
+                              </motion.button>
                             )}
                           </>
                         )}
                       </td>
+
+
                       <td className="px-4 py-2">
                         {u.website ? (
                           <a href={u.website} target="_blank" rel="noreferrer" className="text-blue-500 underline">
@@ -366,6 +378,54 @@ export default function ManageUsers() {
           </div>
         )}
       </main>
+      {/* Role Selection Modal */}
+      {roleModalOpen && selectedUser && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm"
+          onClick={closeUserModal}
+        >
+          <motion.div
+            initial={{ scale: 0.8, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0.8, opacity: 0 }}
+            transition={{ type: "spring", stiffness: 200, damping: 20 }}
+            className="bg-white/20 backdrop-blur-md border border-white/30 
+                      shadow-2xl rounded-2xl p-6 w-80 text-center"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2 className="text-lg font-semibold mb-4 text-white drop-shadow">
+              Change Role for {selectedUser.username}
+            </h2>
+
+            <div className="grid gap-2">
+              {['USER', 'MODERATOR', 'SUPPORT', 'ANALYST', 'ADMIN'].map((r) => (
+                <button
+                  key={r}
+                  onClick={() => {
+                    handleRoleChange(selectedUser.id, r);
+                    closeUserModal();
+                  }}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition 
+                              ${roleColors[r] || 'bg-gray-200 text-gray-800'} 
+                              hover:scale-105`}
+                >
+                  {r}
+                </button>
+              ))}
+            </div>
+
+            <button
+              onClick={closeUserModal}
+              className="mt-4 px-4 py-2 bg-gray-800/70 text-white rounded-lg hover:bg-gray-700"
+            >
+              Cancel
+            </button>
+          </motion.div>
+        </motion.div>
+      )}
     </div>
   );
 }

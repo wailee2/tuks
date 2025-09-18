@@ -25,7 +25,7 @@ const updateUserRole = async (req, res) => {
     const { userId, role } = req.body;
 
     // Validate input
-    const validRoles = ['USER', 'MODERATOR', 'SUPPORT', 'ANALYST', 'ADMIN'];
+    const validRoles = ['USER', 'MODERATOR', 'SUPPORT', 'ANALYST', /*'ADMIN'*/];
     if (!userId || !role || !validRoles.includes(role)) {
       return res.status(400).json({ message: 'Invalid user ID or role' });
     }
