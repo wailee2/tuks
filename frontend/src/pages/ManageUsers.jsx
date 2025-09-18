@@ -6,6 +6,7 @@ import SearchBar from '../components/SearchBar.jsx';
 import { paginate } from '../utils/pagination.js';
 import { useToasts } from '../context/ToastContext';
 import LoadingSpinner from "../components/LoadingSpinner";
+import { EllipsisVertical } from "lucide-react";
 
 const roleColors = {
   USER: 'bg-gray-200 text-gray-800',
@@ -23,13 +24,14 @@ export default function ManageUsers() {
   const [loading, setLoading] = useState(true);
   const { addToast } = useToasts();
   const [error, setError] = useState('');
+  const [selectedTable, setSelectedTable] = useState("Users");
 
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10); // Dynamic page size
 
   useEffect(() => {
-    if (user?.role === 'ADMIN' || user?.role === 'MODERATOR') fetchUsers();
+    if (user?.role === 'ADMIN') fetchUsers();
   }, [user]);
 
   useEffect(() => {
@@ -84,8 +86,8 @@ export default function ManageUsers() {
     }
   };
 
-  // only ADMIN and MODERATOR may access this page
-  if (!user || (user.role !== 'ADMIN' && user.role !== 'MODERATOR'))
+  // only ADMIN may access this page
+  if (!user || (user.role !== 'ADMIN'))
     return (
       <div className="flex items-center justify-center min-h-screen">
         <p className="text-red-500 font-bold">Access Denied</p>
@@ -97,7 +99,7 @@ export default function ManageUsers() {
 
   return (
     <div className="flex min-h-screen bg-gray-50">
-      <main className="flex-1 p-6">
+      <main className="flex-1 p-6 overflow-x-hidden">
         <h1 className="text-3xl font-bold mb-4">Admin User Management</h1>
 
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-4">
@@ -125,23 +127,38 @@ export default function ManageUsers() {
         ) : error ? (
           <p className="text-red-500">{error}</p>
         ) : (
-          <>
-            <div className="overflow-x-auto bg-white shadow rounded-lg p-4">
+          <div className='overflow-x-hidden bg-red-700 relative'>
+            <div className="overflow-x-scroll bg-white shadow rounded-lg p-4">
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50">
                   <tr>
                     <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">ID</th>
+                    <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Profile</th>
                     <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Name</th>
                     <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Email</th>
                     <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Role</th>
                     <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Status</th>
                     <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Actions</th>
+                    <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Website</th>
+                    <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">DOB</th>
+                    <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Location</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
                   {paginatedUsers.map(u => (
                     <tr key={u.id}>
                       <td className="px-4 py-2">{u.id}</td>
+                      <td className="px-4 py-2">
+                        {u.profile_pic ? (
+                          <img
+                            src={u.profile_pic}
+                            alt={`${u.name || u.username}'s avatar`}
+                            className="h-10 w-10 rounded-full object-cover"
+                          />
+                        ) : (
+                          <span className="text-gray-400 italic">No pic</span>
+                        )}
+                      </td>
                       <td className="px-4 py-2">{u.name}</td>
                       <td className="px-4 py-2">{u.email}</td>
                       <td className="px-4 py-2">
@@ -203,6 +220,17 @@ export default function ManageUsers() {
                           </>
                         )}
                       </td>
+                      <td className="px-4 py-2">
+                        {u.website ? (
+                          <a href={u.website} target="_blank" rel="noreferrer" className="text-blue-500 underline">
+                            {u.website}
+                          </a>
+                        ) : (
+                          <span className="text-gray-400 italic">—</span>
+                        )}
+                      </td>
+                      <td className="px-4 py-2">{u.dob || '—'}</td>
+                      <td className="px-4 py-2">{u.location || '—'}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -243,7 +271,7 @@ export default function ManageUsers() {
                 </button>
               </div>
             )}
-          </>
+          </div>
         )}
       </main>
     </div>

@@ -6,8 +6,12 @@ const { getUserById, setUserDisabled } = require('../models/userModel');
 const getAllUsers = async (req, res) => {
   try {
     const result = await pool.query(
-      'SELECT id, name, email, username, role, disabled, created_at FROM users ORDER BY id ASC'
+      `SELECT id, name, email, username, role, disabled, created_at, 
+              profile_pic, website, dob, location
+      FROM users 
+      ORDER BY id ASC`
     );
+
     res.status(200).json(result.rows);
   } catch (err) {
     console.error('Get All Users Error:', err);
