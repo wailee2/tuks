@@ -12,6 +12,7 @@ import {
 } from '../services/profile';
 import ProfileSettingsModal from '../components/ProfileSettingsModal';
 import { useToasts } from '../context/ToastContext';
+import AvatarModal from '../components/AvatarModal';
 
 export default function ProfilePage() {
   const { username } = useParams();
@@ -83,7 +84,6 @@ export default function ProfilePage() {
   }, [imageModalOpen]);
 
   const openImageModal = () => setImageModalOpen(true);
-  const closeImageModal = () => setImageModalOpen(false);
 
   const handleFollow = async () => {
     try {
@@ -243,37 +243,13 @@ export default function ProfilePage() {
       </div>
 
       {/* Image modal */}
-      {imageModalOpen && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60 p-4"
-          onClick={closeImageModal}
-          role="dialog"
-          aria-modal="true"
-          aria-label="Profile picture preview"
-        >
-          <div
-            className="max-w-full max-h-full rounded-lg shadow-lg overflow-hidden relative"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Close button */}
-            <button
-              onClick={closeImageModal}
-              className="absolute top-3 right-3 z-40 bg-white bg-opacity-90 rounded-full p-2 shadow hover:opacity-90"
-              aria-label="Close image preview"
-            >
-              ✕
-            </button>
+      <AvatarModal
+        src={profile.profile_pic}
+        alt={`${profile.name || profile.username}'s avatar`}
+        open={imageModalOpen}
+        onClose={() => setImageModalOpen(false)}
+      />
 
-            {/* Full-size image (contain so it fits in viewport) */}
-            <img
-              src={profile.profile_pic || '/default-avatar.png'}
-              alt={`${profile.name || profile.username}'s full profile picture`}
-              className="block max-w-[90vw] max-h-[90vh] object-contain bg-white"
-              loading="eager"
-            />
-          </div>
-        </div>
-      )}
 
       {/* Settings modal */}
       {settingsOpen && <ProfileSettingsModal onClose={() => setSettingsOpen(false)} onRequestDelete={handleDeleteRequest} />}
