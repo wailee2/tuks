@@ -548,7 +548,7 @@ export default function ManageUsers() {
             </div>
 
             <div className="grid gap-2">
-              {['USER', 'MODERATOR', 'SUPPORT', 'ANALYST', 'ADMIN'].map((r) => {
+              {['USER', 'MODERATOR', 'SUPPORT', 'ANALYST', /*'ADMIN'*/].map((r) => {
                 const RoleIcon = roleIconMap[r] || User;
                 return (
                   <button
@@ -641,7 +641,7 @@ export default function ManageUsers() {
 
             <div className="flex justify-between items-center gap-2">
               <motion.button
-                onClick={() => setSearchFields(['name', 'username'])}
+                onClick={() => setSearchFields(['name', 'username', 'role'])}
                 className="px-3 py-1.5 rounded bg-gray-100 hover:bg-gray-200 text-sm"
                 whileTap={{ scale: 1.05}}
                 transition={{ type: "tween", duration: 0.2, ease: "easeInOut" }}
