@@ -6,8 +6,19 @@ import SearchBar from '../components/SearchBar.jsx';
 import { paginate } from '../utils/pagination.js';
 import { useToasts } from '../context/ToastContext';
 import LoadingSpinner from "../components/LoadingSpinner";
-import { EllipsisVertical } from "lucide-react";
-import { CheckCircle, XCircle, Power, PowerOff } from "lucide-react";
+import {
+  EllipsisVertical,
+  CheckCircle,
+  XCircle,
+  Power,
+  PowerOff,
+  User,
+  ShieldCheck,
+  Headphones,
+  BarChart2,
+  Crown
+} from "lucide-react";
+
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 
@@ -19,6 +30,27 @@ const roleColors = {
   ANALYST: 'bg-yellow-200 text-yellow-800',
   ADMIN: 'bg-red-200 text-red-800'
 };
+const roleIconMap = {
+  USER: User,
+  MODERATOR: ShieldCheck,
+  SUPPORT: Headphones,
+  ANALYST: BarChart2,
+  ADMIN: Crown,
+};
+
+
+
+// Convert field keys like "profile_pic" or "dob" into nice labels
+// Format header labels: only acronyms fully uppercase, normal words capitalize first letter
+const formatHeaderLabel = (field) => {
+  const acronyms = ["ID", "DOB"]; // Add more if needed
+  const words = field.split("_");
+  return words
+    .map(word => (acronyms.includes(word.toUpperCase()) ? word.toUpperCase() : word.charAt(0).toUpperCase() + word.slice(1)))
+    .join(" ");
+};
+
+
 
 export default function ManageUsers() {
   const { user, token } = useContext(AuthContext);
@@ -30,8 +62,8 @@ export default function ManageUsers() {
   const [error, setError] = useState('');
   
   const [dropdownOpen, setDropdownOpen] = useState(false); // ✅ add this
-  const [visibleFields, setVisibleFields] = useState(["id", "name", "username", "profile_pic", "role"]); // example
-  const allFields = ["id", "profile_pic", "name", "username", "email", "role", "website", "dob", "location"];
+  const [visibleFields, setVisibleFields] = useState(["id", "name", "username", "profile_pic", "status", "role"]); // example
+  const allFields = ["id", "profile_pic","username", "name",  "email", "role", "status", "website", "dob", "location"];
 
   // For role modal
   const [selectedUser, setSelectedUser] = useState(null);
@@ -134,10 +166,10 @@ export default function ManageUsers() {
   const totalPages = Math.ceil(filteredUsers.length / pageSize);
 
   return (
-    <div className="flex min-h-screen bg-gray-50">
+    <div className="flex min-h-screen bg-gray-50 ">
       <main className="flex-1 p-6 overflow-x-hidden">
         
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between ">
           <h1 className="text-3xl font-bold mb-4">Admin User Management</h1>
           {/* Table selector */}
           <div className="relative inline-block text-left" ref={dropdownRef}>
@@ -186,9 +218,6 @@ export default function ManageUsers() {
             )}
           </div>
 
-
-
-
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-4">
             <SearchBar
               value={searchTerm}
@@ -216,57 +245,39 @@ export default function ManageUsers() {
           <p className="text-red-500">{error}</p>
         ) : (
           <div className='overflow-x-hidden '>
-            <div className="overflow-x-scroll bg-white shadow rounded-lg p-4">
+            <div className="overflow-x-scroll bg-white shadow rounded-lg border-gray-200 border">
               <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
+                <thead className="bg-gray-100">
                   <tr>
-                    {visibleFields.includes("id") && (
-                      <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">ID</th>
-                    )}
-                    {visibleFields.includes("profile_pic") && (
-                      <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Profile_Pic</th>
-                    )}
-                    {visibleFields.includes("name") && (
-                      <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Name</th>
-                    )}
-                    {visibleFields.includes("username") && (
-                      <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Username</th>
-                    )}
-                    {visibleFields.includes("email") && (
-                      <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Email</th>
-                    )}
-                    {visibleFields.includes("role") && (
-                      <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Role</th>
-                    )}
-                    {visibleFields.includes("status") && (
-                      <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Status</th>
-                    )}
-                    {visibleFields.includes("website") && (
-                      <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Website</th>
-                    )}
-                    {visibleFields.includes("dob") && (
-                      <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">DOB</th>
-                    )}
-                    {visibleFields.includes("location") && (
-                      <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Location</th>
-                    )}
+                    {allFields
+                      .filter(field => visibleFields.includes(field))
+                      .map(field => (
+                        <th
+                          key={field}
+                          className="px-6 py-2 text-left text-[13px] font-medium text-gray-500"
+                        >
+                          {formatHeaderLabel(field)}
+                        </th>
+                      ))}
                   </tr>
                 </thead>
+
+
                 <tbody className="divide-y divide-gray-100">
                   {paginatedUsers.map(u => (
-                    <tr key={u.id}>
-                      {visibleFields.includes("id") && <td className="px-4 py-2">{u.id}</td>}
+                    <tr key={u.id} className='text-[14px] text-gray-600'>
+                      {visibleFields.includes("id") && <td className="text-center py-4 w-1 border-r-1 border-gray-200">{u.id}</td>}
                       {visibleFields.includes("profile_pic") && (
-                        <td className="px-4 py-2">
-                          <Link to={`/${u.username}`} className="flex items-center justify-start">
+                        <td className="w-30">
+                          <Link to={`/${u.username}`} className="flex items-center justify-center">
                             {u.profile_pic ? (
                               <motion.img
                                 src={u.profile_pic}
                                 alt={`${u.name || u.username}'s avatar`}
                                 className="h-12 w-12 rounded-full object-cover 
-                                          backdrop-blur-md bg-white/20 border border-white/30 shadow-lg
-                                          cursor-pointer"
-                                whileTap={{ scale: 1.2, opacity: 0.9 }}
+                                          backdrop-blur-md bg-white/20 border border-white/30 shadow-xl
+                                          cursor-pointer "
+                                whileHover={{ scale: 1.2, opacity: 0.9 }}
                                 transition={{ type: "spring", stiffness: 300, damping: 20 }}
                               />
                             ) : (
@@ -281,22 +292,22 @@ export default function ManageUsers() {
                           </Link>
                         </td>
                       )}
-                      {visibleFields.includes("name") && (
-                        <td className="px-4 py-2">
-                          <span title={u.name} className="cursor-default">
-                            {u.name && u.name.length > 10 ? u.name.slice(0, 10) + '…' : u.name}
-                          </span>
-                        </td>
-                      )}
                       {visibleFields.includes("username") && (
-                        <td className="px-4 py-2">
+                        <td className="px-6 py-4 text-[14.5px] text-gray-900 font-semibold">
                           <span title={u.username} className="cursor-default">
                             {u.username && u.username.length > 10 ? u.username.slice(0, 10) + '…' : u.username}
                           </span>
                         </td>
                       )}
+                      {visibleFields.includes("name") && (
+                        <td className="px-6 py-4">
+                          <span title={u.name} className="cursor-default">
+                            {u.name && u.name.length > 10 ? u.name.slice(0, 10) + '…' : u.name}
+                          </span>
+                        </td>
+                      )}
                       {visibleFields.includes("email") && (
-                        <td className="px-4 py-2">
+                        <td className="px-6 py-4">
                           <span
                             className="cursor-default"
                             title={u.email}
@@ -307,18 +318,25 @@ export default function ManageUsers() {
                       )}
                       {visibleFields.includes("role") && (
                         <td
-                          className="px-4 py-2 cursor-pointer"
+                          className="px-6 py-4 cursor-pointer"
                           onClick={() => openUserModal(u)}
+                          title={`${u.role}${u.disabled ? " (Disabled)" : ""}`}
+                          aria-label={`Role: ${u.role}`}
                         >
-                          <span
-                            className={`px-2 py-1 rounded-full text-sm font-medium ${roleColors[u.role] || 'bg-gray-200 text-gray-800'}`}
+                          {/* Icon badge — uses the roleColors for bg/text so icon inherits color */}
+                          <div
+                            className={`inline-flex items-center justify-center h-9 w-9 rounded-full ${roleColors[u.role] || 'bg-gray-200 text-gray-800'}`}
                           >
-                            {u.role}{u.disabled ? " (Disabled)" : ""}
-                          </span>
+                            {(() => {
+                              const RoleIcon = roleIconMap[u.role] || User;
+                              return <RoleIcon className="h-5 w-5" />;
+                            })()}
+                          </div>
                         </td>
                       )}
+
                       {visibleFields.includes("status") && (
-                        <td className="px-4 py-2 flex items-center gap-2">
+                        <td className="px-6 py-4 flex items-center gap-2">
                           {u.id !== user.id && user.role === "ADMIN" && (
                             <>
                               {!u.disabled ? (
@@ -347,7 +365,7 @@ export default function ManageUsers() {
                         </td>
                       )}
                       {visibleFields.includes("website") && (
-                        <td className="px-4 py-2">
+                        <td className="px-6 py-5">
                           {u.website ? (
                             <a
                               href={u.website}
@@ -364,13 +382,13 @@ export default function ManageUsers() {
                         </td>
                       )}
                       {visibleFields.includes("dob") && (
-                        <td className="px-4 py-2">
+                        <td className="px-2 py-4 text-center">
                           {u.dob ? (
                             <span
                               title={new Date(u.dob).toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
                               className="cursor-default"
                             >
-                              {new Date(u.dob).toLocaleDateString(undefined, { day: 'numeric', month: 'long', year: 'numeric' }).slice(0, 20) + (new Date(u.dob).toLocaleDateString().length > 20 ? '…' : '')}
+                              {new Date(u.dob).toLocaleDateString(undefined, { day: 'numeric', month: 'long', year: 'numeric' }).slice(0, 10) + (new Date(u.dob).toLocaleDateString().length > 10 ? '…' : '')}
                             </span>
                           ) : (
                             <span className="text-gray-400 italic">—</span>
@@ -378,7 +396,7 @@ export default function ManageUsers() {
                         </td>
                       )}
                       {visibleFields.includes("location") && (
-                        <td className="px-4 py-2">
+                        <td className="px-6 py-4">
                           <span title={u.location || '—'} className="cursor-default">
                             {u.location && u.location.length > 20 ? u.location.slice(0, 20) + '…' : (u.location || '—')}
                           </span>
@@ -427,6 +445,7 @@ export default function ManageUsers() {
           </div>
         )}
       </main>
+
       {/* Role Selection Modal */}
       {roleModalOpen && selectedUser && (
         <motion.div
@@ -441,29 +460,45 @@ export default function ManageUsers() {
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.8, opacity: 0 }}
             transition={{ type: "spring", stiffness: 200, damping: 20 }}
-            className="bg-white/20 backdrop-blur-md border border-white/30 
-                      shadow-2xl rounded-2xl p-6 w-80 text-center"
+            className="bg-white/20 backdrop-blur-md border border-white/30 shadow-2xl rounded-2xl p-6 w-80 text-center"
             onClick={(e) => e.stopPropagation()}
           >
-            <h2 className="text-lg font-semibold mb-4 text-white drop-shadow">
-              Change Role for {selectedUser.username}
-            </h2>
+            <div className="flex items-center justify-center gap-3 mb-4">
+              {/* current role icon + username */}
+              {(() => {
+                const CurrentIcon = roleIconMap[selectedUser.role] || User;
+                return (
+                  <div className={`inline-flex items-center justify-center h-9 w-9 rounded-full ${roleColors[selectedUser.role] || 'bg-gray-200 text-gray-800'}`}>
+                    <CurrentIcon className="h-5 w-5" />
+                  </div>
+                );
+              })()}
+
+              <h2 className="text-lg font-semibold text-white drop-shadow">
+                Change Role for {selectedUser.username}
+              </h2>
+            </div>
 
             <div className="grid gap-2">
-              {['USER', 'MODERATOR', 'SUPPORT', 'ANALYST', 'ADMIN'].map((r) => (
-                <button
-                  key={r}
-                  onClick={() => {
-                    handleRoleChange(selectedUser.id, r);
-                    closeUserModal();
-                  }}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition 
-                              ${roleColors[r] || 'bg-gray-200 text-gray-800'} 
-                              hover:scale-105`}
-                >
-                  {r}
-                </button>
-              ))}
+              {['USER', 'MODERATOR', 'SUPPORT', 'ANALYST', 'ADMIN'].map((r) => {
+                const RoleIcon = roleIconMap[r] || User;
+                return (
+                  <button
+                    key={r}
+                    onClick={() => {
+                      handleRoleChange(selectedUser.id, r);
+                      closeUserModal();
+                    }}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition flex items-center justify-center gap-3
+                                ${roleColors[r] || 'bg-gray-200 text-gray-800'} hover:scale-105`}
+                  >
+                    <div className={`inline-flex items-center justify-center h-8 w-8 rounded-full ${roleColors[r] || 'bg-gray-200 text-gray-800'}`}>
+                      <RoleIcon className="h-4 w-4" />
+                    </div>
+                    <span className="text-sm font-semibold">{r}</span>
+                  </button>
+                );
+              })}
             </div>
 
             <button
@@ -475,6 +510,8 @@ export default function ManageUsers() {
           </motion.div>
         </motion.div>
       )}
+
+
     </div>
   );
 }
