@@ -1,9 +1,9 @@
 // pages/ManageUsers.jsx
 import { useContext, useEffect, useState, useRef } from 'react';
 import { AuthContext } from '../context/AuthContext';
-import { getAllUsers, updateUserRole, disableUser } from '../services/admin.js';
-import SearchBar from '../components/SearchBar.jsx';
-import { paginate } from '../utils/pagination.js';
+import { getAllUsers, updateUserRole, disableUser } from '../services/admin';
+import SearchBar from '../components/manageusers/SearchBar'
+import { paginate } from '../utils/pagination';
 import { useToasts } from '../context/ToastContext';
 import LoadingSpinner from "../components/LoadingSpinner";
 import {
@@ -16,7 +16,12 @@ import {
   ShieldCheck,
   Headphones,
   BarChart2,
-  Crown
+  Crown,
+  Search,
+  ArrowLeft,
+  ArrowRight,
+  Filter,
+  PlusIcon
 } from "lucide-react";
 
 import { motion } from "framer-motion";
@@ -38,10 +43,6 @@ const roleIconMap = {
   ADMIN: Crown,
 };
 
-
-
-// Convert field keys like "profile_pic" or "dob" into nice labels
-// Format header labels: only acronyms fully uppercase, normal words capitalize first letter
 const formatHeaderLabel = (field) => {
   const acronyms = ["ID", "DOB"]; // Add more if needed
   const words = field.split("_");
@@ -49,8 +50,6 @@ const formatHeaderLabel = (field) => {
     .map(word => (acronyms.includes(word.toUpperCase()) ? word.toUpperCase() : word.charAt(0).toUpperCase() + word.slice(1)))
     .join(" ");
 };
-
-
 
 export default function ManageUsers() {
   const { user, token } = useContext(AuthContext);
@@ -61,9 +60,14 @@ export default function ManageUsers() {
   const { addToast } = useToasts();
   const [error, setError] = useState('');
   
-  const [dropdownOpen, setDropdownOpen] = useState(false); // ✅ add this
-  const [visibleFields, setVisibleFields] = useState(["id", "name", "username", "profile_pic", "status", "role"]); // example
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [visibleFields, setVisibleFields] = useState(["id", "name", "username", "profile_pic", "status", "role"]); 
   const allFields = ["id", "profile_pic","username", "name",  "email", "role", "status", "website", "dob", "location"];
+
+  // SEARCH / FILTER state (add here)
+  const [searchFields, setSearchFields] = useState(['name', 'username']); // default search fields
+  const [filterModalOpen, setFilterModalOpen] = useState(false); // opens the filter modal (same UI as role modal)
+
 
   // For role modal
   const [selectedUser, setSelectedUser] = useState(null);
@@ -105,20 +109,24 @@ export default function ManageUsers() {
   useEffect(() => {
     if (searchTerm.trim() === '') {
       setFilteredUsers(users);
-    } else {
-      const term = searchTerm.toLowerCase();
-      setFilteredUsers(
-        users.filter(
-          u =>
-            (u.name || '').toLowerCase().includes(term) ||
-            (u.email || '').toLowerCase().includes(term) ||
-            (u.role || '').toLowerCase().includes(term) ||
-            (u.username || '').toLowerCase().includes(term)
-        )
-      );
+      setCurrentPage(1);
+      return;
     }
-    setCurrentPage(1); // reset to first page on search
-  }, [searchTerm, users]);
+
+    const term = searchTerm.toLowerCase();
+
+    setFilteredUsers(
+      users.filter(u =>
+        searchFields.some(field => {
+          const val = (u[field] ?? '').toString().toLowerCase();
+          return val.includes(term);
+        })
+      )
+    );
+
+    setCurrentPage(1);
+  }, [searchTerm, users, searchFields]);
+
 
   const fetchUsers = async () => {
     try {
@@ -139,7 +147,6 @@ export default function ManageUsers() {
       await updateUserRole(token, userId, newRole);
       fetchUsers();
     } catch (err) {
-      //alert(err.response?.data?.message || 'Failed to update role');
       addToast('Failed to update role', 'error');
     }
   };
@@ -154,7 +161,6 @@ export default function ManageUsers() {
     }
   };
 
-  // only ADMIN may access this page
   if (!user || (user.role !== 'ADMIN'))
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -164,77 +170,97 @@ export default function ManageUsers() {
 
   const paginatedUsers = paginate(filteredUsers, currentPage, pageSize);
   const totalPages = Math.ceil(filteredUsers.length / pageSize);
+  
 
   return (
     <div className="flex min-h-screen bg-gray-50 ">
-      <main className="flex-1 p-6 overflow-x-hidden">
+      <main className="flex-1 p-7 overflow-x-hidden">
+        <div className='mb-8'>
+          <h1 className="text-2xl text-gray-800 font-semibold tracking-tight">User management</h1>
+        </div>
         
-        <div className="flex items-center justify-between ">
-          <h1 className="text-3xl font-bold mb-4">Admin User Management</h1>
-          {/* Table selector */}
-          <div className="relative inline-block text-left" ref={dropdownRef}>
-            <button
-              onClick={() => setDropdownOpen(!dropdownOpen)}
-              className="px-3 py-1.5 rounded-lg border bg-white shadow-sm hover:bg-gray-50"
-            >
-              Select Fields
-            </button>
-
-            {dropdownOpen && (
-              <div className="absolute mt-2 w-56 rounded-lg bg-white shadow-lg border p-2 z-50">
-                {/* ✅ Select/Deselect All Toggle */}
-                <button
-                  onClick={() => {
-                    if (visibleFields.length === allFields.length) {
-                      setVisibleFields([]); // deselect all
-                    } else {
-                      setVisibleFields(allFields); // select all
-                    }
-                  }}
-                  className="w-full text-sm font-medium mb-2 px-3 py-1.5 rounded-md 
-                            bg-green-100 text-green-700 hover:bg-green-200 transition"
-                >
-                  {visibleFields.length === allFields.length ? "Deselect All" : "Select All"}
-                </button>
-
-                <div className="max-h-48 overflow-y-auto space-y-1">
-                  {allFields.map((f) => (
-                    <label key={f} className="flex items-center gap-2 px-2 py-1 hover:bg-gray-50 rounded-md cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={visibleFields.includes(f)}
-                        onChange={() =>
-                          setVisibleFields((prev) =>
-                            prev.includes(f) ? prev.filter((v) => v !== f) : [...prev, f]
-                          )
-                        }
-                        className="rounded text-green-600 focus:ring-green-500"
-                      />
-                      <span className="text-sm">{f}</span>
-                    </label>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-4">
-            <SearchBar
+        {/* Header*/}
+        <div className="flex flex-wrap gap-4 items-center justify-between mb-6">
+          {/* Search + Filter area */}
+          <div className="flex items-center gap-3 w-full sm:w-1/2 md:w-md border border-gray-200 rounded-full shadow-sm px-4 py-2.5">
+            <Search className="h-5 w-5 text-gray-400 "/>
+            <input
+              className="flex-1 outline-none text-[16px] text-gray-800 "
+              placeholder={`Search`}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Search by name, username, email, or role"
+              aria-label="Search users"
             />
-            <div className="flex items-center gap-2">
-              <label className="font-medium">Users per page:</label>
-              <select
-                value={pageSize}
-                onChange={(e) => setPageSize(Number(e.target.value))}
-                className="border px-2 py-1 rounded"
+          </div>
+
+          <div className='flex items-center justify-between gap-3'>
+            {/* Table selector */}
+            <div className="relative inline-block text-left" ref={dropdownRef}>
+              <button
+                onClick={() => setDropdownOpen(!dropdownOpen)}
+                className="  text-gray-700 shadow-sm rounded-full border border-gray-300 text-sm px-4 py-2.5 flex items-center justify-between gap-3"
               >
-                {[1, 5, 10, 20, 50].map(size => (
-                  <option key={size} value={size}>{size}</option>
+                <PlusIcon className='w-3.5 h-3.5'/>
+                <span>Add Fields</span>
+              </button>
+
+              {dropdownOpen && (
+                <div className="absolute right-0 mt-2 w-56 rounded-lg bg-white shadow-lg border p-2 z-50">
+                  <button
+                    onClick={() => {
+                      if (visibleFields.length === allFields.length) {
+                        setVisibleFields([]);
+                      } else {
+                        setVisibleFields(allFields);
+                      }
+                    }}
+                    className="w-full text-sm font-medium mb-2 px-3 py-1.5 rounded-md 
+                              bg-green-100 text-green-700 hover:bg-green-200 transition"
+                  >
+                    {visibleFields.length === allFields.length ? "Deselect All" : "Select All"}
+                  </button>
+
+                  <div className="max-h-48 overflow-y-auto space-y-1">
+                    {allFields.map((f) => (
+                      <label key={f} className="flex items-center gap-2 px-2 py-1 hover:bg-gray-50 rounded-md cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={visibleFields.includes(f)}
+                          onChange={() =>
+                            setVisibleFields((prev) =>
+                              prev.includes(f) ? prev.filter((v) => v !== f) : [...prev, f]
+                            )
+                          }
+                          className="rounded text-green-600 focus:ring-green-500"
+                        />
+                        <span className="text-sm">{f}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+            
+            <div>
+              <button
+                onClick={() => setFilterModalOpen(true)}
+                className="bg-green-700 text-white shadow-sm rounded-full text-sm px-4 py-2.5 flex items-center justify-between gap-3"
+                aria-expanded={filterModalOpen}
+                aria-controls="filter-modal"
+              >
+                <Filter className='w-3.5 h-3.5'/>
+                <span>Filter</span>
+              </button>
+
+              {/* Active search fields chips 
+              <div
+                className="flex gap-2 items-center flex-wrap">
+                {searchFields.map(f => (
+                  <span key={f} className="text-xs px-2 py-1 bg-gray-100 rounded-lg text-gray-700 select-none">
+                    {f.replace(/_/g, ' ')}
+                  </span>
                 ))}
-              </select>
+              </div>*/}
             </div>
           </div>
         </div>
@@ -244,8 +270,8 @@ export default function ManageUsers() {
         ) : error ? (
           <p className="text-red-500">{error}</p>
         ) : (
-          <div className='overflow-x-hidden '>
-            <div className="overflow-x-scroll bg-white shadow rounded-lg border-gray-200 border">
+          <div className='overflow-x-hidden rounded-lg border-gray-200 border-1 shadow'>
+            <div className="overflow-x-scroll bg-white ">
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-100">
                   <tr>
@@ -261,7 +287,6 @@ export default function ManageUsers() {
                       ))}
                   </tr>
                 </thead>
-
 
                 <tbody className="divide-y divide-gray-100">
                   {paginatedUsers.map(u => (
@@ -334,7 +359,6 @@ export default function ManageUsers() {
                           </div>
                         </td>
                       )}
-
                       {visibleFields.includes("status") && (
                         <td className="px-6 py-4 flex items-center gap-2">
                           {u.id !== user.id && user.role === "ADMIN" && (
@@ -408,40 +432,84 @@ export default function ManageUsers() {
               </table>
             </div>
 
-            {/* Pagination Controls */}
-            {totalPages > 1 && (
-              <div className="flex justify-center mt-4 items-center gap-2 flex-wrap">
-                <button
-                  disabled={currentPage === 1}
-                  onClick={() => setCurrentPage((prev) => prev - 1)}
-                  className="px-3 py-1 bg-gray-200 rounded disabled:opacity-50 hover:bg-gray-300"
-                >
-                  Prev
-                </button>
-
-                {Array.from({ length: totalPages }, (_, idx) => idx + 1).map((page) => (
-                  <button
-                    key={page}
-                    onClick={() => setCurrentPage(page)}
-                    className={`px-3 py-1 rounded ${
-                      currentPage === page
-                        ? 'bg-green-500 text-white'
-                        : 'bg-gray-200 hover:bg-gray-300'
-                    }`}
+            <div className='flex flex-wrap items-center justify-between py-4 px-6 space-y-3 border-t border-gray-200'>
+              {/* Page size selector */}
+              <div className="flex items-center gap-3">
+                <label className="text-sm font-medium text-gray-700">Rows per page</label>
+                <div className="relative">
+                  <select
+                    value={pageSize}
+                    onChange={(e) => setPageSize(Number(e.target.value))}
+                    className="
+                      appearance-none
+                      bg-white
+                      border border-gray-300
+                      rounded-lg
+                      pl-3 pr-8 py-2
+                      text-sm text-gray-700
+                      shadow-sm
+                      focus:outline-none focus:ring-2 focus:ring-green-400 focus:border-green-400
+                      transition
+                    "
                   >
-                    {page}
-                  </button>
-                ))}
+                    {[5, 10, 20, 50].map(size => (
+                      <option key={size} value={size}>
+                        {size}
+                      </option>
+                    ))}
+                  </select>
 
-                <button
-                  disabled={currentPage === totalPages}
-                  onClick={() => setCurrentPage((prev) => prev + 1)}
-                  className="px-3 py-1 bg-gray-200 rounded disabled:opacity-50 hover:bg-gray-300"
-                >
-                  Next
-                </button>
+                  {/* dropdown chevron */}
+                  <svg
+                    className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </div>
               </div>
-            )}
+
+              {/* Pagination Controls */}
+              {totalPages > 1 && ( 
+                <div className="flex justify-between w-full sm:w-1/2">
+                  
+                  <div>
+                    {Array.from({ length: totalPages }, (_, idx) => idx + 1).map((page) => (
+                      <button
+                        key={page}
+                        onClick={() => setCurrentPage(page)}
+                        className={`px-3.5 py-1.5 mx-1 rounded text-sm ${
+                          currentPage === page
+                            ? 'bg-gray-200 text-gray-800 font-semibold'
+                            : 'text-gray-500 hover:bg-gray-300 '
+                        }`}
+                      >
+                        {page}
+                      </button>
+                    ))}
+                  </div>
+                  <div className='flex gap-3'>
+                    <button
+                      disabled={currentPage === 1}
+                      onClick={() => setCurrentPage((prev) => prev - 1)}
+                      className="disabled:opacity-50 flex items-center gap-2 text-gray-500 text-sm font-semibold"
+                    >
+                      <ArrowLeft className='w-5 h-5'/>Previous
+                    </button>
+                    <button
+                      disabled={currentPage === totalPages}
+                      onClick={() => setCurrentPage((prev) => prev + 1)}
+                      className="disabled:opacity-50 flex items-center gap-2 text-gray-500 text-sm font-semibold"
+                    >
+                      Next<ArrowRight className='w-5 h-5'/>
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         )}
       </main>
@@ -510,6 +578,92 @@ export default function ManageUsers() {
           </motion.div>
         </motion.div>
       )}
+
+      {filterModalOpen && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0, scale: 0.96, y: 12 }}
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm"
+          onClick={() => setFilterModalOpen(false)}
+        >
+          <motion.div
+            id="filter-modal"
+            initial={{ scale: 0.8, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0.8, opacity: 0 }}
+            transition={{ type: "spring", stiffness: 200, damping: 20 }}
+            className="bg-white/95 backdrop-blur-sm border border-gray-200 shadow-2xl rounded-2xl p-6 w-96 text-left"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2 className="text-lg font-semibold mb-3 text-gray-800">Filter Search Fields</h2>
+
+            <div
+              className="
+                grid gap-3 mb-4
+                grid-cols-1 sm:grid-cols-2 lg:grid-cols-3
+                p-2
+                max-w-full
+                max-h-[70vh] overflow-y-auto
+              "
+            >
+              {allFields
+                .filter((f) => f !== 'profile_pic') // <- removed profile_pic entries
+                .map((f) => {
+                  const selected = searchFields.includes(f);
+
+                  return (
+                    <motion.button
+                      key={f}
+                      type="button"
+                      aria-pressed={selected}
+                      onClick={() =>
+                        setSearchFields(prev =>
+                          prev.includes(f) ? prev.filter(x => x !== f) : [...prev, f]
+                        )
+                      }
+                      whileTap={{ scale: 1.05}}
+                      transition={{ type: "tween", duration: 0.2, ease: "easeInOut" }}
+                      className={
+                        `w-full flex items-center justify-between gap-3 px-4 py-2 rounded-lg transition-all duration-150 transform-gpu cursor-pointer ` +
+                        (selected
+                          ? 'bg-gradient-to-r from-green-400 via-green-500 to-green-600 text-white shadow-md'
+                          : 'bg-gray-200 text-gray-700')
+                      }
+                    >
+                      <div className="flex items-center gap-3">
+                        <span className="text-sm truncate">{f.replace(/_/g, '...')}</span>
+                      </div>
+                    </motion.button>
+                  );
+                })}
+            </div>
+
+            <div className="flex justify-between items-center gap-2">
+              <motion.button
+                onClick={() => setSearchFields(['name', 'username'])}
+                className="px-3 py-1.5 rounded bg-gray-100 hover:bg-gray-200 text-sm"
+                whileTap={{ scale: 1.05}}
+                transition={{ type: "tween", duration: 0.2, ease: "easeInOut" }}
+              >
+                Reset to Default
+              </motion.button>
+
+              <div className="flex gap-2">
+                <motion.button
+                  onClick={() => setFilterModalOpen(false)}
+                  className="px-3 py-1.5 rounded bg-gray-100 hover:bg-gray-200 text-sm"
+                  whileHover={{ scale: 1.05}}
+                  transition={{ type: "tween", duration: 0.2, ease: "easeInOut" }}
+                >
+                  Cancel
+                </motion.button>
+              </div>
+            </div>
+          </motion.div>
+        </motion.div>
+      )}
+
 
 
     </div>
