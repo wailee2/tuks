@@ -8,6 +8,8 @@ const jwt = require("jsonwebtoken");
 
 const router = express.Router();
 
+const isProd = process.env.NODE_ENV === 'production';
+
 /* ---------- Per-account login limiter ---------- */
 const loginAccountLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
@@ -40,40 +42,24 @@ router.get('/me', authMiddleware, me);
 
 
 
+router.get('/google', passport.authenticate('google', { scope: ['profile','email'] }));
 
-
-router.get(
-  "/google",
-  passport.authenticate("google", { scope: ["profile", "email"], session: false })
-);
-
-const isProd = process.env.NODE_ENV === 'production';
-
-router.get(
-  "/google/callback",
-  passport.authenticate("google", { session: false, failureRedirect: `${process.env.CLIENT_ORIGIN}/login` }),
+router.get('/google/callback',
+  passport.authenticate('google', { session: false, failureRedirect: '/login' }),
   (req, res) => {
-    // req.user is the DB user returned from the strategy
+    // req.user set by passport
     const user = req.user;
+    const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET, { expiresIn: '7d' });
 
-    // Issue JWT using same secret/claims you use in login/register
-    const token = jwt.sign({ id: user.id, role: user.role }, process.env.JWT_SECRET, { expiresIn: "7d" });
-
-    // Set token as a secure, httpOnly cookie (safer than query string)
-    res.cookie("token", token, {
+    res.cookie('token', token, {
       httpOnly: true,
-      secure: isProd,           // true in production (HTTPS)
-      sameSite: "lax",         // adjust to 'strict' if you want tighter CSRF protection
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+      secure: isProd,                 // true only in production (requires HTTPS)
+      sameSite: isProd ? 'none' : 'lax', // none in prod for cross-site; lax in dev is fine with proxy
+      maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
-    // Redirect to frontend route (frontend will call /api/auth/me to read user)
-    const redirectUrl = `${process.env.CLIENT_ORIGIN.replace(/\/$/, "")}/auth/success`;
-    return res.redirect(redirectUrl);
+    res.redirect(`${process.env.CLIENT_ORIGIN}/auth/success`);
   }
 );
 
-
-
 module.exports = router;
-

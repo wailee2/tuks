@@ -19,7 +19,8 @@ export const checkUsername = async (username) => {
 };
 
 export const startGoogleLogin = () => {
-  const base = api.defaults.baseURL || import.meta.env.VITE_API_URL || '';
-  const url = `${base.replace(/\/$/, '')}/auth/google`;
+  // prefer explicit env so proxy works
+  const base = import.meta.env.VITE_API_URL || '';
+  const url = `${base.replace(/\/$/, '')}/auth/google`; // produces "/api/auth/google" in dev
   window.location.href = url;
 };

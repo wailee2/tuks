@@ -12,6 +12,7 @@ const rateLimit = require("express-rate-limit");
 const passport = require("passport");
 const { Strategy: GoogleStrategy } = require("passport-google-oauth20");
 const cookieParser = require("cookie-parser");
+const { getUserByGoogleId, getUserByEmail, createUserWithGoogle, getUserByUsername, setGoogleIdForUser } = require('./models/userModel');
 
 
 // route imports
@@ -40,51 +41,66 @@ passport.use(
     {
       clientID: process.env.GOOGLE_CLIENT_ID,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-      callbackURL: "/auth/google/callback",
+      callbackURL: "/api/auth/google/callback",
     },
     async (accessToken, refreshToken, profile, done) => {
       try {
-        // Here you’d look up or create the user in your DB
-        // Example user object:
-        const user = {
-          googleId: profile.id,
-          name: profile.displayName,
-          email: profile.emails?.[0]?.value,
-          avatar: profile.photos?.[0]?.value,
-        };
+        const email = profile.emails?.[0]?.value;
+        const googleId = profile.id;
+        const avatar = profile.photos?.[0]?.value || null;
+        const displayName = profile.displayName || 'GoogleUser';
 
-        // Return user object
-        done(null, user);
+        // 1) try to find by google_id
+        let user = await getUserByGoogleId(googleId);
+
+        // 2) fallback: if not found, try to find existing user by email
+        if (!user && email) {
+          user = await getUserByEmail(email);
+          if (user) {
+            // link google_id to existing account if not linked yet
+            if (!user.google_id) {
+              try {
+                await setGoogleIdForUser(user.id, googleId);
+                user.google_id = googleId;
+              } catch (e) {
+                console.warn('Failed to set google_id for existing user:', e);
+              }
+            }
+          }
+        }
+
+        // 3) if still not found, create a new user record
+        if (!user) {
+          // generate a sane username from display name, ensure uniqueness
+          const base = (displayName || 'user')
+            .toLowerCase()
+            .replace(/[^a-z0-9._-]/g, '') // keep simple chars
+            .slice(0, 20) || `user${Date.now()}`;
+
+          let username = base || `user${Date.now()}`;
+          let suffix = 0;
+          while (await getUserByUsername(username)) {
+            suffix += 1;
+            username = `${base}${suffix}`;
+          }
+
+          user = await createUserWithGoogle(displayName, username, email || null, googleId, avatar);
+        }
+
+        // Ensure we return a DB user object that includes `id`
+        return done(null, user);
       } catch (err) {
-        done(err, null);
+        console.error('GoogleStrategy error:', err);
+        return done(err, null);
       }
     }
   )
 );
 
+
+
 app.use(passport.initialize());
 
-// ---- Google OAuth ----
-app.get(
-  "/auth/google",
-  passport.authenticate("google", { scope: ["profile", "email"] })
-);
-
-app.get(
-  "/auth/google/callback",
-  passport.authenticate("google", { session: false, failureRedirect: "/login" }),
-  (req, res) => {
-    // Issue a JWT
-    const token = jwt.sign(
-      { id: req.user.googleId, email: req.user.email },
-      process.env.JWT_SECRET,
-      { expiresIn: "7d" }
-    );
-
-    // Redirect back to frontend with token (query param)
-    res.redirect(`${process.env.CLIENT_ORIGIN}/auth/success?token=${token}`);
-  }
-);
 
 
 /* ---------- Middleware ---------- */
@@ -99,7 +115,7 @@ app.use(
 app.use(express.json());
 
 // CORS
-const CLIENT_ORIGIN = process.env.CLIENT_ORIGIN || "*";
+const CLIENT_ORIGIN = process.env.CLIENT_ORIGIN;
 app.use(
   cors({
     origin: CLIENT_ORIGIN,

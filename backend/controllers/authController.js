@@ -89,9 +89,19 @@ const checkUsername = async (req, res) => {
 };
 
 
+// controllers/authController.js -> me
 const me = async (req, res) => {
   try {
-    const uid = req.user.id;
+    console.log('[DEBUG /auth/me] req.headers.cookie =', req.headers.cookie);
+    console.log('[DEBUG /auth/me] req.cookies =', req.cookies);
+    console.log('[DEBUG /auth/me] req.user (attached by authMiddleware) =', req.user);
+
+    const uid = req.user?.id;
+    if (!uid) {
+      console.warn('[DEBUG /auth/me] missing req.user.id -> unauthorized');
+      return res.status(401).json({ message: 'Missing user id' });
+    }
+
     const user = await getUserById(uid);
     if (!user) return res.status(404).json({ message: 'User not found' });
     res.json(user);
@@ -100,4 +110,5 @@ const me = async (req, res) => {
     res.status(500).json({ message: 'Server error' });
   }
 };
+
 module.exports = { register, login, checkUsername, me };

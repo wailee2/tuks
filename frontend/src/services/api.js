@@ -5,7 +5,7 @@ const API_URL = import.meta.env.VITE_API_URL;
 
 const api = axios.create({
   baseURL: API_URL,
-  // NO global Content-Type here — let interceptor set it conditionally
+  withCredentials: true,
 });
 
 // Add a request interceptor to attach the JWT token automatically

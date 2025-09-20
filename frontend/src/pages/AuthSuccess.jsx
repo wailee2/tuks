@@ -1,28 +1,28 @@
 // pages/AuthSuccess.jsx
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import api from "../services/api"; // central axios instance
 
 export default function AuthSuccess() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const token = params.get("token");
+    const finishLogin = async () => {
+      try {
+        // ✅ fetch user, cookie will be sent automatically
+        const res = await api.get("/auth/me", { withCredentials: true });
 
-    if (token) {
-      // save token
-      localStorage.setItem("token", token);
+        localStorage.setItem("user", JSON.stringify(res.data));
 
-      // optional: you can decode user info here with jwt-decode if needed
-      // const user = jwtDecode(token);
-      // localStorage.setItem("user", JSON.stringify(user));
+        // redirect to dashboard
+        navigate("/dashboard");
+      } catch (err) {
+        console.error("Failed to fetch user after Google login", err);
+        navigate("/login");
+      }
+    };
 
-      // redirect user
-      navigate("/dashboard");
-    } else {
-      // if no token, send back to login
-      navigate("/login");
-    }
+    finishLogin();
   }, [navigate]);
 
   return (

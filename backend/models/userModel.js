@@ -1,5 +1,7 @@
 // models/userModel.js
 const pool = require('../config/db');
+const bcrypt = require('bcrypt');
+const crypto = require('crypto');
 
 // Lookup by email (includes password for login checks)
 const getUserByEmail = async (email) => {
@@ -75,16 +77,21 @@ const getUserByGoogleId = async (googleId) => {
 };
 
 // Create a user created through Google (password nullable)
+// We generate a random password, hash it, and store it so DB NOT NULL constraint is satisfied.
+// The random password is not used by OAuth users, but allows DB schema to remain unchanged
 const createUserWithGoogle = async (name, username, email, googleId, avatar = null) => {
+  // generate a secure random password (dev/length OK)
+  const randomPassword = crypto.randomBytes(32).toString('hex'); // 64 chars
+  const hashed = await bcrypt.hash(randomPassword, 10);
+
   const res = await pool.query(
-    `INSERT INTO users (name, username, email, google_id, avatar)
-     VALUES ($1, $2, $3, $4, $5)
+    `INSERT INTO users (name, username, email, google_id, avatar, password)
+     VALUES ($1, $2, $3, $4, $5, $6)
      RETURNING id, name, username, email, role, disabled, created_at`,
-    [name, username, email, googleId, avatar]
+    [name, username, email, googleId, avatar, hashed]
   );
   return res.rows[0];
 };
-
 // Attach google_id to an existing user (when user created earlier with email/password)
 const setGoogleIdForUser = async (userId, googleId) => {
   const res = await pool.query(
