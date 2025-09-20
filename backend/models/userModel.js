@@ -64,6 +64,37 @@ const searchUsers = async (query) => {
   return res.rows;
 };
 
+
+// Find user by google_id
+const getUserByGoogleId = async (googleId) => {
+  const res = await pool.query(
+    'SELECT id, name, username, email, role, disabled, created_at FROM users WHERE google_id = $1',
+    [googleId]
+  );
+  return res.rows[0];
+};
+
+// Create a user created through Google (password nullable)
+const createUserWithGoogle = async (name, username, email, googleId, avatar = null) => {
+  const res = await pool.query(
+    `INSERT INTO users (name, username, email, google_id, avatar)
+     VALUES ($1, $2, $3, $4, $5)
+     RETURNING id, name, username, email, role, disabled, created_at`,
+    [name, username, email, googleId, avatar]
+  );
+  return res.rows[0];
+};
+
+// Attach google_id to an existing user (when user created earlier with email/password)
+const setGoogleIdForUser = async (userId, googleId) => {
+  const res = await pool.query(
+    'UPDATE users SET google_id = $1 WHERE id = $2 RETURNING id, name, username, email, role, disabled, created_at',
+    [googleId, userId]
+  );
+  return res.rows[0];
+};
+
+
 module.exports = {
   getUserByEmail,
   getUserByUsername,
@@ -71,5 +102,8 @@ module.exports = {
   getUserById,
   setUserDisabled,
   findUsersByRole,
-  searchUsers
+  searchUsers,
+  getUserByGoogleId,
+  createUserWithGoogle,
+  setGoogleIdForUser
 };

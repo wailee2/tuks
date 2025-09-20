@@ -1,6 +1,7 @@
 // pages/Login.jsx
 import { useState, useContext } from 'react';
 import { AuthContext } from '../context/AuthContext';
+import { startGoogleLogin } from '../services/auth.js';
 import { useNavigate } from 'react-router-dom';
 import { FiEye, FiEyeOff } from "react-icons/fi";
 
@@ -15,6 +16,11 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const [serverError, setServerError] = useState('');
   const [notice, setNotice] = useState(''); // used to show immediate notices like "disabled -> redirecting"
+
+  const handleGoogleSignIn = () => {
+    setLoading(true);
+    startGoogleLogin();
+  };
 
   // validate fields quickly
   const validate = () => {
@@ -102,6 +108,29 @@ export default function Login() {
             {notice}
           </div>
         )}
+
+        {/* Preferred Google sign-in button */}
+        {/* Preferred login: Google */}
+        <div className="mb-6">
+          <button
+            type="button"
+            onClick={() => {
+              setLoading(true);
+              startGoogleLogin();
+            }}
+            disabled={loading}
+            className="w-full flex items-center justify-center gap-3 px-4 py-2 rounded-lg border border-gray-300 bg-white text-gray-700 font-medium hover:bg-gray-50 shadow-sm disabled:opacity-60"
+          >
+            <img
+              src="https://www.svgrepo.com/show/355037/google.svg"
+              alt="Google"
+              className="h-5 w-5"
+            />
+            Continue with Google
+          </button>
+        </div>
+
+
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>

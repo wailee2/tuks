@@ -17,3 +17,9 @@ export const checkUsername = async (username) => {
   const res = await api.get(`/auth/check-username?username=${encodeURIComponent(username)}`);
   return res.data;
 };
+
+export const startGoogleLogin = () => {
+  const base = api.defaults.baseURL || import.meta.env.VITE_API_URL || '';
+  const url = `${base.replace(/\/$/, '')}/auth/google`;
+  window.location.href = url;
+};

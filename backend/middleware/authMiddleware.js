@@ -4,14 +4,29 @@ const { getUserById } = require('../models/userModel');
 
 const SUPPORT_WHITELIST_PREFIX = '/api/support'; // whitelist support endpoints
 
+// Helper: extract token from Authorization header, cookie, or (dev-only) query string
+const getTokenFromReq = (req) => {
+  // 1) Authorization header
+  const authHeader = req.headers.authorization || req.headers.Authorization;
+  if (authHeader && authHeader.startsWith('Bearer ')) return authHeader.split(' ')[1];
+
+  // 2) httpOnly cookie (set by OAuth callback)
+  if (req.cookies && req.cookies.token) return req.cookies.token;
+
+  // 3) dev-only fallback: query parameter (NOT recommended for production)
+  if (process.env.NODE_ENV !== 'production') {
+    const q = req.query?.token || req.query?.access_token;
+    if (q) return q;
+  }
+
+  return null;
+};
+
 const authMiddleware = async (req, res, next) => {
   try {
-    const authHeader = req.headers.authorization || req.headers.Authorization;
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return res.status(401).json({ message: 'Missing or invalid authorization header' });
-    }
+    const token = getTokenFromReq(req);
+    if (!token) return res.status(401).json({ message: 'Missing or invalid authorization token' });
 
-    const token = authHeader.split(' ')[1];
     let decoded;
     try {
       decoded = jwt.verify(token, process.env.JWT_SECRET);
@@ -59,13 +74,12 @@ const authMiddleware = async (req, res, next) => {
 // OPTIONAL auth — does NOT fail if no token provided
 const optionalAuth = async (req, res, next) => {
   try {
-    const authHeader = req.headers.authorization || req.headers.Authorization;
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    const token = getTokenFromReq(req);
+    if (!token) {
       // no token: continue as guest
       return next();
     }
 
-    const token = authHeader.split(' ')[1];
     let decoded;
     try {
       decoded = jwt.verify(token, process.env.JWT_SECRET);

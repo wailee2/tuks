@@ -3,6 +3,7 @@ import { useContext } from 'react';
 import { AuthContext } from './context/AuthContext';
 import Sidebar from './components/Sidebar.jsx';
 
+import AuthSuccess from "./pages/AuthSuccess";
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
@@ -33,6 +34,8 @@ export default function AppRoutes() {
         
         <main className='flex-1 overflow-y-auto pb-20 md:pb-0'>
           <Routes>
+            <Route path="/auth/success" element={<AuthSuccess />} />
+            
             <Route path="/" element={user ? <Navigate to="/dashboard" /> : <Login />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />

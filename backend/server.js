@@ -9,6 +9,10 @@ const startCleanup = require("./scripts/cleanupMessages");
 const jwt = require("jsonwebtoken");
 const path = require("path");
 const rateLimit = require("express-rate-limit");
+const passport = require("passport");
+const { Strategy: GoogleStrategy } = require("passport-google-oauth20");
+const cookieParser = require("cookie-parser");
+
 
 // route imports
 const userRoutes = require("./routes/userRoutes");
@@ -24,9 +28,64 @@ const profileRoutes = require("./routes/profileRoutes");
 const app = express();
 
 
+app.use(cookieParser());
+
+
 // Detect environment (default: development)
 const NODE_ENV = process.env.NODE_ENV || "development";
 const isProd = NODE_ENV === "production";
+
+passport.use(
+  new GoogleStrategy(
+    {
+      clientID: process.env.GOOGLE_CLIENT_ID,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+      callbackURL: "/auth/google/callback",
+    },
+    async (accessToken, refreshToken, profile, done) => {
+      try {
+        // Here you’d look up or create the user in your DB
+        // Example user object:
+        const user = {
+          googleId: profile.id,
+          name: profile.displayName,
+          email: profile.emails?.[0]?.value,
+          avatar: profile.photos?.[0]?.value,
+        };
+
+        // Return user object
+        done(null, user);
+      } catch (err) {
+        done(err, null);
+      }
+    }
+  )
+);
+
+app.use(passport.initialize());
+
+// ---- Google OAuth ----
+app.get(
+  "/auth/google",
+  passport.authenticate("google", { scope: ["profile", "email"] })
+);
+
+app.get(
+  "/auth/google/callback",
+  passport.authenticate("google", { session: false, failureRedirect: "/login" }),
+  (req, res) => {
+    // Issue a JWT
+    const token = jwt.sign(
+      { id: req.user.googleId, email: req.user.email },
+      process.env.JWT_SECRET,
+      { expiresIn: "7d" }
+    );
+
+    // Redirect back to frontend with token (query param)
+    res.redirect(`${process.env.CLIENT_ORIGIN}/auth/success?token=${token}`);
+  }
+);
+
 
 /* ---------- Middleware ---------- */
 app.use(
