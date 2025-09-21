@@ -1,3 +1,4 @@
+// components/AvatarModal
 import React, { useEffect, useRef } from 'react';
 
 // AvatarModal

@@ -10,7 +10,7 @@ const MAX_BIO = 200;
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export default function EditProfilePage() {
-  const { user, token, refreshUser } = useContext(AuthContext);
+  const { user, token, refreshUser, refreshProfile } = useContext(AuthContext);
   const { addToast } = useToasts();
   const navigate = useNavigate();
 
@@ -214,12 +214,24 @@ export default function EditProfilePage() {
 
         // update UI state immediately
         if (uploadedProfilePic) {
-          setForm(prev => ({ ...prev, profile_pic: uploadedProfilePic }));
+          // add a cache-buster if server returned same filename (optional)
+          const busted = uploadedProfilePic.includes('?') ? `${uploadedProfilePic}&v=${Date.now()}` : `${uploadedProfilePic}?v=${Date.now()}`;
+          setForm(prev => ({ ...prev, profile_pic: busted }));
         }
         // clear selection after successful upload
         setAvatarFile(null);
         setAvatarPreview(null);
+
+        // --- NEW: refresh global profile in AuthContext so Sidebar/Header update ---
+        try {
+          if (typeof refreshProfile === 'function') {
+            await refreshProfile();
+          }
+        } catch (err) {
+          console.warn('refreshProfile failed after avatar upload', err);
+        }
       }
+
 
       // 2) Normalize website input
       const rawWebsite = (form.website || '').trim();

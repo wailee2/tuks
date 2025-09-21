@@ -39,19 +39,19 @@ export const AuthProvider = ({ children }) => {
 
   // Setup axios interceptor once (for 403 handling)
   useEffect(() => {
-  const interceptor = api.interceptors.response.use(
-    (response) => response,
-    (error) => {
-      const status = error?.response?.status;
-      if (status === 401 || status === 403) {
-        console.warn('[AuthContext] unauthorized/forbidden -> forcing logout', status);
-        logout();
+    const interceptor = api.interceptors.response.use(
+      (response) => response,
+      (error) => {
+        const status = error?.response?.status;
+        if (status === 401 || status === 403) {
+          console.warn('[AuthContext] unauthorized/forbidden -> forcing logout', status);
+          logout();
+        }
+        return Promise.reject(error);
       }
-      return Promise.reject(error);
-    }
-  );
-  return () => api.interceptors.response.eject(interceptor);
-}, []);
+    );
+    return () => api.interceptors.response.eject(interceptor);
+  }, []);
 
 
   useEffect(() => {
@@ -204,9 +204,21 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const refreshProfile = async () => {
+    try {
+      if (!token || !user?.username) return null;
+      const p = await fetchProfileFromApi(user.username, token);
+      setProfile(p);
+      return p;
+    } catch (err) {
+      console.warn('[AuthContext] refreshProfile failed', err);
+      return null;
+    }
+  };
+
   return (
     <AuthContext.Provider
-      value={{ user, token, socket, profile, login, register, logout, checkUsername, refreshUser }}
+      value={{ user, token, socket, profile, refreshProfile, login, register, logout, checkUsername, refreshUser }}
     >
       {children}
     </AuthContext.Provider>
