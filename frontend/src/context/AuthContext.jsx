@@ -3,6 +3,7 @@ import React, { createContext, useState, useEffect, useRef } from 'react';
 import api from '../services/api'; // <-- central axios instance
 import { loginUser, registerUser, checkUsername as checkUsernameApi } from '../services/auth';
 import { initSocket, disconnectSocket } from '../services/socket';
+import { getProfile as fetchProfileFromApi } from '../services/profile';
 
 export const AuthContext = createContext();
 
@@ -111,6 +112,50 @@ export const AuthProvider = ({ children }) => {
       setSocket(null);
     }
   }, [token]);
+
+  const [profile, setProfile] = useState(() => {
+    const saved = localStorage.getItem('profile');
+    return saved ? JSON.parse(saved) : null;
+  });
+
+  
+  useEffect(() => {
+    if (profile) localStorage.setItem('profile', JSON.stringify(profile));
+    else localStorage.removeItem('profile');
+  }, [profile]);
+
+  useEffect(() => {
+    let mounted = true;
+    let fetching = false;
+
+    if (!token || !user?.username) {
+      setProfile(null);
+      return;
+    }
+
+    (async () => {
+      // avoid overlapping calls
+      if (fetching) return;
+      fetching = true;
+      try {
+        const p = await fetchProfileFromApi(user.username, token);
+        if (!mounted) return;
+        // shallow compare to avoid unnecessary setProfile (prevents re-renders)
+        const same = profile && profile.id === p.id && profile.updatedAt === p.updatedAt;
+        if (!same) setProfile(p);
+      } catch (err) {
+        console.warn('[AuthContext] fetch profile failed', err);
+      } finally {
+        fetching = false;
+      }
+    })();
+
+    return () => {
+      mounted = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.username, token]);
+
   
 
   const login = async (email, password) => {
@@ -161,7 +206,7 @@ export const AuthProvider = ({ children }) => {
 
   return (
     <AuthContext.Provider
-      value={{ user, token, socket, login, register, logout, checkUsername, refreshUser }}
+      value={{ user, token, socket, profile, login, register, logout, checkUsername, refreshUser }}
     >
       {children}
     </AuthContext.Provider>

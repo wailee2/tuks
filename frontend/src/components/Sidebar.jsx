@@ -18,8 +18,7 @@ import {
 } from "react-icons/fi";
 
 function Sidebar() {
-  const { user, token } = useContext(AuthContext);
-  const [profile, setProfile] = useState(null);
+  const { user, token, profile } = useContext(AuthContext);
   const location = useLocation();
 
   // icon-only pages
@@ -59,22 +58,11 @@ function Sidebar() {
   // spacing: gap appears at lg
   const spacingClass = iconOnlyMode ? "space-x-0" : "space-x-0 xl:space-x-3";
 
-  const avatar = profile?.profile_pic || "/default-avatar.png"; // adjust default path as needed
+  const avatar = profile?.profile_pic || "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='48' height='48'><rect width='48' height='48' fill='%23ddd'/><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' font-size='18' fill='%23666'>U</text></svg>";
+
   const displayName = user?.name || user?.username || "Guest";
 
-  useEffect(() => {
-    const fetchProfile = async () => {
-      if (!user?.username || !token) return;
-      try {
-        const data = await getProfile(user.username, token); // same API call Profile.jsx uses
-        setProfile(data);
-      } catch (err) {
-        console.error("Sidebar fetch profile failed", err);
-      }
-    };
 
-    fetchProfile();
-  }, [user, token]);
 
   return (
     <aside
