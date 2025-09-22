@@ -49,18 +49,45 @@ export default function EditProfilePage() {
   const usernameTimer = useRef(null);
 
   useEffect(() => {
-    if (!user || !token) {
-      addToast('You must be signed in to edit your profile', 'error');
-      navigate('/login');
-      return;
-    }
-
     let mounted = true;
+
     (async () => {
+      // If no user at all -> immediate redirect
+      if (!user) {
+        addToast('You must be signed in to edit your profile', 'error');
+        navigate('/login');
+        return;
+      }
+
+      // If user exists but token missing, try to bootstrap via cookies
+      if (!token && typeof refreshUser === 'function') {
+        setLoading(true);
+        try {
+          const boot = await refreshUser(); // will attempt cookie-based /auth/me
+          if (!mounted) return;
+          // if boot failed to return a valid user, force redirect
+          if (!boot) {
+            addToast('You must be signed in to edit your profile', 'error');
+            navigate('/login');
+            return;
+          }
+          // otherwise falled-through and we now have token/user (or cookie-based session), continue
+        } catch (err) {
+          console.warn('bootstrap refreshUser failed in EditProfile', err);
+          addToast('You must be signed in to edit your profile', 'error');
+          navigate('/login');
+          return;
+        } finally {
+          if (mounted) setLoading(false);
+        }
+      }
+
+      // now fetch the profile we are editing (same code as before)
+      let mountedLocal = true;
       try {
         setLoading(true);
-        const p = await getProfile(user.username, token);
-        if (!mounted) return;
+        const p = await getProfile(user.username, token); // getProfile should work with token or cookie/api(withCredentials)
+        if (!mountedLocal) return;
         setForm({
           username: p.username || user.username,
           name: p.name || user.name || '',
@@ -78,13 +105,14 @@ export default function EditProfilePage() {
         console.error('loading profile for edit', err);
         addToast('Failed to load profile', 'error');
       } finally {
-        if (mounted) setLoading(false);
+        if (mountedLocal) setLoading(false);
       }
     })();
 
     return () => { mounted = false; };
     // eslint-disable-next-line
   }, [user?.username, token]);
+
 
   useEffect(() => {
     if (avatarFile) {

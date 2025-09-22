@@ -156,6 +156,41 @@ export const AuthProvider = ({ children }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.username, token]);
 
+  useEffect(() => {
+    let mounted = true;
+    const tryBootstrap = async () => {
+      // Only try when we have a persisted user but no token (common after OAuth redirect)
+      if (!user || token) return;
+      try {
+        // call /auth/me using api (withCredentials true) so cookie/session is used
+        const res = await api.get('/auth/me');
+        if (!mounted) return;
+
+        // server might return { user, token } OR just user object; handle both:
+        const body = res.data || {};
+        if (body.token) {
+          // if server returned a token, persist it and set axios header
+          api.defaults.headers.common['Authorization'] = `Bearer ${body.token}`;
+          setToken(body.token);
+          localStorage.setItem('token', body.token);
+        }
+
+        // update user if server returned fresh user info
+        const newUser = body.user || body;
+        if (newUser && newUser.username) {
+          setUser(newUser);
+          localStorage.setItem('user', JSON.stringify(newUser));
+        }
+      } catch (err) {
+        // harmless: cookie/session might be invalid -> do nothing (we'll let normal flows handle logout)
+        console.warn('[AuthContext] cookie bootstrap /auth/me failed', err?.response?.status || err.message);
+      }
+    };
+
+    tryBootstrap();
+    return () => { mounted = false; };
+  }, [user, token]);
+
   
 
   const login = async (email, password) => {
@@ -190,12 +225,27 @@ export const AuthProvider = ({ children }) => {
   
   const refreshUser = async () => {
     try {
-      if (!token) return null;
+      if (!token) {
+        // try cookie-based fetch
+        const res = await api.get('/auth/me');
+        const body = res.data || {};
+        if (body.token) {
+          api.defaults.headers.common['Authorization'] = `Bearer ${body.token}`;
+          setToken(body.token);
+          localStorage.setItem('token', body.token);
+        }
+        const newUser = body.user || body;
+        if (newUser && newUser.username) {
+          setUser(newUser);
+          localStorage.setItem('user', JSON.stringify(newUser));
+          return newUser;
+        }
+        return null;
+      }
       const res = await api.get('/auth/me', { headers: { Authorization: `Bearer ${token}` } });
       setUser(res.data);
       return res.data;
     } catch (err) {
-      // If token invalid/403, log out client
       if (err.response?.status === 401 || err.response?.status === 403) {
         logout();
       }
@@ -203,6 +253,7 @@ export const AuthProvider = ({ children }) => {
       return null;
     }
   };
+
 
   const refreshProfile = async () => {
     try {
