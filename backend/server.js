@@ -157,8 +157,10 @@ app.use(express.json({ limit: "1mb" }));
 
 
 /* ---------- API Routes ---------- */
-app.use("/api/users", userRoutes);
 app.use("/api/auth", authRoutes);
+app.use('/api', apiLimiter);
+
+app.use("/api/users", userRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/inventory", inventoryRoutes);
 app.use("/api/orders", orderRoutes);

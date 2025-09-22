@@ -8,12 +8,16 @@ export const getProfile = async (username, token) => {
   return res.data;
 };
 
-export async function updateProfile(token, data) {
-  const res = await api.put('/profile', data, {
-    headers: { Authorization: `Bearer ${token}` }
-  });
+export const updateProfile = async (token, payload) => {
+  // if caller passes token, explicitly send Authorization header;
+  // otherwise rely on cookies (api.withCredentials = true).
+  const opts = {};
+  if (token) opts.headers = { Authorization: `Bearer ${token}` };
+  // ensure withCredentials true even for explicit header calls
+  opts.withCredentials = true;
+  const res = await api.put('/profile', payload, opts);
   return res.data;
-}
+};
 
 
 

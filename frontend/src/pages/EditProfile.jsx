@@ -1,4 +1,4 @@
-// pages/EditProfile
+// pages/EditProfile.jsx
 import React, { useContext, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { checkUsername as apiCheckUsername, getProfile, updateProfile, uploadAvatar } from '../services/profile';
@@ -71,7 +71,7 @@ export default function EditProfilePage() {
             navigate('/login');
             return;
           }
-          // otherwise falled-through and we now have token/user (or cookie-based session), continue
+          // otherwise we now have token/user (or cookie-based session), continue
         } catch (err) {
           console.warn('bootstrap refreshUser failed in EditProfile', err);
           addToast('You must be signed in to edit your profile', 'error');
@@ -86,7 +86,7 @@ export default function EditProfilePage() {
       let mountedLocal = true;
       try {
         setLoading(true);
-        const p = await getProfile(user.username, token); // getProfile should work with token or cookie/api(withCredentials)
+        const p = await getProfile(user.username, token); // getProfile works with token or cookie/api(withCredentials)
         if (!mountedLocal) return;
         setForm({
           username: p.username || user.username,
@@ -172,8 +172,8 @@ export default function EditProfilePage() {
     if (usernameTimer.current) clearTimeout(usernameTimer.current);
     usernameTimer.current = setTimeout(async () => {
       const v = (value || '').trim();
-      if (!v || v.toLowerCase() === user.username.toLowerCase() || !USERNAME_RE.test(v)) {
-        setUsernameAvailable(v.toLowerCase() === user.username.toLowerCase() ? true : null);
+      if (!v || v.toLowerCase() === (user?.username || '').toLowerCase() || !USERNAME_RE.test(v)) {
+        setUsernameAvailable(v.toLowerCase() === (user?.username || '').toLowerCase() ? true : null);
         return;
       }
       setCheckingUsername(true);
@@ -229,6 +229,25 @@ export default function EditProfilePage() {
       return;
     }
 
+    // --- NEW: if we don't have a token, try to bootstrap via cookies/session before sending PUT ---
+    if (!token && typeof refreshUser === 'function') {
+      try {
+        const boot = await refreshUser();
+        if (!boot) {
+          addToast('Session expired — please sign in again', 'error');
+          navigate('/login');
+          return;
+        }
+        // If refreshUser succeeded, AuthContext likely updated token/user; continue to save
+      } catch (err) {
+        console.warn('refreshUser failed during save bootstrap', err);
+        addToast('Session expired — please sign in again', 'error');
+        navigate('/login');
+        return;
+      }
+    }
+    // --- END bootstrap ---
+
     setSaving(true);
     setErrors({});
 
@@ -270,7 +289,7 @@ export default function EditProfilePage() {
       // 3) usernameToSend logic (only if user unlocked and changed it)
       const usernameToSend = (usernameEditable &&
         form.username &&
-        form.username.trim().toLowerCase() !== (user.username || '').toLowerCase())
+        form.username.trim().toLowerCase() !== (user?.username || '').toLowerCase())
         ? form.username.trim()
         : undefined;
 
@@ -310,7 +329,7 @@ export default function EditProfilePage() {
       }
 
       // navigate to profile (use returned username if backend changed it)
-      const newUsername = payload.username || form.username || user.username;
+      const newUsername = payload.username || form.username || user?.username;
       navigate(`/${encodeURIComponent(newUsername)}`);
     } catch (err) {
       console.error('save profile - full error', err);
@@ -335,7 +354,6 @@ export default function EditProfilePage() {
 
 
 
-
   if (loading) {
     return (
       <div className="p-6 flex items-center justify-center">
@@ -346,6 +364,15 @@ export default function EditProfilePage() {
           </svg>
           Loading profile...
         </div>
+      </div>
+    );
+  }
+
+  // --- NEW: defensive early-return if user is null (prevents crashes if interceptor logs out) ---
+  if (!user) {
+    return (
+      <div className="p-6 flex items-center justify-center">
+        <div className="text-gray-600">Not signed in — redirecting...</div>
       </div>
     );
   }
@@ -373,8 +400,8 @@ export default function EditProfilePage() {
             <h1 className="text-2xl font-semibold">Edit profile</h1>
             <p className="text-sm text-gray-500 mt-1">Update personal details. Changes to username will change your public profile URL.</p>
             <div className="mt-3 text-sm text-gray-600">
-              <div className="font-medium">{user.name || user.username}</div>
-              <div className="text-gray-400">@{user.username}</div>
+              <div className="font-medium">{user?.name || user?.username}</div>
+              <div className="text-gray-400">@{user?.username}</div>
             </div>
           </div>
         </div>
@@ -515,7 +542,7 @@ export default function EditProfilePage() {
 
           {/* Actions */}
           <div className="flex justify-end gap-3">
-            <button onClick={() => navigate(`/${user.username}`)} className="px-4 py-2 border rounded-md">Cancel</button>
+            <button onClick={() => navigate(`/${user?.username || ''}`)} className="px-4 py-2 border rounded-md">Cancel</button>
             <button onClick={handleSave} disabled={saving || checkingUsername} className="px-4 py-2 bg-indigo-600 text-white rounded-md flex items-center gap-2 disabled:opacity-60">
               {saving ? (
                 <>

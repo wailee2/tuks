@@ -18,6 +18,16 @@ export const AuthProvider = ({ children }) => {
   const socketRef = useRef(null);
   const [socket, setSocket] = useState(null);
 
+  // inside AuthProvider (top-level, near other refs)
+  const bootstrapRanRef = useRef(false); // ensure bootstrap runs only once per mount
+  const authMeCooldownRef = useRef(0);   // timestamp until which we should not call /auth/me
+
+  const canCallAuthMe = () => {
+    const now = Date.now();
+    return now >= (authMeCooldownRef.current || 0);
+  };
+
+
   // 🔒 force logout helper
   const logout = () => {
     setUser(null);
@@ -159,37 +169,46 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     let mounted = true;
     const tryBootstrap = async () => {
-      // Only try when we have a persisted user but no token (common after OAuth redirect)
-      if (!user || token) return;
-      try {
-        // call /auth/me using api (withCredentials true) so cookie/session is used
-        const res = await api.get('/auth/me');
-        if (!mounted) return;
+      // Only attempt once per mount and only if we have a persisted user but no token
+      if (bootstrapRanRef.current) return;
+      bootstrapRanRef.current = true;
 
-        // server might return { user, token } OR just user object; handle both:
+      if (!user || token) return;
+      if (!canCallAuthMe()) {
+        // still in cooldown from a recent 429 => skip bootstrap
+        return;
+      }
+
+      try {
+        const res = await api.get('/auth/me'); // api has withCredentials true
+        if (!mounted) return;
         const body = res.data || {};
+
         if (body.token) {
-          // if server returned a token, persist it and set axios header
           api.defaults.headers.common['Authorization'] = `Bearer ${body.token}`;
           setToken(body.token);
           localStorage.setItem('token', body.token);
         }
-
-        // update user if server returned fresh user info
         const newUser = body.user || body;
         if (newUser && newUser.username) {
           setUser(newUser);
           localStorage.setItem('user', JSON.stringify(newUser));
         }
       } catch (err) {
-        // harmless: cookie/session might be invalid -> do nothing (we'll let normal flows handle logout)
-        console.warn('[AuthContext] cookie bootstrap /auth/me failed', err?.response?.status || err.message);
+        const status = err?.response?.status;
+        console.warn('[AuthContext] cookie bootstrap /auth/me failed', status || err?.message || err);
+
+        // If server sent 429, set a cooldown (avoid retrying for e.g. 60 seconds)
+        if (status === 429) {
+          authMeCooldownRef.current = Date.now() + 60 * 1000; // 60s cooldown
+        }
       }
     };
 
     tryBootstrap();
     return () => { mounted = false; };
-  }, [user, token]);
+  }, [user, token]); // keep dependencies as before
+
 
   
 
@@ -226,9 +245,13 @@ export const AuthProvider = ({ children }) => {
   const refreshUser = async () => {
     try {
       if (!token) {
-        // try cookie-based fetch
-        const res = await api.get('/auth/me');
+        if (!canCallAuthMe()) {
+          // We're in cooldown; avoid calling the server. Return null to indicate no refresh.
+          return null;
+        }
+        const res = await api.get('/auth/me'); // axios instance has withCredentials true
         const body = res.data || {};
+
         if (body.token) {
           api.defaults.headers.common['Authorization'] = `Bearer ${body.token}`;
           setToken(body.token);
@@ -242,17 +265,27 @@ export const AuthProvider = ({ children }) => {
         }
         return null;
       }
+
       const res = await api.get('/auth/me', { headers: { Authorization: `Bearer ${token}` } });
       setUser(res.data);
       return res.data;
     } catch (err) {
-      if (err.response?.status === 401 || err.response?.status === 403) {
+      const status = err?.response?.status;
+      if (status === 429) {
+        // set 60s cooldown to avoid hammering the rate limiter
+        authMeCooldownRef.current = Date.now() + 60 * 1000;
+        console.warn('[AuthContext] refreshUser 429 cooldown set for 60s');
+        return null;
+      }
+
+      if (status === 401 || status === 403) {
         logout();
       }
       console.error('refreshUser failed', err);
       return null;
     }
   };
+
 
 
   const refreshProfile = async () => {
