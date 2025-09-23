@@ -10,11 +10,15 @@ import {
   unblockUser,
   requestDelete
 } from '../services/profile';
-import ProfileSettingsModal from '../components/ProfileSettingsModal';
+import ProfileSettingsModal from '../components/profile/ProfileSettingsModal';
 import { useToasts } from '../context/ToastContext';
-import AvatarModal from '../components/AvatarModal';
-import NotFoundPlaceholder from "../components/NotFoundPlaceholder";
+import AvatarModal from '../components/profile/AvatarModal';
+import NotFoundPlaceholder from "../components/profile/NotFoundPlaceholder";
 import LoadingSpinner from "../components/LoadingSpinner";
+import { AnimatePresence, motion } from 'framer-motion';
+
+
+
 
 export default function ProfilePage() {
   const { username } = useParams();
@@ -30,6 +34,8 @@ export default function ProfilePage() {
   // NEW: image modal state + focus restore ref
   const [imageModalOpen, setImageModalOpen] = useState(false);
   const lastFocusedEl = useRef(null);
+
+  const [actionsOpen, setActionsOpen] = useState(false);
 
   const isOwner = user && user.username && user.username.toLowerCase() === (username || '').toLowerCase();
 
@@ -86,6 +92,8 @@ export default function ProfilePage() {
   }, [imageModalOpen]);
 
   const openImageModal = () => setImageModalOpen(true);
+
+  
 
   const handleFollow = async () => {
     try {
@@ -173,21 +181,21 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto p-6">
-      <div className="bg-white rounded-lg shadow p-6 flex gap-6">
+    <div className="max-w-4xl mx-auto p-2 md:p-6">
+      <div className="bg-white p-2 md:p-6 flex flex-col md:flex-row  gap-6 md:gap-20">
         {/* clickable avatar */}
         {profile.profile_pic ? (
           <img
             src={profile.profile_pic}
             alt={`${profile.name || profile.username}'s avatar`}
-            className="w-28 h-28 rounded-full object-cover cursor-pointer"
+            className="w-22 h-22 md:w-40 md:h-40 rounded-full object-cover cursor-pointer"
             onClick={openImageModal}
             role="button"
             aria-label="Open profile picture"
           />
         ) : (
           <div
-            className="w-28 h-28 flex items-center justify-center rounded-full 
+            className="w-22 h-22 md:w-40 md:h-40 flex items-center justify-center rounded-full 
                       bg-gray-300 text-gray-700 text-3xl font-semibold select-none"
             aria-label="Default profile picture"
           >
@@ -197,67 +205,96 @@ export default function ProfilePage() {
 
 
         <div className="flex-1">
+          <div className="flex items-center gap-4.5">
+            <div>
+              <div className="text-xl font-semibold">{profile.name}</div>
+            </div>
+            {isOwner ? (
+              <div className='flex gap-2'>
+                <button
+                  onClick={() => navigate(`/settings/edit-profile`)}
+                  className=" profilebutton  bg-indigo-600 text-white">
+                    Edit profile
+                </button>
+                <button
+                  onClick={() => setSettingsOpen(true)}
+                  className=" profilebutton bg-indigo-600 text-white">
+                    set
+                </button>
+              </div>
+            ) : (
+              <div className='flex gap-2'>
+                {!profile.is_following ? (
+                  <button onClick={handleFollow} className=" profilebutton bg-green-600 text-white">Follow</button>
+                ) : (
+                  <button onClick={handleUnfollow} className="profilebutton bg-gray-200 ">Unfollow</button>
+                )}
+
+                <button onClick={handleMessage} className="profilebutton bg-blue-600 text-white">Message</button>
+
+                {/* ellipsis / more actions button */}
+                <button
+                  onClick={() => setActionsOpen(true)}
+                  aria-label="More options"
+                  className="ml-2 p-1 rounded-full hover:bg-gray-100"
+                  title="More"
+                >
+                  {/* simple ellipsis icon (SVG) */}
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 12h.01M12 12h.01M18 12h.01" />
+                  </svg>
+                </button>
+
+              </div>
+            )}
+          </div>
           <div className="flex items-start justify-between">
             <div>
-              <div className="text-2xl font-semibold">{profile.name}</div>
               <div className="text-sm text-gray-500">@{profile.username}</div>
-              <div className="mt-3 text-sm">{profile.bio}</div>
-              <div className="mt-3 text-sm text-gray-600 flex gap-4">
-                <div>Posts: {profile.posts_count}</div>
-                <div>Followers: {profile.followers_count}</div>
-                <div>Following: {profile.following_count}</div>
-              </div>
 
-              <div className="mt-3 space-y-1 text-sm text-gray-700">
+              <div className="mt-4 text-sm max-w-xl md:max-w-md">{profile.bio}</div>
+        
+              <div className="mt-4 space-y-3 text-sm text-gray-700">
                 {profile.website && (
                   <div>🔗 <a href={profile.website} target="_blank" rel="noreferrer" className="text-blue-600 hover:underline">{profile.website}</a></div>
                 )}
 
                 {profile.email && isVisible('email') && (
-                  <div>✉️ {profile.email}</div>
+                  <div className='flex gap-1'>
+                    <span>✉️</span>
+                    {profile.email}
+                  </div>
+                )}
+                
+                {profile.location && isVisible('location') && (
+                  <div className='flex gap-1'>
+                    <span>📍</span>
+                    {profile.location}
+                  </div>
                 )}
 
                 {profile.dob && isVisible('dob') && (
-                  <div>🎂 {profile.dob}</div>
-                )}
-
-                {profile.location && isVisible('location') && (
-                  <div>📍 {profile.location}</div>
+                  <div className='flex gap-1'>
+                    <span>🎂</span>
+                    {profile.dob}
+                  </div>
                 )}
               </div>
-            </div>
 
-            <div className="flex flex-col items-end gap-2">
-              {isOwner ? (
-                <>
-                  <button onClick={() => navigate(`/settings/edit-profile`)} className="px-3 py-1 bg-indigo-600 text-white rounded">Edit profile</button>
-                  <button onClick={() => setSettingsOpen(true)} className="text-gray-600">
-                    <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none"> ... </svg>
-                  </button>
-                   <button onClick={() => setSettingsOpen(true)} className="text-gray-600">settings</button>
-                </>
-              ) : (
-                <>
-                  {!profile.is_following ? (
-                    <button onClick={handleFollow} className="px-3 py-1 bg-green-600 text-white rounded">Follow</button>
-                  ) : (
-                    <button onClick={handleUnfollow} className="px-3 py-1 bg-gray-200 rounded">Unfollow</button>
-                  )}
-
-                  <button onClick={handleMessage} className="px-3 py-1 bg-blue-600 text-white rounded">Message</button>
-
-                  {profile.is_blocked_by_viewer ? (
-                    <button onClick={handleUnblock} className="px-3 py-1 bg-gray-200 rounded">Unblock</button>
-                  ) : (
-                    <button onClick={handleBlock} disabled={blocking} className="px-3 py-1 bg-red-600 text-white rounded">Block</button>
-                  )}
-
-                  <div className="flex gap-2 mt-2">
-                    <button onClick={handleReport} className="text-sm text-gray-600">Report</button>
-                    <button onClick={handleShare} className="text-sm text-gray-600">Share</button>
-                  </div>
-                </>
-              )}
+              <div className="mt-4 text-sm text-gray-600 flex gap-8">
+                <div>
+                  <span className='font-bold text-black'>{profile.posts_count} </span>
+                  <span>posts</span>
+                </div>
+                <div>
+                  <span className='font-bold text-black'>{profile.followers_count} </span>
+                  <span>followers</span>
+                </div>
+                <div>
+                  <span className='font-bold text-black'>{profile.following_count} </span>
+                  <span>following</span>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -273,7 +310,87 @@ export default function ProfilePage() {
 
 
       {/* Settings modal */}
-      {settingsOpen && <ProfileSettingsModal onClose={() => setSettingsOpen(false)} onRequestDelete={handleDeleteRequest} />}
+      <AnimatePresence>
+        {settingsOpen && (
+          <ProfileSettingsModal
+            onClose={() => setSettingsOpen(false)}
+            onRequestDelete={handleDeleteRequest}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Actions modal opened by the "..." button */}
+      <AnimatePresence>
+        {actionsOpen && (
+          <motion.div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setActionsOpen(false)}
+          >
+
+            {/* panel */}
+            <motion.div
+              className="relative z-60 bg-white/20 backdrop-blur-md border border-white/20 shadow-2xl rounded-2xl p-6 w-full max-w-sm mx-4"
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.8, opacity: 0 }}
+              transition={{ type: "spring", stiffness: 200, damping: 20 }}
+              onClick={(e) => e.stopPropagation()}
+              role="dialog"
+              aria-modal="true"
+            >
+              <h3 className="text-lg font-semibold mb-3 text-white">More</h3>
+
+              <div className="space-y-3">
+                {/* BLOCK / UNBLOCK moved here */}
+                <div className="flex gap-2">
+                  {profile.is_blocked_by_viewer ? (
+                    <button
+                      onClick={() => { setActionsOpen(false); handleUnblock(); }}
+                      className="w-full px-3 py-2 bg-gray-200 text-black rounded hover:scale-[1.02] transition"
+                    >
+                      Unblock
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => { setActionsOpen(false); handleBlock(); }}
+                      disabled={blocking}
+                      className="w-full px-3 py-2 bg-red-600 text-white rounded hover:opacity-90 transition"
+                    >
+                      Block
+                    </button>
+                  )}
+                </div>
+                <div className="flex flex-col  gap-2 mt-2">
+                  <button
+                    onClick={() => { setActionsOpen(false); handleReport(); }}
+                    className="text-sm  w-full cursor-pointer py-2 bg-gray-800/60 hover:scale-[1.02] transition text-red-400"
+                  >
+                    Report
+                  </button>
+                  <button
+                    onClick={() => { setActionsOpen(false); handleShare(); }}
+                    className="text-sm w-full cursor-pointer py-2 hover:scale-[1.02] transition bg-gray-800/60 rounded text-white"
+                  >
+                    Share
+                  </button>
+                </div>
+
+                <div className="flex justify-end mt-3">
+                  <button
+                    onClick={() => setActionsOpen(false)}
+                    className="px-3 py-1 border rounded bg-white/5 text-white hover:bg-white/10"
+                  >
+                    Close
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
