@@ -1,4 +1,4 @@
-// routes/authRoutes
+// routes/authRoutes.js
 const express = require('express');
 const rateLimit = require('express-rate-limit');
 const { register, login, checkUsername, me } = require('../controllers/authController');
@@ -9,6 +9,9 @@ const jwt = require("jsonwebtoken");
 const router = express.Router();
 
 const isProd = process.env.NODE_ENV === 'production';
+
+// --- REQUIRED: define CLIENT_ORIGIN from env (fallback to localhost dev URL) ---
+const CLIENT_ORIGIN = process.env.CLIENT_ORIGIN || 'http://localhost:5173';
 
 /* ---------- Per-account login limiter ---------- */
 const loginAccountLimiter = rateLimit({
@@ -40,26 +43,35 @@ router.post('/login', loginIpLimiter, loginAccountLimiter, login);
 router.get('/check-username', checkUsername);
 router.get('/me', authMiddleware, me);
 
-
-
 router.get('/google', passport.authenticate('google', { scope: ['profile','email'] }));
 
 router.get('/google/callback',
   passport.authenticate('google', { session: false, failureRedirect: '/login' }),
   (req, res) => {
-    // req.user set by passport
     const user = req.user;
     const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET, { expiresIn: '7d' });
 
-    res.cookie('token', token, {
+    // Build cookie options
+    const cookieOpts = {
       httpOnly: true,
-      secure: isProd,                 // true only in production (requires HTTPS)
-      sameSite: isProd ? 'none' : 'lax', // none in prod for cross-site; lax in dev is fine with proxy
+      secure: isProd ? true : false,            // secure required with sameSite 'none' in prod
+      sameSite: isProd ? 'none' : 'lax',        // allow cross-site only in prod with secure:true
+      path: '/',                                // make cookie available to /api/*
       maxAge: 7 * 24 * 60 * 60 * 1000,
-    });
+    };
 
-    res.redirect(`${process.env.CLIENT_ORIGIN}/auth/success`);
+    // Only set domain in production (set to your real domain), NOT on localhost
+    if (isProd && process.env.COOKIE_DOMAIN) {
+      cookieOpts.domain = process.env.COOKIE_DOMAIN;
+    }
+
+    res.cookie('token', token, cookieOpts);
+
+    // Redirect back to client. Add a small flag so the client can proactively call /auth/me.
+    const redirectTo = (process.env.CLIENT_ORIGIN || 'http://localhost:5173') + '/?oauth=1';
+    res.redirect(redirectTo);
   }
 );
+
 
 module.exports = router;

@@ -169,21 +169,22 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     let mounted = true;
     const tryBootstrap = async () => {
-      // Only attempt once per mount and only if we have a persisted user but no token
       if (bootstrapRanRef.current) return;
       bootstrapRanRef.current = true;
 
-      if (!user || token) return;
-      if (!canCallAuthMe()) {
-        // still in cooldown from a recent 429 => skip bootstrap
-        return;
-      }
+      // If we already have token in state/localStorage we can skip the cookie-only flow
+      if (token) return;
+
+      // If we're in cooldown from rate limiting, skip
+      if (!canCallAuthMe()) return;
 
       try {
-        const res = await api.get('/auth/me'); // api has withCredentials true
+        // This request will send cookies (api has withCredentials: true)
+        const res = await api.get('/auth/me');
         if (!mounted) return;
         const body = res.data || {};
 
+        // server may return { token, user } OR just user
         if (body.token) {
           api.defaults.headers.common['Authorization'] = `Bearer ${body.token}`;
           setToken(body.token);
@@ -197,8 +198,6 @@ export const AuthProvider = ({ children }) => {
       } catch (err) {
         const status = err?.response?.status;
         console.warn('[AuthContext] cookie bootstrap /auth/me failed', status || err?.message || err);
-
-        // If server sent 429, set a cooldown (avoid retrying for e.g. 60 seconds)
         if (status === 429) {
           authMeCooldownRef.current = Date.now() + 60 * 1000; // 60s cooldown
         }
@@ -207,7 +206,22 @@ export const AuthProvider = ({ children }) => {
 
     tryBootstrap();
     return () => { mounted = false; };
-  }, [user, token]); // keep dependencies as before
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // run once on mount
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('oauth') === '1') {
+      // clear the param so we don't run repeatedly
+      const url = new URL(window.location.href);
+      url.searchParams.delete('oauth');
+      window.history.replaceState({}, '', url.toString());
+
+      // attempt to refresh from cookie
+      refreshUser();
+    }
+  }, []);
+
 
 
   

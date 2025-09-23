@@ -1,56 +1,51 @@
 // services/profile.js
 import api from './api.js';
 
+// GET /profile/:username
 export const getProfile = async (username, token) => {
-  const res = await api.get(`/profile/${encodeURIComponent(username)}`, {
-    headers: token ? { Authorization: `Bearer ${token}` } : {}
-  });
+  const opts = { withCredentials: true };
+  if (token) opts.headers = { Authorization: `Bearer ${token}` };
+  const res = await api.get(`/profile/${encodeURIComponent(username)}`, opts);
   return res.data;
 };
 
+// PUT /profile
 export const updateProfile = async (token, payload) => {
-  // if caller passes token, explicitly send Authorization header;
-  // otherwise rely on cookies (api.withCredentials = true).
-  const opts = {};
+  const opts = { withCredentials: true };
   if (token) opts.headers = { Authorization: `Bearer ${token}` };
-  // ensure withCredentials true even for explicit header calls
-  opts.withCredentials = true;
   const res = await api.put('/profile', payload, opts);
   return res.data;
 };
 
+// POST /profile/avatar
+export const uploadAvatar = async (token, file) => {
+  const form = new FormData();
+  form.append('avatar', file);
 
+  const opts = {
+    withCredentials: true, // ensure cookies are sent
+    headers: {
+      // 'Content-Type' will be set automatically by axios when using FormData,
+      // but keep withCredentials here.
+    },
+  };
 
-
-export async function uploadAvatar(token, file) {
-  const fd = new FormData();
-  fd.append('avatar', file); // matches upload.single('avatar') on the server
-
-  try {
-    const res = await api.post('/profile/avatar', fd, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        // do NOT set Content-Type manually — axios will set the boundary
-      },
-    });
-    return res.data;
-  } catch (err) {
-    // helpful debug info
-    console.error('uploadAvatar error', err.response?.status, err.response?.data);
-    throw err;
+  // Only add Authorization header when token is explicitly provided
+  if (token) {
+    opts.headers = { ...(opts.headers || {}), Authorization: `Bearer ${token}` };
   }
-}
 
-
-
-export const checkUsername = async (token, username) => {
-  const res = await api.get('/profile/check-username', {
-    headers: token ? { Authorization: `Bearer ${token}` } : {},
-    params: { username }
-  });
+  const res = await api.post('/profile/avatar', form, opts);
   return res.data;
 };
 
+// check username
+export const checkUsername = async (token, username) => {
+  const opts = { withCredentials: true };
+  if (token) opts.headers = { Authorization: `Bearer ${token}` };
+  const res = await api.get(`/profile/check-username?username=${encodeURIComponent(username)}`, opts);
+  return res.data;
+};
 
 export const followUser = async (token, username) => {
   const res = await api.post(`/profile/${encodeURIComponent(username)}/follow`, {}, {
