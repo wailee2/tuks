@@ -134,23 +134,24 @@ export const AuthProvider = ({ children }) => {
     else localStorage.removeItem('profile');
   }, [profile]);
 
+
   useEffect(() => {
     let mounted = true;
     let fetching = false;
 
-    if (!token || !user?.username) {
+    // only require username — allow cookie-based auth (no token in localStorage)
+    if (!user?.username) {
       setProfile(null);
       return;
     }
 
     (async () => {
-      // avoid overlapping calls
       if (fetching) return;
       fetching = true;
       try {
+        // pass token if available, otherwise rely on cookie-based auth
         const p = await fetchProfileFromApi(user.username, token);
         if (!mounted) return;
-        // shallow compare to avoid unnecessary setProfile (prevents re-renders)
         const same = profile && profile.id === p.id && profile.updatedAt === p.updatedAt;
         if (!same) setProfile(p);
       } catch (err) {
@@ -160,11 +161,9 @@ export const AuthProvider = ({ children }) => {
       }
     })();
 
-    return () => {
-      mounted = false;
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    return () => { mounted = false; };
   }, [user?.username, token]);
+
 
   useEffect(() => {
     let mounted = true;
@@ -301,10 +300,12 @@ export const AuthProvider = ({ children }) => {
   };
 
 
-
   const refreshProfile = async () => {
     try {
-      if (!token || !user?.username) return null;
+      // require username only; token optional for cookie-based sessions
+      if (!user?.username) return null;
+
+      // pass token if available; fetchProfileFromApi handles withCredentials
       const p = await fetchProfileFromApi(user.username, token);
       setProfile(p);
       return p;
@@ -313,6 +314,7 @@ export const AuthProvider = ({ children }) => {
       return null;
     }
   };
+
 
   return (
     <AuthContext.Provider

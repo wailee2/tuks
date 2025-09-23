@@ -60,6 +60,20 @@ function Sidebar() {
 
   const avatar = profile?.profile_pic || "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='48' height='48'><rect width='48' height='48' fill='%23ddd'/><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' font-size='18' fill='%23666'>U</text></svg>";
 
+  const defaultSvg = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='48' height='48'><rect width='48' height='48' fill='%23ddd'/><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' font-size='18' fill='%23666'>U</text></svg>";
+
+  // choose profile or fallback to user (server might put avatar on user object)
+  const avatarUrl = profile?.profile_pic || user?.profile_pic || null;
+
+  // add cache-busting query so updated file is re-fetched (avoid stale image in browser cache)
+  const addCacheBust = (url) => {
+    if (!url) return null;
+    const stamp = (profile && profile.updatedAt) ? encodeURIComponent(profile.updatedAt) : Date.now();
+    return url + (url.includes('?') ? '&' : '?') + `v=${stamp}`;
+  };
+
+
+
   const displayName = user?.name || user?.username || "Guest";
 
 
