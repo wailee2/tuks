@@ -207,7 +207,7 @@ export const AuthProvider = ({ children }) => {
     tryBootstrap();
     return () => { mounted = false; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // run once on mount
+  }, []); 
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
