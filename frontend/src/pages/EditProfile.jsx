@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { checkUsername as apiCheckUsername, getProfile, updateProfile, uploadAvatar } from '../services/profile';
 import { AuthContext } from '../context/AuthContext';
 import { useToasts } from '../context/ToastContext';
+import { MdEdit } from "react-icons/md";
 
 const USERNAME_RE = /^[a-zA-Z0-9._-]{3,30}$/;
 const MAX_BIO = 200;
@@ -155,7 +156,7 @@ export default function EditProfilePage() {
         />
 
         {/* track */}
-        <div className={`w-full h-full rounded-full transition ${checked ? 'bg-indigo-600' : 'bg-gray-200'}`} />
+        <div className={`w-full h-full rounded-full transition ${checked ? 'bg-green-500' : 'bg-gray-200'}`} />
 
         {/* knob */}
         <div
@@ -373,7 +374,6 @@ export default function EditProfilePage() {
     );
   }
 
-  // --- NEW: defensive early-return if user is null (prevents crashes if interceptor logs out) ---
   if (!user) {
     return (
       <div className="p-6 flex items-center justify-center">
@@ -384,7 +384,8 @@ export default function EditProfilePage() {
 
   return (
     <div className="max-w-3xl mx-auto p-6">
-      <div className="bg-white rounded-2xl shadow-lg p-6">
+      <h1 className="text-3xl font-semibold mb-4">Edit profile</h1>
+      <div className="bg-white rounded-2xl shadow-nlg p-6">
         <div className="flex items-start gap-6">
           {/* Avatar */}
           <div className="flex-shrink-0">
@@ -394,19 +395,10 @@ export default function EditProfilePage() {
                 alt="avatar"
                 className="w-full h-full object-cover"
               />
-              <label className="absolute bottom-2 right-2 bg-white bg-opacity-90 text-gray-700 px-2 py-1 text-xs rounded cursor-pointer shadow">
-                Change
+              <label className="absolute bottom-1 right-1 bg-green-500 bg-opacity-90 text-white p-2 text-xs rounded-full cursor-pointer shadow">
+                <MdEdit className="text-lg"/>
                 <input type="file" accept="image/*" className="hidden" onChange={handleAvatarSelect} />
               </label>
-            </div>
-          </div>
-
-          <div className="flex-1">
-            <h1 className="text-2xl font-semibold">Edit profile</h1>
-            <p className="text-sm text-gray-500 mt-1">Update personal details. Changes to username will change your public profile URL.</p>
-            <div className="mt-3 text-sm text-gray-600">
-              <div className="font-medium">{user?.name || user?.username}</div>
-              <div className="text-gray-400">@{user?.username}</div>
             </div>
           </div>
         </div>
@@ -414,11 +406,11 @@ export default function EditProfilePage() {
         {/* Form */}
         <div className="mt-6 space-y-5">
           <div>
-            <label className="block text-sm font-medium text-gray-700">Name</label>
+            <label className="block text-sm font-medium text-gray-700">Full Name</label>
             <input
               value={form.name}
               onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
-              className={`mt-1 block w-full rounded-md border-gray-200 shadow-sm px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 ${errors.name ? 'border-red-500' : ''}`}
+              className={`profileinput  ${errors.name ? 'border-red-500' : ''}`}
               placeholder="Your full name"
             />
             {errors.name && <div className="text-xs text-red-600 mt-1">{errors.name}</div>}
@@ -436,11 +428,11 @@ export default function EditProfilePage() {
                 {usernameEditable ? 'Lock' : 'Edit'}
               </button>
             </div>
-            <div className="flex items-center gap-3 mt-2">
+            <div className="flex items-center gap-3">
               <input
                 value={form.username}
                 onChange={e => handleUsernameChange(e.target.value)}
-                className={`flex-1 rounded-md border-gray-200 shadow-sm px-3 py-2 ${errors.username ? 'border-red-500' : ''}`}
+                className={`flex-1 profileinput ${errors.username ? 'border-red-500' : ''}`}
                 aria-invalid={!!errors.username}
                 readOnly={!usernameEditable}
               />
@@ -470,12 +462,20 @@ export default function EditProfilePage() {
             <label className="block text-sm font-medium text-gray-700">Email</label>
             <input
               value={form.email}
-              className={`mt-1 block w-full rounded-md border-gray-200 shadow-sm px-3 py-2 ${errors.email ? 'border-red-500' : ''}`}
+              className={`profileinput ${errors.email ? 'border-red-500' : ''}`}
               readOnly
               aria-readonly
             />
-            <div className="text-xs text-gray-500 mt-1">Email is used for authentication and cannot be changed here. Contact support to update it.</div>
+            <div className="text-xs text-gray-500 mt-1">Email is used for authentication and cannot be changed.</div>
             {errors.email && <div className="text-xs text-red-600 mt-1">{errors.email}</div>}
+            
+            {/* Email visibility */}
+            <ToggleSwitch
+              checked={form.email_visible}
+              onChange={(val) => setForm(f => ({ ...f, email_visible: val }))}
+              label="Make email visible to others"
+              ariaLabel="Make email visible to others"
+            />
           </div>
 
           {/* Bio */}
@@ -484,7 +484,7 @@ export default function EditProfilePage() {
             <textarea
               value={form.bio}
               onChange={e => setForm(f => ({ ...f, bio: e.target.value }))}
-              className={`mt-1 block w-full rounded-md border-gray-200 shadow-sm px-3 py-2 ${errors.bio ? 'border-red-500' : ''}`}
+              className={`profileinput ${errors.bio ? 'border-red-500' : ''}`}
               rows={4}
             />
             <div className="text-xs text-gray-500 mt-1">{(form.bio || '').length}/{MAX_BIO}</div>
@@ -497,7 +497,7 @@ export default function EditProfilePage() {
             <input
               value={form.website}
               onChange={e => setForm(f => ({ ...f, website: e.target.value }))}
-              className={`mt-1 block w-full rounded-md border-gray-200 shadow-sm px-3 py-2 ${errors.website ? 'border-red-500' : ''}`}
+              className={`profileinput ${errors.website ? 'border-red-500' : ''}`}
               placeholder="https://your-website.com"
             />
             {errors.website && <div className="text-xs text-red-600 mt-1">{errors.website}</div>}
@@ -505,15 +505,14 @@ export default function EditProfilePage() {
 
           {/* DOB & Location */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* old DOB toggle block -> replace with: */}
             <div>
               <label className="block text-sm font-medium text-gray-700">Date of birth</label>
-              <input type="date" value={form.dob || ''} onChange={e => setForm(f => ({ ...f, dob: e.target.value }))} className="mt-1 block w-full rounded-md border-gray-200 shadow-sm px-3 py-2" />
+              <input type="date" value={form.dob || ''} onChange={e => setForm(f => ({ ...f, dob: e.target.value }))} className="profileinput" />
 
               <ToggleSwitch
                 checked={form.dob_visible}
                 onChange={(val) => setForm(f => ({ ...f, dob_visible: val }))}
-                label="Make DOB visible"
+                label="Show DOB"
                 ariaLabel="Make date of birth visible"
               />
             </div>
@@ -522,7 +521,7 @@ export default function EditProfilePage() {
             {/* Location field */}
             <div>
               <label className="block text-sm font-medium text-gray-700">Location</label>
-              <input value={form.location || ''} onChange={e => setForm(f => ({ ...f, location: e.target.value }))} className="mt-1 block w-full rounded-md border-gray-200 shadow-sm px-3 py-2" />
+              <input value={form.location || ''} onChange={e => setForm(f => ({ ...f, location: e.target.value }))} className="profileinput" />
 
               <ToggleSwitch
                 checked={form.location_visible}
@@ -531,24 +530,12 @@ export default function EditProfilePage() {
                 ariaLabel="Show location"
               />
             </div>
-
           </div>
-
-          {/* Email visibility */}
-          <div>
-            <ToggleSwitch
-              checked={form.email_visible}
-              onChange={(val) => setForm(f => ({ ...f, email_visible: val }))}
-              label="Make email visible to others"
-              ariaLabel="Make email visible to others"
-            />
-          </div>
-
 
           {/* Actions */}
-          <div className="flex justify-end gap-3">
-            <button onClick={() => navigate(`/${user?.username || ''}`)} className="px-4 py-2 border rounded-md">Cancel</button>
-            <button onClick={handleSave} disabled={saving || checkingUsername} className="px-4 py-2 bg-indigo-600 text-white rounded-md flex items-center gap-2 disabled:opacity-60">
+          <div className="flex justify-end gap-3 mt-3">
+            <button onClick={() => navigate(`/${user?.username || ''}`)} className="border profilebut text-green-500 hover:bg-green-500 hover:text-white">Cancel</button>
+            <button onClick={handleSave} disabled={saving || checkingUsername} className=" bg-green-500 text-white flex items-center gap-2 disabled:opacity-60 profilebut">
               {saving ? (
                 <>
                   <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">

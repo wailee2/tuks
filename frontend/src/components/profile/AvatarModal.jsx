@@ -48,7 +48,7 @@ export default function AvatarModal({ src, alt = 'Profile picture', open = false
         animate={{ scale: 1, opacity: 1 }}
         exit={{ scale: 0.8, opacity: 0 }}
         transition={{ type: "spring", stiffness: 200, damping: 20 }}
-        className="max-w-full max-h-full rounded-lg shadow-lg overflow-hidden relative"
+        className="max-w-full max-h-full rounded-full shadow-lg overflow-hidden relative"
         onClick={(e) => e.stopPropagation()}
       >
         <button
@@ -62,7 +62,7 @@ export default function AvatarModal({ src, alt = 'Profile picture', open = false
         <img
           src={src || '/default-avatar.png'}
           alt={alt}
-          className="block max-w-[95vw] max-h-[95vh] object-contain bg-white"
+          className="block max-w-[90vw] max-h-[90vh] object-contain bg-white"
           loading="eager"
         />
       </motion.div>

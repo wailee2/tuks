@@ -9,3 +9,10 @@
    @apply bg-[#3f413e]
 }
  
+.profileinput{
+    @apply mt-1 block w-full rounded-md border border-gray-200 shadow-sm px-3 py-2
+}
+
+.profilebut{
+    @apply rounded-full px-6 py-2 text-[15px] font-semibold cursor-pointer hover:opacity-80
+}
