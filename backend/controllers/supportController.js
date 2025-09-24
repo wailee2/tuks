@@ -187,7 +187,7 @@ const postComment = async (req, res) => {
     const ticket = await getTicketById(ticketId);
     if (!ticket) return res.status(404).json({ message: 'Ticket not found' });
 
-    if (ticket.created_by !== req.user.id && !['SUPPORT','ADMIN'].includes(req.user.role)) {
+    if (ticket.created_by !== req.user.id && !['SUPPORT','ADMIN', 'OWNER'].includes(req.user.role)) {
       return res.status(403).json({ message: 'Forbidden' });
     }
 
