@@ -43,7 +43,9 @@ export default function AppRoutes() {
             <Route path="/marketplace" element={<Marketplace />} />
             <Route
               path="/manage-users"
-              element={user?.role === 'ADMIN' ? <ManageUsers /> : <Navigate to="/dashboard" />}
+              element={(user?.role === 'ADMIN' || user?.role === 'OWNER') 
+                ? <ManageUsers /> 
+                : <Navigate to="/dashboard" />}
             />
             <Route path="/orders" element={<OrdersList />} />
             <Route path="/orders/:id" element={<OrderDetails />} />

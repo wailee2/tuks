@@ -347,7 +347,10 @@ export default function ManageUsers() {
                       {visibleFields.includes("role") && (
                         <td
                           className="px-6 py-4 cursor-pointer"
-                          onClick={() => openUserModal(u)}
+                          onClick={() => {
+                            if (u.role === "OWNER" && user.role !== "OWNER") return; // block editing owner
+                            openUserModal(u);
+                          }}
                           title={`${u.role}${u.disabled ? " (Disabled)" : ""}`}
                           aria-label={`Role: ${u.role}`}
                         >
@@ -364,28 +367,33 @@ export default function ManageUsers() {
                       )}
                       {visibleFields.includes("status") && (
                         <td className="px-6 py-4 flex items-center gap-2">
-                          {u.id !== user.id && user.role === "ADMIN" && (
+                          {u.id !== user.id && (user.role === "ADMIN" || user.role === "OWNER") && (
                             <>
-                              {!u.disabled ? (
-                                <motion.button
-                                  whileTap={{ scale: 0.9 }}
-                                  whileHover={{ scale: 1.1 }}
-                                  onClick={() => handleDisableToggle(u.id, true)}
-                                  className="flex items-center gap-1 px-3 py-1 text-green-500 hover:text-green-600 transition"
-                                >
-                                  <CheckCircle className="h-5 w-5" />
-                                  <span className="text-sm">Active</span>
-                                </motion.button>
-                              ) : (
-                                <motion.button
-                                  whileTap={{ scale: 0.9 }}
-                                  whileHover={{ scale: 1.1 }}
-                                  onClick={() => handleDisableToggle(u.id, false)}
-                                  className="flex items-center gap-1 px-3 py-1 text-red-500 hover:text-red-600 transition"
-                                >
-                                  <XCircle className="h-5 w-5" />
-                                  <span className="text-sm">Disabled</span>
-                                </motion.button>
+                              {/* 🚨 Block non-owners from toggling OWNER accounts */}
+                              {!(u.role === "OWNER" && user.role !== "OWNER") && (
+                                <>
+                                  {!u.disabled ? (
+                                    <motion.button
+                                      whileTap={{ scale: 0.9 }}
+                                      whileHover={{ scale: 1.1 }}
+                                      onClick={() => handleDisableToggle(u.id, true)}
+                                      className="flex items-center gap-1 px-3 py-1 text-green-500 hover:text-green-600 transition"
+                                    >
+                                      <CheckCircle className="h-5 w-5" />
+                                      <span className="text-sm">Active</span>
+                                    </motion.button>
+                                  ) : (
+                                    <motion.button
+                                      whileTap={{ scale: 0.9 }}
+                                      whileHover={{ scale: 1.1 }}
+                                      onClick={() => handleDisableToggle(u.id, false)}
+                                      className="flex items-center gap-1 px-3 py-1 text-red-500 hover:text-red-600 transition"
+                                    >
+                                      <XCircle className="h-5 w-5" />
+                                      <span className="text-sm">Disabled</span>
+                                    </motion.button>
+                                  )}
+                                </>
                               )}
                             </>
                           )}
@@ -551,7 +559,7 @@ export default function ManageUsers() {
             </div>
 
             <div className="grid gap-2">
-              {['USER', 'MODERATOR', 'SUPPORT', 'ANALYST', 'ADMIN'].map((r) => {
+              {['USER', 'MODERATOR', 'SUPPORT', 'ANALYST', 'ADMIN', ...(user.role === 'OWNER' ? ['OWNER'] : [])].map((r) => {
                 const RoleIcon = roleIconMap[r] || User;
                 return (
                   <button

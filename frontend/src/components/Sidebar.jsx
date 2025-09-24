@@ -41,9 +41,10 @@ function Sidebar() {
     { name: "Notifications", path: "/notifications", icon: <FiBell aria-hidden /> },
     //{ name: "Cart", path: "/cart", icon: <FiShoppingCart aria-hidden /> },
     { name: "Support", path: "/support", icon: <FiHelpCircle aria-hidden /> },
-    ...(user?.role === "ADMIN"
+    ...((user?.role === "ADMIN" || user?.role === "OWNER")
       ? [{ name: "Manage Users", path: "/manage-users", icon: <FiUsers aria-hidden /> }]
       : []),
+
   ];
 
   // responsive sizing: full-width bottom on small, narrow at md, larger at lg

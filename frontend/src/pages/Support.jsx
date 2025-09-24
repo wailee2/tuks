@@ -20,7 +20,7 @@ export default function Support() {
   }
 
   // Only SUPPORT and ADMIN see the dashboard (but disabled-login already handled above)
-  if (user.role === 'SUPPORT' || user.role === 'ADMIN') {
+  if (user.role === 'SUPPORT' || user.role === 'ADMIN' || user.role === 'OWNER')  {
     return <SupportDashboard />;
   }
 
