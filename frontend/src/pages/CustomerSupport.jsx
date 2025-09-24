@@ -29,6 +29,16 @@ export default function CustomerSupport() {
   const [commentText, setCommentText] = useState('');
   const [loadingTicketDetail, setLoadingTicketDetail] = useState(false);
 
+  const commentsRef = useRef(null);
+
+  useEffect(() => {
+    // auto-scroll to bottom when comments change
+    if (commentsRef.current) {
+      commentsRef.current.scrollTop = commentsRef.current.scrollHeight;
+    }
+  }, [ticketComments]);
+
+
   // ref to the create ticket form for scrolling from banner CTA
   const formRef = useRef(null);
 
@@ -258,14 +268,46 @@ export default function CustomerSupport() {
 
             <div className="mt-4">
               <h5 className="font-medium mb-2">Conversation</h5>
-              <div className="space-y-3 max-h-64 overflow-auto p-2 bg-gray-50 rounded">
-                {ticketComments.map(c => (
-                  <div key={c.id} className="bg-white p-2 rounded shadow-sm">
-                    <div className="text-xs text-gray-600">{c.author_name || 'Support'} • {new Date(c.created_at).toLocaleString()}</div>
-                    <div className="text-sm mt-1">{c.message}</div>
-                  </div>
-                ))}
+              {/* Conversation (chat-like) */}
+              <div
+                ref={commentsRef}
+                className="space-y-3 max-h-64 overflow-auto p-2 bg-gray-50 rounded"
+              >
+                {ticketComments.map(c => {
+                  const isCustomer = c.author_id === user.id;
+                  // bubble + avatar colors: customer = blue, support = red
+                  const bubbleClasses = isCustomer
+                    ? "bg-blue-600 text-white rounded-lg rounded-br-none"
+                    : "bg-red-600 text-white rounded-lg rounded-bl-none";
+
+                  // avatar bg (slightly lighter)
+                  const avatarClasses = isCustomer ? "bg-blue-500 text-white" : "bg-red-500 text-white";
+
+                  // friendly label
+                  const authorLabel = c.author_name || (isCustomer ? "You" : "Support");
+
+                  return (
+                    <div key={c.id} className={`flex ${isCustomer ? "justify-end" : "justify-start"}`}>
+                      <div className={`flex items-end gap-2 max-w-[80%] ${isCustomer ? "flex-row-reverse" : ""}`}>
+                        {/* avatar */}
+                        <div className="flex-shrink-0">
+                          <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${avatarClasses}`}>
+                            {String(authorLabel).slice(0,1).toUpperCase()}
+                          </div>
+                        </div>
+
+                        {/* bubble */}
+                        <div className={`p-2 ${bubbleClasses} break-words whitespace-pre-wrap`}>
+                          <div className="text-xs opacity-80">{authorLabel} • {new Date(c.created_at).toLocaleString()}</div>
+                          <div className="text-sm mt-1">{c.message}</div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
+
+
 
               <div className="mt-3 flex gap-2">
                 <input value={commentText} onChange={(e) => setCommentText(e.target.value)} placeholder="Write a reply..." className="flex-1 border px-3 py-2 rounded" />

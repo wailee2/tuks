@@ -183,10 +183,17 @@ export default function SupportDashboard() {
           </div>
         </div>
 
-        <div className="max-h-[60vh] overflow-auto divide-y">
+        <div className="max-h-[60vh] overflow-auto">
           {loading ? <LoadingSpinner message="." />: tickets.map(t => (
-            <div key={t.id} className="py-2 cursor-pointer hover:bg-gray-50" onClick={() => openTicket(t.id)}>
-              <div className="flex justify-between items-start">
+            <div
+              key={t.id}
+              onClick={() => openTicket(t.id)}
+              className={
+                `cursor-pointer space-y-2 mt-2 rounded-md 
+                ${selected?.id === t.id ? 'bg-green-100 ' : 'hover:bg-gray-100'}`
+              }
+            >
+              <div className="flex justify-between px-3 py-3 items-start">
                 <div>
                   <div className="font-medium">{t.subject}</div>
                   <div className="text-xs text-gray-500">{t.category} • {t.created_by_name}</div>
@@ -271,15 +278,38 @@ export default function SupportDashboard() {
 
             <div className="mt-6">
               <h4 className="font-medium mb-2">Conversation</h4>
-              <div className="space-y-3 max-h-56 overflow-auto p-2 bg-gray-50 rounded">
-                {comments.map(c => (
-                  <div key={c.id} className="bg-white p-2 rounded shadow-sm">
-                    <div className="text-xs text-gray-600">{c.author_name} • {new Date(c.created_at).toLocaleString()}</div>
-                    <div className="text-sm mt-1">{c.message}</div>
-                  </div>
-                ))}
-              </div>
+              {/* Conversation list: customer = blue, support/admin = red */}
+              <div className="space-y-3 max-h-56 overflow-auto p-2 bg-gray-50 rounded-md flex flex-col">
+                {comments.map((c) => {
+                  // Determine role:
+                  // - Prefer an explicit author_role from the comment if available.
+                  // - Fallback: if comment author id/username matches ticket creator, treat as CUSTOMER.
+                  // - Otherwise treat as support (SUPPORT/ADMIN/OWNER).
+                  const authorRole = c.author_role ? c.author_role.toUpperCase() : null;
+                  const isCustomer = authorRole
+                    ? authorRole === 'CUSTOMER'
+                    : (selected && (c.author_id === selected.created_by || c.author_username === selected.created_by_username));
+                  const isSupport = authorRole
+                    ? (authorRole === 'SUPPORT' || authorRole === 'ADMIN' || authorRole === 'OWNER')
+                    : !isCustomer;
 
+                  return (
+                    <div key={c.id} className={`flex ${isCustomer ? 'justify-start' : 'justify-end'}`}>
+                      <div
+                        className={
+                          `p-2 rounded-lg shadow-sm max-w-[80%] whitespace-pre-wrap ` +
+                          (isCustomer
+                            ? 'bg-gray-200   '   // customer: blue
+                            : 'bg-green-200  ')     // support/admin: red
+                        }
+                      >
+                        <div className="text-xs text-gray-600">{c.author_name} • {new Date(c.created_at).toLocaleString()}</div>
+                        <div className="text-sm mt-1.5">{c.message}</div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
               <div className="mt-3 flex flex-wrap gap-2">
                 <input
                   value={commentText}
