@@ -11,7 +11,7 @@ const getPublicProfileByUsername = async (username, viewerId = null) => {
   const primaryQ = `
     SELECT
       u.id, u.username, u.name, u.profile_pic, u.bio, u.website,
-      u.location, u.location_visible, u.dob, u.dob_visible,
+      u.location, u.location_visible, to_char(u.dob, 'YYYY-MM-DD') AS dob, u.dob_visible,
       u.email, u.email_visible, u.created_at,
       (SELECT COUNT(*) FROM follows f WHERE f.followee_id = u.id) AS followers_count,
       (SELECT COUNT(*) FROM follows f WHERE f.follower_id = u.id) AS following_count,
@@ -24,7 +24,7 @@ const getPublicProfileByUsername = async (username, viewerId = null) => {
   const fallbackQ = `
     SELECT
       u.id, u.username, u.name, u.profile_pic, u.bio, u.website,
-      u.location, u.location_visible, u.dob, u.dob_visible,
+      u.location, u.location_visible, to_char(u.dob, 'YYYY-MM-DD') AS dob, u.dob_visible,
       u.email, u.email_visible, u.created_at,
       (SELECT COUNT(*) FROM follows f WHERE f.followee_id = u.id) AS followers_count,
       (SELECT COUNT(*) FROM follows f WHERE f.follower_id = u.id) AS following_count
@@ -55,7 +55,7 @@ const getPublicProfileByUsername = async (username, viewerId = null) => {
 
     // include fields only if allowed for the viewer
     if (isOwner || p.email_visible) result.email = p.email || null;
-    if (isOwner || p.dob_visible) result.dob = p.dob ? p.dob.toISOString().split('T')[0] : null;
+    if (isOwner || p.dob_visible) result.dob = p.dob || null;
     if (isOwner || p.location_visible) result.location = p.location || null;
 
     // include visibility flags for the owner so edit page can bind toggles
@@ -120,7 +120,11 @@ const updateUserProfile = async (userId, updates = {}) => {
     return r.rows[0];
   }
 
-  const setParts = keys.map((k, i) => `${k} = $${i + 1}`);
+  const setParts = keys.map((k, i) => {
+    if (k === 'dob') return `dob = $${i + 1}::date`;
+      return `${k} = $${i + 1}`;
+  });
+
   const params = keys.map(k => updates[k]);
   params.push(userId);
 

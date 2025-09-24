@@ -129,7 +129,7 @@ const updateProfileController = async (req, res) => {
         profile_pic: updated.profile_pic,
         bio: updated.bio,
         website: updated.website,
-        dob: updated.dob,
+        dob: updated.dob ? String(updated.dob) : null,
         dob_visible: updated.dob_visible,
         email: updated.email,
         email_visible: updated.email_visible,
