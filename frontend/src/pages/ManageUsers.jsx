@@ -300,8 +300,8 @@ export default function ManageUsers() {
                                 src={u.profile_pic}
                                 alt={`${u.name || u.username}'s avatar`}
                                 className="h-12 w-12 rounded-full object-cover 
-                                          backdrop-blur-md bg-white/20 border border-white/30 shadow-xl
-                                          cursor-pointer "
+                                backdrop-blur-md bg-white/20 border border-white/30 shadow-xl
+                                cursor-pointer "
                                 whileHover={{ scale: 1.2, opacity: 0.9 }}
                                 transition={{ type: "spring", stiffness: 300, damping: 20 }}
                               />

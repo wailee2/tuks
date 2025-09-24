@@ -156,7 +156,7 @@ export default function EditProfilePage() {
         />
 
         {/* track */}
-        <div className={`w-full h-full rounded-full transition ${checked ? 'bg-green-500' : 'bg-gray-200'}`} />
+        <div className={`w-full h-full rounded-full transition ${checked ? 'bg-green-700' : 'bg-gray-200'}`} />
 
         {/* knob */}
         <div
@@ -395,7 +395,7 @@ export default function EditProfilePage() {
                 alt="avatar"
                 className="w-full h-full object-cover"
               />
-              <label className="absolute bottom-1 right-1 bg-green-500 bg-opacity-90 text-white p-2 text-xs rounded-full cursor-pointer shadow">
+              <label className="absolute bottom-1 right-1 bg-green-700 bg-opacity-90 text-white p-2 text-xs rounded-full cursor-pointer shadow">
                 <MdEdit className="text-lg"/>
                 <input type="file" accept="image/*" className="hidden" onChange={handleAvatarSelect} />
               </label>
@@ -441,7 +441,7 @@ export default function EditProfilePage() {
                 {checkingUsername ? (
                   <Spinner label="Checking..." />
                 ) : usernameAvailable === true ? (
-                  <div className="text-green-600 text-sm">Available</div>
+                  <div className="text-green-700 text-sm">Available</div>
                 ) : usernameAvailable === false ? (
                   <div className="text-red-600 text-sm">Taken</div>
                 ) : null}
@@ -534,8 +534,8 @@ export default function EditProfilePage() {
 
           {/* Actions */}
           <div className="flex justify-end gap-3 mt-3">
-            <button onClick={() => navigate(`/${user?.username || ''}`)} className="border profilebut text-green-500 hover:bg-green-500 hover:text-white">Cancel</button>
-            <button onClick={handleSave} disabled={saving || checkingUsername} className=" bg-green-500 text-white flex items-center gap-2 disabled:opacity-60 profilebut">
+            <button onClick={() => navigate(`/${user?.username || ''}`)} className="border profilebut text-green-700 hover:bg-green-600 hover:text-white">Cancel</button>
+            <button onClick={handleSave} disabled={saving || checkingUsername} className=" bg-green-700 text-white flex items-center gap-2 disabled:opacity-60 profilebut">
               {saving ? (
                 <>
                   <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">

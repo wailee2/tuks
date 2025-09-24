@@ -255,7 +255,7 @@ export default function ProfilePage() {
               <div className='flex gap-2'>
                 <button
                   onClick={() => navigate(`/settings/edit-profile`)}
-                  className=" profilebutton  bg-indigo-600 text-white">
+                  className=" profilebutton  bg-green-700 text-white">
                     Edit profile
                 </button>
                 <button
@@ -302,7 +302,7 @@ export default function ProfilePage() {
                       href={(profile.website)}
                       target="_blank"
                       rel="noreferrer"
-                      className="text-blue-600 font-semibold"
+                      className="text-green-700 font-semibold"
                     >
                       {stripProtocol(profile.website)}
                     </a>
