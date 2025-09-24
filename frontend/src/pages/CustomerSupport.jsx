@@ -40,10 +40,7 @@ export default function CustomerSupport() {
       setBannerMessage(msg);
       setBannerVisible(true);
 
-      // if user is present and disabled, also fetch their tickets
-      if (token) {
-        fetchMyTickets();
-      }
+      fetchMyTickets();
     } else {
       // normal load: if logged-in, fetch user's tickets
       if (token) fetchMyTickets();

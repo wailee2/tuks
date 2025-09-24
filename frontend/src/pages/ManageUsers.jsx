@@ -165,16 +165,15 @@ export default function ManageUsers() {
   };
 
   if (!user || (user.role !== 'ADMIN' && user.role !== 'OWNER'))
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <p className="text-red-500 font-bold">Access Denied</p>
-      </div>
-    );
+  return (
+    <div className="flex items-center justify-center min-h-screen">
+      <p className="text-red-500 font-bold">Access Denied</p>
+    </div>
+  );
 
   const paginatedUsers = paginate(filteredUsers, currentPage, pageSize);
   const totalPages = Math.ceil(filteredUsers.length / pageSize);
   
-
   return (
     <div className="flex min-h-screen bg-gray-50 ">
       <main className="flex-1 p-7 overflow-x-hidden">
@@ -674,9 +673,6 @@ export default function ManageUsers() {
           </motion.div>
         </motion.div>
       )}
-
-
-
     </div>
   );
 }

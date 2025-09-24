@@ -21,11 +21,12 @@ export default function SupportDashboard() {
   const [updating, setUpdating] = useState(false);
 
   useEffect(() => {
-    if (token) {
-      fetchAllTickets();
-      fetchAgents();
-    }
-  }, [token]);
+    // fetch regardless of whether a JWT token is stored; services will rely on cookie session
+    fetchAllTickets();
+    fetchAgents();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [token]); // keep token in deps so a later token change still triggers refresh
+
 
   const fetchAgents = async () => {
     try {
@@ -40,15 +41,21 @@ export default function SupportDashboard() {
   const fetchAllTickets = async () => {
     try {
       setLoading(true);
-      const data = await getTickets(token, { limit: 100 });
+      // If user is support/admin, fetch all; otherwise get only the user's tickets
+      const params = (user?.role === 'SUPPORT' || user?.role === 'ADMIN' || user?.role === 'OWNER')
+        ? { limit: 100 }
+        : { mine: true, limit: 50 };
+
+      const data = await getTickets(token, params);
       setTickets(data);
     } catch (err) {
       console.error(err);
-      addToast('Failed to fetch tickets', 'error');
+      addToast(err.response?.data?.message || 'Failed to fetch tickets', 'error');
     } finally {
       setLoading(false);
     }
   };
+
 
   const openTicket = async (id) => {
     try {

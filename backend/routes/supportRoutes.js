@@ -25,7 +25,7 @@ router.get('/tickets', authMiddleware, listTickets);
 router.get('/tickets/:id', authMiddleware, getTicket);
 
 // Update ticket (support/admin)
-router.put('/tickets/:id', authMiddleware, roleMiddleware(['SUPPORT', 'ADMIN']), patchTicket);
+router.put('/tickets/:id', authMiddleware, roleMiddleware(['SUPPORT', 'ADMIN', 'OWNER']), patchTicket);
 
 // Comment on ticket (auth required; controller enforces ownership or support/admin)
 router.post('/tickets/:id/comments', authMiddleware, postComment);

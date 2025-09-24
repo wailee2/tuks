@@ -54,7 +54,7 @@ const listTickets = async (req, res) => {
     };
 
     // If not support/admin and not requesting "mine", reject
-    if (!mine && req.user.role !== 'SUPPORT' && req.user.role !== 'ADMIN') {
+    if (!mine && !['SUPPORT', 'ADMIN', 'OWNER'].includes(req.user.role)) {
       return res.status(403).json({ message: 'Forbidden' });
     }
 
@@ -73,7 +73,7 @@ const getTicket = async (req, res) => {
     if (!ticket) return res.status(404).json({ message: 'Ticket not found' });
 
     // If not public to user and not owner and not support/admin, block
-    if (!ticket.is_public && ticket.created_by !== req.user.id && !['SUPPORT','ADMIN'].includes(req.user.role)) {
+    if (!ticket.is_public && ticket.created_by !== req.user.id && !['SUPPORT','ADMIN', 'OWNER'].includes(req.user.role)) {
       return res.status(403).json({ message: 'Forbidden' });
     }
 
@@ -92,7 +92,7 @@ const getTicket = async (req, res) => {
 // controllers/supportController.js (patchTicket - replace or update existing)
 const patchTicket = async (req, res) => {
   try {
-    if (!['SUPPORT', 'ADMIN'].includes(req.user.role)) {
+    if (!['SUPPORT', 'ADMIN', 'OWNER'].includes(req.user.role)) {
       return res.status(403).json({ message: 'Forbidden' });
     }
 
@@ -100,8 +100,11 @@ const patchTicket = async (req, res) => {
     const updates = req.body;
 
     // Only ADMIN may change assignment via update (allowed earlier)
-    if (Object.prototype.hasOwnProperty.call(updates, 'assigned_to') && req.user.role !== 'ADMIN') {
-      return res.status(403).json({ message: 'Only ADMINs can assign tickets' });
+    if (
+      Object.prototype.hasOwnProperty.call(updates, 'assigned_to') &&
+      !['ADMIN', 'OWNER'].includes(req.user.role)
+    ) {
+      return res.status(403).json({ message: 'Only ADMINs n OWNER can assign tickets' });
     }
 
     const updated = await updateTicket(id, updates);
@@ -122,7 +125,7 @@ const claimTicketHandler = async (req, res) => {
     const id = parseInt(req.params.id);
     const actor = req.user;
 
-    if (!['SUPPORT', 'ADMIN'].includes(actor.role)) {
+    if (!['SUPPORT', 'ADMIN', 'OWNER'].includes(actor.role)) {
       return res.status(403).json({ message: 'Forbidden' });
     }
 
@@ -141,6 +144,14 @@ const claimTicketHandler = async (req, res) => {
     if (actor.role === 'ADMIN') {
       const forced = await forceAssignTicket(id, actor.id);
       if (!forced) return res.status(404).json({ message: 'Ticket not found' });
+      const ticket = await getTicketById(id);
+      return res.json(ticket);
+    }
+
+    // OWNER: can assign to any user
+    if (actor.role === 'OWNER' && updates.assigned_to) {
+      const updated = await forceAssignTicket(id, updates.assigned_to);
+      if (!updated) return res.status(404).json({ message: 'Ticket not found' });
       const ticket = await getTicketById(id);
       return res.json(ticket);
     }
