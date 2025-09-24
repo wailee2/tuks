@@ -1,28 +1,25 @@
-// services/admin.js
-import api from './api.js';
+// src/services/admin.js
+import api from './api';
 
-// Get all users
+const buildOptionsWithToken = (token) => {
+  if (!token) return {}; // do NOT send Authorization header if token is falsy
+  return { headers: { Authorization: `Bearer ${token}` } };
+};
+
 export const getAllUsers = async (token) => {
-  const res = await api.get('/admin/users', {
-    headers: { Authorization: `Bearer ${token}` }
-  });
+  const options = buildOptionsWithToken(token);
+  const res = await api.get('/admin/users', options);
   return res.data;
 };
 
-// Update user role (promote/demote)
 export const updateUserRole = async (token, userId, role) => {
-  const res = await api.put('/admin/users/role',
-    { userId, role },
-    { headers: { Authorization: `Bearer ${token}` } }
-  );
+  const options = buildOptionsWithToken(token);
+  const res = await api.put('/admin/users/role', { userId, role }, options);
   return res.data;
 };
 
-// Disable or enable user
 export const disableUser = async (token, userId, disable) => {
-  const res = await api.put('/admin/users/disable',
-    { userId, disable },
-    { headers: { Authorization: `Bearer ${token}` } }
-  );
+  const options = buildOptionsWithToken(token);
+  const res = await api.put('/admin/users/disable', { userId, disable }, options);
   return res.data;
 };

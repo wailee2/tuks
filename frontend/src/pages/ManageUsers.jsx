@@ -33,7 +33,8 @@ const roleColors = {
   MODERATOR: 'bg-blue-200 text-blue-800',
   SUPPORT: 'bg-purple-200 text-purple-800',
   ANALYST: 'bg-yellow-200 text-yellow-800',
-  ADMIN: 'bg-red-200 text-red-800'
+  ADMIN: 'bg-red-200 text-red-800',
+  OWNER: 'bg-green-800 text-white',
 };
 const roleIconMap = {
   USER: User,
@@ -41,6 +42,7 @@ const roleIconMap = {
   SUPPORT: Headphones,
   ANALYST: BarChart2,
   ADMIN: Crown,
+  OWNER: Power,
 };
 
 const formatHeaderLabel = (field) => {
@@ -103,8 +105,9 @@ export default function ManageUsers() {
   const [pageSize, setPageSize] = useState(10); // Dynamic page size
 
   useEffect(() => {
-    if (user?.role === 'ADMIN') fetchUsers();
+    if (user?.role === 'ADMIN' || user?.role === 'OWNER') fetchUsers();
   }, [user]);
+
 
   useEffect(() => {
     if (searchTerm.trim() === '') {
@@ -161,7 +164,7 @@ export default function ManageUsers() {
     }
   };
 
-  if (!user || (user.role !== 'ADMIN'))
+  if (!user || (user.role !== 'ADMIN' && user.role !== 'OWNER'))
     return (
       <div className="flex items-center justify-center min-h-screen">
         <p className="text-red-500 font-bold">Access Denied</p>
@@ -548,7 +551,7 @@ export default function ManageUsers() {
             </div>
 
             <div className="grid gap-2">
-              {['USER', 'MODERATOR', 'SUPPORT', 'ANALYST', /*'ADMIN'*/].map((r) => {
+              {['USER', 'MODERATOR', 'SUPPORT', 'ANALYST', 'ADMIN'].map((r) => {
                 const RoleIcon = roleIconMap[r] || User;
                 return (
                   <button

@@ -23,16 +23,35 @@ const getAllUsers = async (req, res) => {
 const updateUserRole = async (req, res) => {
   try {
     const { userId, role } = req.body;
+    const actor = req.user;
 
     // Validate input
-    const validRoles = ['USER', 'MODERATOR', 'SUPPORT', 'ANALYST', /*'ADMIN'*/];
+    const validRoles = ['OWNER', 'ADMIN', 'MODERATOR', 'SUPPORT', 'ANALYST', 'USER'];
     if (!userId || !role || !validRoles.includes(role)) {
       return res.status(400).json({ message: 'Invalid user ID or role' });
+    }
+
+    // Prevent changing own role
+    if (actor.id === parseInt(userId)) {
+      return res.status(400).json({ message: 'Cannot change your own role' });
     }
 
     // Prevent changing own role accidentally
     if (req.user.id === parseInt(userId)) {
       return res.status(400).json({ message: 'Cannot change your own role' });
+    }
+
+    const target = await getUserById(userId);
+    if (!target) return res.status(404).json({ message: 'User not found' });
+
+    // PROTECTION RULES:
+    // - Only OWNER can assign the OWNER role
+    // - Only OWNER can change an existing OWNER
+    if (role === 'OWNER' && actor.role !== 'OWNER') {
+      return res.status(403).json({ message: 'Only OWNER can assign OWNER role' });
+    }
+    if (target.role === 'OWNER' && actor.role !== 'OWNER') {
+      return res.status(403).json({ message: 'Only OWNER can modify OWNER account' });
     }
 
     const result = await pool.query(
@@ -72,6 +91,11 @@ const disableUser = async (req, res) => {
 
     const target = await getUserById(userId);
     if (!target) return res.status(404).json({ message: 'User not found' });
+
+    // Prevent disabling OWNER at all
+    if (target.role === 'OWNER') {
+      return res.status(403).json({ message: 'Cannot disable the OWNER account' });
+    }
 
     // moderators cannot disable/enable admins
     if (actor.role === 'MODERATOR' && target.role === 'ADMIN') {

@@ -5,13 +5,13 @@ const { authMiddleware, roleMiddleware } = require('../middleware/authMiddleware
 
 const router = express.Router();
 
-// ADMIN and MODERATOR can view users
-router.get('/users', authMiddleware, roleMiddleware(['ADMIN', 'MODERATOR']), getAllUsers);
+// OWNER, ADMIN and MODERATOR can view users
+router.get('/users', authMiddleware, roleMiddleware(['ADMIN','MODERATOR','OWNER']), getAllUsers);
 
 // Update user role (ADMIN only)
-router.put('/users/role', authMiddleware, roleMiddleware(['ADMIN']), updateUserRole);
+router.put('/users/role', authMiddleware, roleMiddleware(['ADMIN','OWNER']), updateUserRole);
 
 // Disable / enable user (ADMIN + MODERATOR) - moderator cannot disable an ADMIN (enforced in controller)
-router.put('/users/disable', authMiddleware, roleMiddleware(['ADMIN', 'MODERATOR']), disableUser);
+router.put('/users/disable', authMiddleware, roleMiddleware(['ADMIN','MODERATOR','OWNER']), disableUser);
 
 module.exports = router;
