@@ -5,6 +5,9 @@ import { getTickets, getTicket, updateTicket, postComment, claimTicket } from '.
 import { getUsersByRole } from '../services/users';
 import { useToasts } from '../context/ToastContext';
 import LoadingSpinner from "../components/LoadingSpinner";
+import { RiCustomerService2Fill } from "react-icons/ri";
+import { MdAssignmentTurnedIn } from "react-icons/md";
+import { IoSend } from "react-icons/io5";
 
 export default function SupportDashboard() {
   const { user, token } = useContext(AuthContext);
@@ -152,21 +155,21 @@ export default function SupportDashboard() {
   };
 
   return (
-    <div className="p-6 grid grid-cols-1 lg:grid-cols-4 gap-6">
-      <div className="col-span-1 lg:col-span-1 bg-white p-4 rounded shadow">
+    <div className="p-6 grid grid-cols-1 lg:grid-cols-5 gap-6">
+      <div className="col-span-1 md:col-span-2 lg:col-span-2 bg-white p-4 rounded shadow">
         <h3 className="font-semibold mb-3">Tickets</h3>
 
-        <div className="space-y-2 mb-3">
-          <input placeholder="Search subject/description" value={filters.search} onChange={(e) => setFilters(s => ({ ...s, search: e.target.value }))} className="w-full border px-3 py-2 rounded" />
-          <div className="flex gap-2">
-            <select value={filters.status} onChange={(e) => setFilters(s => ({ ...s, status: e.target.value }))} className="flex-1 border px-3 py-2 rounded">
+        <div className="space-y-3 mb-3">
+          <input placeholder="Search subject/description" value={filters.search} onChange={(e) => setFilters(s => ({ ...s, search: e.target.value }))} className=" supportinput" />
+          <div className="flex flex-wrap gap-2">
+            <select value={filters.status} onChange={(e) => setFilters(s => ({ ...s, status: e.target.value }))} className="supportselect">
               <option value="">Any status</option>
               <option>OPEN</option>
               <option>ASSIGNED</option>
               <option>RESOLVED</option>
               <option>CLOSED</option>
             </select>
-            <select value={filters.priority} onChange={(e) => setFilters(s => ({ ...s, priority: e.target.value }))} className="flex-1 border px-3 py-2 rounded">
+            <select value={filters.priority} onChange={(e) => setFilters(s => ({ ...s, priority: e.target.value }))} className="supportselect">
               <option value="">Any priority</option>
               <option>LOW</option>
               <option>MEDIUM</option>
@@ -175,8 +178,8 @@ export default function SupportDashboard() {
             </select>
           </div>
           <div className="flex gap-2">
-            <button onClick={applyFilters} className="px-3 py-2 bg-indigo-600 text-white rounded">Apply</button>
-            <button onClick={fetchAllTickets} className="px-3 py-2 bg-gray-200 rounded">Reset</button>
+            <button onClick={applyFilters} className="supportbutton bg-green-700 text-white">Apply</button>
+            <button onClick={fetchAllTickets} className="supportbutton bg-gray-200 text-gray-800">Reset</button>
           </div>
         </div>
 
@@ -198,7 +201,7 @@ export default function SupportDashboard() {
         </div>
       </div>
 
-      <div className="col-span-1 lg:col-span-3 bg-white p-4 rounded shadow">
+      <div className="col-span-1 md:col-span-2 lg:col-span-3 bg-white p-4 rounded shadow">
         {selected ? (
           <>
             <div className="flex items-start justify-between">
@@ -209,45 +212,58 @@ export default function SupportDashboard() {
               <div className="text-sm text-gray-500">Ticket #{selected.id}</div>
             </div>
 
-            <div className="mt-4">
+            <div className="mt-4 ">
               <div className="text-sm">{selected.description}</div>
-              <div className="mt-4 flex gap-2 items-center">
-                <label className="text-sm">Status</label>
-                <select value={selected.status} onChange={(e) => handleUpdate({ status: e.target.value })} className="border px-2 py-1 rounded">
-                  <option>OPEN</option>
-                  <option>ASSIGNED</option>
-                  <option>RESOLVED</option>
-                  <option>CLOSED</option>
-                </select>
+              <div className="mt-4 flex flex-wrap gap-3 items-center justify-between">
+                <div className='flex  gap-4'>
+                  <div>
+                    <label className="text-sm ">Status </label>
+                    <select value={selected.status} onChange={(e) => handleUpdate({ status: e.target.value })} className=" supportsel">
+                      <option>OPEN</option>
+                      <option>ASSIGNED</option>
+                      <option>RESOLVED</option>
+                      <option>CLOSED</option>
+                    </select>
+                  </div>
 
-                <label className="text-sm">Priority</label>
-                <select value={selected.priority} onChange={(e) => handleUpdate({ priority: e.target.value })} className="border px-2 py-1 rounded">
-                  <option>LOW</option>
-                  <option>MEDIUM</option>
-                  <option>HIGH</option>
-                  <option>URGENT</option>
-                </select>
+                  <div>
+                    <label className="text-sm">Priority </label>
+                    <select value={selected.priority} onChange={(e) => handleUpdate({ priority: e.target.value })} className="supportsel">
+                      <option>LOW</option>
+                      <option>MEDIUM</option>
+                      <option>HIGH</option>
+                      <option>URGENT</option>
+                    </select>
+                  </div>
+                </div>
 
                 {/* Assign controls */}
-                <div className="ml-4 flex items-center gap-2">
+                <div className="ml-4 flex flex-wrap items-center gap-2">
                   {/* Assign to me (SUPPORT & ADMIN) */}
-                  <button onClick={handleAssignToMe} disabled={updating} className="px-3 py-1 bg-green-600 text-white rounded">
-                    Assign to me
+                  <button 
+                    onClick={handleAssignToMe}
+                    disabled={updating}
+                    className="p-2 bg-green-700 text-white rounded-full cursor-pointer"
+                    title='Assign to me'>
+                    <RiCustomerService2Fill className='text-xl'/>
                   </button>
 
                   {/* Admin-only agent dropdown */}
                   {(user.role === 'ADMIN' || user.role === 'OWNER') && (
-                    <>
-                      <select value={assignUsername} onChange={(e) => setAssignUsername(e.target.value)} className="border px-2 py-1 rounded">
+                    <div className="supportselect flex items-center cursor-pointer">
+                      <select value={assignUsername} onChange={(e) => setAssignUsername(e.target.value)} >
                         <option value="">Select agent</option>
                         {agents.map(a => (
                           <option key={a.id} value={a.id}>{a.username} — {a.name}</option>
                         ))}
                       </select>
-                      <button onClick={() => handleAssignAgent(assignUsername)} disabled={updating || !assignUsername} className="px-3 py-1 bg-green-700 text-white rounded">
-                        Assign
+                      <button
+                        onClick={() => handleAssignAgent(assignUsername)}
+                        disabled={updating || !assignUsername}
+                        className="p-2 rounded-full bg-green-700 text-white cursor pointer">
+                        <MdAssignmentTurnedIn   className='text-xl'/>
                       </button>
-                    </>
+                    </div>
                   )}
                 </div>
               </div>
@@ -264,9 +280,18 @@ export default function SupportDashboard() {
                 ))}
               </div>
 
-              <div className="mt-3 flex gap-2">
-                <input value={commentText} onChange={(e) => setCommentText(e.target.value)} placeholder="Write a reply..." className="flex-1 border px-3 py-2 rounded" />
-                <button onClick={handleAddComment} className="px-4 py-2 bg-blue-600 text-white rounded">Add Comment</button>
+              <div className="mt-3 flex flex-wrap gap-2">
+                <input
+                  value={commentText}
+                  onChange={(e) => setCommentText(e.target.value)}
+                  placeholder="Write a reply..." className="supportchat"
+                />
+                <button
+                  onClick={handleAddComment}
+                  className="supportsend"
+                >
+                  <IoSend className='text-xl'/>
+                </button>
               </div>
             </div>
 

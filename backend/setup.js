@@ -10,7 +10,7 @@ async function createTables() {
         name VARCHAR(100) NOT NULL,
         email VARCHAR(100) UNIQUE NOT NULL,
         password VARCHAR(255) NOT NULL,
-        role VARCHAR(20) DEFAULT 'USER', -- USER, ADMIN, MODERATOR, SUPPORT, ANALYST
+        role VARCHAR(20) DEFAULT 'USER', -- USER, OWNER, ADMIN, MODERATOR, SUPPORT, ANALYST
         created_at TIMESTAMP DEFAULT NOW()
       );
     `);
