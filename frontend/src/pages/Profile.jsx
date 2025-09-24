@@ -225,13 +225,15 @@ export default function ProfilePage() {
       <div className="bg-white p-2 md:p-6 flex flex-col md:flex-row  gap-6 md:gap-20">
         {/* clickable avatar */}
         {profile.profile_pic ? (
-          <img
+          <motion.img
             src={profile.profile_pic}
             alt={`${profile.name || profile.username}'s avatar`}
             className="w-22 h-22 md:w-40 md:h-40 rounded-full object-cover cursor-pointer"
             onClick={openImageModal}
             role="button"
             aria-label="Open profile picture"
+            whileHover={{ scale: 1.05, opacity: 0.9 }}
+            transition={{ type: "spring", stiffness: 300, damping: 20 }}
           />
         ) : (
           <div
@@ -295,7 +297,7 @@ export default function ProfilePage() {
               <div className="mt-4 space-y-2 text-sm text-gray-700">
                 {profile.website && (
                   <div className='flex items-center gap-2'>
-                    <IoLink className='text-md -rotate-45'/>
+                    <IoLink className='text-lg -rotate-45'/>
                     <a
                       href={(profile.website)}
                       target="_blank"
