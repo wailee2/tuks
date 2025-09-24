@@ -140,6 +140,14 @@ const claimTicketHandler = async (req, res) => {
       return res.json(ticket);
     }
 
+    // OWNER first (highest privilege)
+    if (actor.role === 'OWNER') {
+      const forced = await forceAssignTicket(id, actor.id);
+      if (!forced) return res.status(404).json({ message: 'Ticket not found' });
+      const ticket = await getTicketById(id);
+      return res.json(ticket);
+    }
+
     // ADMIN: force assign to themselves
     if (actor.role === 'ADMIN') {
       const forced = await forceAssignTicket(id, actor.id);

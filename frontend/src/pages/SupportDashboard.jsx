@@ -56,7 +56,6 @@ export default function SupportDashboard() {
     }
   };
 
-
   const openTicket = async (id) => {
     try {
       const { ticket, comments } = await getTicket(token, id);
@@ -237,7 +236,7 @@ export default function SupportDashboard() {
                   </button>
 
                   {/* Admin-only agent dropdown */}
-                  {user.role === 'ADMIN' && (
+                  {(user.role === 'ADMIN' || user.role === 'OWNER') && (
                     <>
                       <select value={assignUsername} onChange={(e) => setAssignUsername(e.target.value)} className="border px-2 py-1 rounded">
                         <option value="">Select agent</option>
@@ -245,7 +244,7 @@ export default function SupportDashboard() {
                           <option key={a.id} value={a.id}>{a.username} — {a.name}</option>
                         ))}
                       </select>
-                      <button onClick={() => handleAssignAgent(assignUsername)} disabled={updating || !assignUsername} className="px-3 py-1 bg-indigo-600 text-white rounded">
+                      <button onClick={() => handleAssignAgent(assignUsername)} disabled={updating || !assignUsername} className="px-3 py-1 bg-green-700 text-white rounded">
                         Assign
                       </button>
                     </>
