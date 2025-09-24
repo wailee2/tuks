@@ -16,8 +16,10 @@ import AvatarModal from '../components/profile/AvatarModal';
 import NotFoundPlaceholder from "../components/profile/NotFoundPlaceholder";
 import LoadingSpinner from "../components/LoadingSpinner";
 import { AnimatePresence, motion } from 'framer-motion';
-
-
+import { FaEllipsis } from "react-icons/fa6";
+import { IoMdSettings } from "react-icons/io";
+import { IoBalloonOutline, IoLink, IoLocationOutline } from "react-icons/io5";
+import { MdOutlineMail } from "react-icons/md";
 
 
 export default function ProfilePage() {
@@ -51,6 +53,44 @@ export default function ProfilePage() {
       profile?.visibility?.[`${field}_visible`]
     );
   };
+
+    // --- format helpers (add these after isVisible) ---
+  const stripProtocol = (val) => {
+    if (!val) return '';
+    // remove mailto:, http(s)://, www., trailing slashes
+    return String(val)
+      .replace(/^mailto:/i, '')
+      .replace(/^https?:\/\//i, '')
+      .replace(/^www\./i, '')
+      .replace(/\/+$/i, '');
+  };
+
+  const ordinal = (n) => {
+    const num = Number(n);
+    if (!num) return n;
+    const j = num % 10, k = num % 100;
+    if (k >= 11 && k <= 13) return `${num}th`;
+    if (j === 1) return `${num}st`;
+    if (j === 2) return `${num}nd`;
+    if (j === 3) return `${num}rd`;
+    return `${num}th`;
+  };
+
+  const formatDOB = (dobString) => {
+    if (!dobString) return '';
+    // handle "YYYY-MM-DD" or ISO datetime like "YYYY-MM-DDT..."
+    const datePart = String(dobString).split('T')[0];
+    const parts = datePart.split('-');
+    if (parts.length < 3) return dobString;
+    const monthIndex = Number(parts[1]) - 1;
+    const day = Number(parts[2]);
+    if (Number.isNaN(monthIndex) || Number.isNaN(day)) return dobString;
+    // create a date to get month name (year arbitrary)
+    const d = new Date(2000, monthIndex, day);
+    const monthName = d.toLocaleString('en-US', { month: 'long' });
+    return `${monthName} ${ordinal(day)}`; // "January 5th"
+  };
+
 
   useEffect(() => {
     fetch();
@@ -218,8 +258,8 @@ export default function ProfilePage() {
                 </button>
                 <button
                   onClick={() => setSettingsOpen(true)}
-                  className=" profilebutton bg-indigo-600 text-white">
-                    set
+                  className="">
+                    <IoMdSettings className='text-3xl'/>
                 </button>
               </div>
             ) : (
@@ -227,22 +267,20 @@ export default function ProfilePage() {
                 {!profile.is_following ? (
                   <button onClick={handleFollow} className=" profilebutton bg-green-600 text-white">Follow</button>
                 ) : (
-                  <button onClick={handleUnfollow} className="profilebutton bg-gray-200 ">Unfollow</button>
+                  <button onClick={handleUnfollow} className="profilebutton buttondark text-white ">Unfollow</button>
                 )}
 
-                <button onClick={handleMessage} className="profilebutton bg-blue-600 text-white">Message</button>
+                <button onClick={handleMessage} className="profilebutton buttondark text-white">Message</button>
 
                 {/* ellipsis / more actions button */}
                 <button
                   onClick={() => setActionsOpen(true)}
                   aria-label="More options"
-                  className="ml-2 p-1 rounded-full hover:bg-gray-100"
+                  className="cursor-pointer"
                   title="More"
                 >
                   {/* simple ellipsis icon (SVG) */}
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 12h.01M12 12h.01M18 12h.01" />
-                  </svg>
+                  <FaEllipsis className='text-3xl'/>
                 </button>
 
               </div>
@@ -254,31 +292,43 @@ export default function ProfilePage() {
 
               <div className="mt-4 text-sm max-w-xl md:max-w-md">{profile.bio}</div>
         
-              <div className="mt-4 space-y-3 text-sm text-gray-700">
+              <div className="mt-4 space-y-2 text-sm text-gray-700">
                 {profile.website && (
-                  <div>🔗 <a href={profile.website} target="_blank" rel="noreferrer" className="text-blue-600 hover:underline">{profile.website}</a></div>
+                  <div className='flex items-center gap-2'>
+                    <IoLink className='text-md -rotate-45'/>
+                    <a
+                      href={(profile.website)}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-blue-600 font-semibold"
+                    >
+                      {stripProtocol(profile.website)}
+                    </a>
+                  </div>
                 )}
 
+
                 {profile.email && isVisible('email') && (
-                  <div className='flex gap-1'>
-                    <span>✉️</span>
+                  <div className='flex items-center gap-2'>
+                    <span><MdOutlineMail className='text-lg'/></span>
                     {profile.email}
                   </div>
                 )}
                 
                 {profile.location && isVisible('location') && (
-                  <div className='flex gap-1'>
-                    <span>📍</span>
+                  <div className='flex items-center gap-2'>
+                    <span><IoLocationOutline className='text-lg'/></span>
                     {profile.location}
                   </div>
                 )}
 
                 {profile.dob && isVisible('dob') && (
-                  <div className='flex gap-1'>
-                    <span>🎂</span>
-                    {profile.dob}
+                  <div className='flex items-center gap-2'>
+                    <span><IoBalloonOutline className='text-lg'/></span>
+                    <span>Born {formatDOB(profile.dob)}</span>
                   </div>
                 )}
+
               </div>
 
               <div className="mt-4 text-sm text-gray-600 flex gap-8">

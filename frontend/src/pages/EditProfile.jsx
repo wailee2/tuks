@@ -48,6 +48,11 @@ export default function EditProfilePage() {
   // debounce refs
   const usernameTimer = useRef(null);
 
+  const isoToDateInput = s => {
+  if (!s) return '';
+    return typeof s === 'string' && s.includes('T') ? s.split('T')[0] : s;
+  };
+
   useEffect(() => {
     let mounted = true;
 
@@ -93,7 +98,7 @@ export default function EditProfilePage() {
           name: p.name || user.name || '',
           bio: p.bio || '',
           website: p.website || '',
-          dob: p.dob || '',
+          dob: isoToDateInput(p.dob),
           dob_visible: !!p.dob_visible,
           email: p.email || user.email || '',
           email_visible: !!p.email_visible,
