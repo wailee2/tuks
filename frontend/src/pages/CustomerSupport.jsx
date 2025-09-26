@@ -3,6 +3,7 @@ import { useState, useEffect, useContext, useRef } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import { createTicket, getTickets as fetchTicketsApi, getTicket as fetchTicketApi, postComment as postCommentApi } from '../services/support';
 import { Link, useLocation } from 'react-router-dom';
+import { IoSend } from "react-icons/io5";
 
 export default function CustomerSupport() {
   const { user, token } = useContext(AuthContext);
@@ -132,7 +133,7 @@ export default function CustomerSupport() {
   };
 
   return (
-    <div className="max-w-6xl mx-auto p-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div className=" mx-auto p-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
       {/* Top banner (if redirected from disabled-login) */}
       {bannerVisible && (
         <div className="col-span-1 lg:col-span-3">
@@ -161,7 +162,7 @@ export default function CustomerSupport() {
       )}
 
       {/* LEFT: Create ticket */}
-      <div className="col-span-1 bg-white rounded-lg shadow p-6" ref={formRef}>
+      <div className="col-span-1 supportcard px-6 py-4" ref={formRef}>
         <h2 className="text-lg font-semibold mb-2">Contact Support</h2>
         <p className="text-sm text-gray-500 mb-4">
           Submit an appeal or report an issue. You can attach context and links in the description.
@@ -180,12 +181,21 @@ export default function CustomerSupport() {
         <form onSubmit={handleSubmit} className="space-y-3">
           <div>
             <label className="block text-sm font-medium">Subject</label>
-            <input value={subject} onChange={(e) => setSubject(e.target.value)} className="w-full mt-1 border px-3 py-2 rounded" placeholder="Short summary (e.g. 'Account disabled appeal')" />
+            <input
+              value={subject}
+              onChange={(e) => setSubject(e.target.value)}
+              className="supportinput mt-1"
+              placeholder="Short summary..."
+            />
           </div>
 
           <div>
             <label className="block text-sm font-medium">Category</label>
-            <select value={category} onChange={(e) => setCategory(e.target.value)} className="w-full mt-1 border px-3 py-2 rounded">
+            <select
+              value={category}
+              onChange={(e) => setCategory(e.target.value)}
+              className="customerselect"
+            >
               <option value="appeal">Account Appeal</option>
               <option value="report">Report Abuse / User</option>
               <option value="payment">Payment / Billing</option>
@@ -196,7 +206,10 @@ export default function CustomerSupport() {
 
           <div>
             <label className="block text-sm font-medium">Priority</label>
-            <select value={priority} onChange={(e) => setPriority(e.target.value)} className="w-full mt-1 border px-3 py-2 rounded">
+            <select
+              value={priority}
+              onChange={(e) => setPriority(e.target.value)} className="customerselect"
+            >
               <option value="LOW">Low</option>
               <option value="MEDIUM">Medium</option>
               <option value="HIGH">High</option>
@@ -206,21 +219,28 @@ export default function CustomerSupport() {
 
           <div>
             <label className="block text-sm font-medium">Description</label>
-            <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={6} className="w-full mt-1 border px-3 py-2 rounded" placeholder="Provide details, links, and any context. Paste screenshots if helpful." />
+            <textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)} rows={6}
+              className="w-full mt-1 border border-gray-200 shadow-sm px-3 py-2 rounded-lg"
+              placeholder="Provide details and any context."
+            />
           </div>
 
           <div className="flex items-center gap-3">
-            <button disabled={sending} className="px-4 py-2 bg-blue-600 text-white rounded">
+            <button 
+              disabled={sending}
+              className="px-4 py-2 bg-green-700 text-white rounded-full hover:opacity-80 cursor-pointer"
+            >
               {sending ? 'Sending...' : 'Send to Support'}
             </button>
-            <Link to="/help" className="text-sm text-gray-600 hover:underline">Help center</Link>
           </div>
         </form>
       </div>
 
       {/* MIDDLE: my tickets list */}
       <div className="col-span-1 lg:col-span-2 space-y-4">
-        <div className="bg-white rounded-lg shadow p-4">
+        <div className="p-4 supportcard">
           <div className="flex items-center justify-between mb-3">
             <h3 className="font-semibold">My Support Tickets</h3>
             <div className="flex items-center gap-2">
@@ -233,11 +253,20 @@ export default function CustomerSupport() {
           ) : tickets.length === 0 ? (
             <p className="text-sm text-gray-500">You have no support requests. Use the form to create one.</p>
           ) : (
-            <div className="divide-y">
+            <div className=" max-h-[60vh] space-y-2 overflow-auto">
               {tickets.map(t => (
-                <div key={t.id} className="py-3 flex items-start justify-between">
+                <div
+                  key={t.id}
+                  className={
+                    `cursor-pointer  rounded-md px-3 py-3 flex items-start justify-between 
+                    ${selectedTicket?.id === t.id ? 'bg-green-100 ' : 'hover:bg-gray-100'}`
+                  }
+                  onClick={() => openTicket(t.id)}
+                >
                   <div className="flex-1">
-                    <button onClick={() => openTicket(t.id)} className="text-left w-full">
+                    <button
+                      className="text-left cursor-pointer w-full"
+                    >
                       <div className="flex items-center gap-3">
                         <div className="text-sm font-medium">{t.subject}</div>
                         <div className="text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-600">{t.priority}</div>
@@ -255,7 +284,7 @@ export default function CustomerSupport() {
 
         {/* ticket detail */}
         {selectedTicket && (
-          <div className="bg-white rounded-lg shadow p-4">
+          <div className="p-4 supportcard">
             <div className="flex items-start justify-between">
               <div>
                 <h4 className="text-lg font-semibold">{selectedTicket.subject}</h4>
@@ -271,35 +300,46 @@ export default function CustomerSupport() {
               {/* Conversation (chat-like) */}
               <div
                 ref={commentsRef}
-                className="space-y-3 max-h-64 overflow-auto p-2 bg-gray-50 rounded"
+                className="space-y-3 max-h-64 overflow-auto p-2 bg-gray-100 rounded-md"
               >
                 {ticketComments.map(c => {
                   const isCustomer = c.author_id === user.id;
                   // bubble + avatar colors: customer = blue, support = red
                   const bubbleClasses = isCustomer
-                    ? "bg-blue-600 text-white rounded-lg rounded-br-none"
-                    : "bg-red-600 text-white rounded-lg rounded-bl-none";
-
-                  // avatar bg (slightly lighter)
+                    ? "bg-green-600 text-white rounded-lg "
+                    : "bg-gray-600 text-white rounded-lg";
+                    
+                  /**
+                  // avatar bg  
                   const avatarClasses = isCustomer ? "bg-blue-500 text-white" : "bg-red-500 text-white";
 
                   // friendly label
-                  const authorLabel = c.author_name || (isCustomer ? "You" : "Support");
+                  const authorLabel = c.author_name || (isCustomer ? "You" : "Support");*/
 
                   return (
                     <div key={c.id} className={`flex ${isCustomer ? "justify-end" : "justify-start"}`}>
                       <div className={`flex items-end gap-2 max-w-[80%] ${isCustomer ? "flex-row-reverse" : ""}`}>
-                        {/* avatar */}
+                        {/* avatar 
                         <div className="flex-shrink-0">
                           <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${avatarClasses}`}>
                             {String(authorLabel).slice(0,1).toUpperCase()}
                           </div>
-                        </div>
+                        </div>*/}
 
                         {/* bubble */}
                         <div className={`p-2 ${bubbleClasses} break-words whitespace-pre-wrap`}>
-                          <div className="text-xs opacity-80">{authorLabel} • {new Date(c.created_at).toLocaleString()}</div>
-                          <div className="text-sm mt-1">{c.message}</div>
+                          <div className="text-sm ">{c.message}</div>
+                          <div className="text-xs opacity-80 text-right mt-1">
+                            {/*{authorLabel} • */}
+                            {new Date(c.created_at).toLocaleString(undefined, {
+                              year: "numeric",
+                              month: "numeric", // "long" or "short".
+                              day: "numeric",
+                              hour: "2-digit",
+                              minute: "2-digit",
+                              hour12: true // or false for 24h clock
+                            })}
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -310,8 +350,18 @@ export default function CustomerSupport() {
 
 
               <div className="mt-3 flex gap-2">
-                <input value={commentText} onChange={(e) => setCommentText(e.target.value)} placeholder="Write a reply..." className="flex-1 border px-3 py-2 rounded" />
-                <button onClick={handleAddComment} className="px-4 py-2 bg-blue-600 text-white rounded">Reply</button>
+                <input
+                  value={commentText}
+                  onChange={(e) => setCommentText(e.target.value)}
+                  placeholder="Write a reply..."
+                  className="supportchat" 
+                />
+                <button
+                  onClick={handleAddComment}
+                  className="supportsend"
+                >
+                  <IoSend className='text-xl'/>
+                </button>
               </div>
             </div>
           </div>

@@ -40,3 +40,11 @@
 .supportsend{
     @apply rounded-full p-3 cursor-pointer hover:opacity-80 bg-green-700 text-white
 }
+
+.customerselect{
+    @apply rounded-lg border border-gray-200 shadow-sm px-3 py-2 text-sm mt-1 w-full
+}
+
+.supportcard{
+    @apply rounded-lg border-gray-200 border-1 shadow bg-white
+}

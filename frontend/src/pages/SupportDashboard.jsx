@@ -1,5 +1,5 @@
 // pages/SupportDashboard.jsx
-import { useState, useEffect, useContext } from 'react';
+import { useState, useEffect, useContext, useRef } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import { getTickets, getTicket, updateTicket, postComment, claimTicket } from '../services/support';
 import { getUsersByRole } from '../services/users';
@@ -154,12 +154,20 @@ export default function SupportDashboard() {
     }
   };
 
+  const chatRef = useRef(null);
+
+  useEffect(() => {
+    const el = chatRef.current;
+    if (!el) return;
+    // scroll to bottom when comments update
+    el.scrollTop = el.scrollHeight;
+  }, [comments]);
+
   return (
     <div className="p-6 grid grid-cols-1 lg:grid-cols-5 gap-6">
-      <div className="col-span-1 md:col-span-2 lg:col-span-2 bg-white p-4 rounded shadow">
-        <h3 className="font-semibold mb-3">Tickets</h3>
-
-        <div className="space-y-3 mb-3">
+      <div className="col-span-1 md:col-span-2 lg:col-span-2">
+        
+        <div className="space-y-3 mb-3 supportcard p-4">
           <input placeholder="Search subject/description" value={filters.search} onChange={(e) => setFilters(s => ({ ...s, search: e.target.value }))} className=" supportinput" />
           <div className="flex flex-wrap gap-2">
             <select value={filters.status} onChange={(e) => setFilters(s => ({ ...s, status: e.target.value }))} className="supportselect">
@@ -183,103 +191,106 @@ export default function SupportDashboard() {
           </div>
         </div>
 
-        <div className="max-h-[60vh] overflow-auto">
-          {loading ? <LoadingSpinner message="." />: tickets.map(t => (
-            <div
-              key={t.id}
-              onClick={() => openTicket(t.id)}
-              className={
-                `cursor-pointer space-y-2 mt-2 rounded-md 
-                ${selected?.id === t.id ? 'bg-green-100 ' : 'hover:bg-gray-100'}`
-              }
-            >
-              <div className="flex justify-between px-3 py-3 items-start">
-                <div>
-                  <div className="font-medium">{t.subject}</div>
-                  <div className="text-xs text-gray-500">{t.category} • {t.created_by_name}</div>
-                </div>
-                <div className="text-right text-xs">
-                  <div>{t.priority}</div>
-                  <div className="text-gray-500">{t.status}</div>
+        <div className='supportcard p-4 mt-6'>
+          <h3 className="font-semibold mb-3">Tickets</h3>
+          <div className="max-h-[60vh] overflow-auto ">
+            {loading ? <LoadingSpinner message="." />: tickets.map(t => (
+              <div
+                key={t.id}
+                onClick={() => openTicket(t.id)}
+                className={
+                  `cursor-pointer space-y-2 mt-2 rounded-md 
+                  ${selected?.id === t.id ? 'bg-green-100 ' : 'hover:bg-gray-100'}`
+                }
+              >
+                <div className="flex justify-between px-3 py-3 items-start">
+                  <div>
+                    <div className="font-medium">{t.subject}</div>
+                    <div className="text-xs text-gray-500">{t.category} • {t.created_by_name}</div>
+                  </div>
+                  <div className="text-right text-xs">
+                    <div>{t.priority}</div>
+                    <div className="text-gray-500">{t.status}</div>
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       </div>
 
-      <div className="col-span-1 md:col-span-2 lg:col-span-3 bg-white p-4 rounded shadow">
+      <div className="col-span-1 md:col-span-2 lg:col-span-3 ">
         {selected ? (
           <>
-            <div className="flex items-start justify-between">
-              <div>
-                <h2 className="text-xl font-semibold">{selected.subject}</h2>
-                <div className="text-sm text-gray-500">By {selected.created_by_name} • {new Date(selected.created_at).toLocaleString()}</div>
-              </div>
-              <div className="text-sm text-gray-500">Ticket #{selected.id}</div>
-            </div>
-
-            <div className="mt-4 ">
-              <div className="text-sm">{selected.description}</div>
-              <div className="mt-4 flex flex-wrap gap-3 items-center justify-between">
-                <div className='flex  gap-4'>
-                  <div>
-                    <label className="text-sm ">Status </label>
-                    <select value={selected.status} onChange={(e) => handleUpdate({ status: e.target.value })} className=" supportsel">
-                      <option>OPEN</option>
-                      <option>ASSIGNED</option>
-                      <option>RESOLVED</option>
-                      <option>CLOSED</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="text-sm">Priority </label>
-                    <select value={selected.priority} onChange={(e) => handleUpdate({ priority: e.target.value })} className="supportsel">
-                      <option>LOW</option>
-                      <option>MEDIUM</option>
-                      <option>HIGH</option>
-                      <option>URGENT</option>
-                    </select>
-                  </div>
+            <div className='supportcard p-4'>
+              <div className="flex items-start justify-between">
+                <div>
+                  <h2 className="text-xl font-semibold">{selected.subject}</h2>
+                  <div className="text-sm text-gray-500">By {selected.created_by_name} • {new Date(selected.created_at).toLocaleString()}</div>
                 </div>
-
-                {/* Assign controls */}
-                <div className="ml-4 flex flex-wrap items-center gap-2">
-                  {/* Assign to me (SUPPORT & ADMIN) */}
-                  <button 
-                    onClick={handleAssignToMe}
-                    disabled={updating}
-                    className="p-2 bg-green-700 text-white rounded-full cursor-pointer"
-                    title='Assign to me'>
-                    <RiCustomerService2Fill className='text-xl'/>
-                  </button>
-
-                  {/* Admin-only agent dropdown */}
-                  {(user.role === 'ADMIN' || user.role === 'OWNER') && (
-                    <div className="supportselect flex items-center cursor-pointer">
-                      <select value={assignUsername} onChange={(e) => setAssignUsername(e.target.value)} >
-                        <option value="">Select agent</option>
-                        {agents.map(a => (
-                          <option key={a.id} value={a.id}>{a.username} — {a.name}</option>
-                        ))}
+                <div className="text-sm text-gray-500">Ticket #{selected.id}</div>
+              </div>
+            
+              <div className="mt-4 ">
+                <div className="text-sm">{selected.description}</div>
+                <div className="mt-4 flex flex-wrap gap-3 items-center justify-between">
+                  <div className='flex  gap-4'>
+                    <div>
+                      <label className="text-sm ">Status </label>
+                      <select value={selected.status} onChange={(e) => handleUpdate({ status: e.target.value })} className=" supportsel">
+                        <option>OPEN</option>
+                        <option>ASSIGNED</option>
+                        <option>RESOLVED</option>
+                        <option>CLOSED</option>
                       </select>
-                      <button
-                        onClick={() => handleAssignAgent(assignUsername)}
-                        disabled={updating || !assignUsername}
-                        className="p-2 rounded-full bg-green-700 text-white cursor pointer">
-                        <MdAssignmentTurnedIn   className='text-xl'/>
-                      </button>
                     </div>
-                  )}
+
+                    <div>
+                      <label className="text-sm">Priority </label>
+                      <select value={selected.priority} onChange={(e) => handleUpdate({ priority: e.target.value })} className="supportsel">
+                        <option>LOW</option>
+                        <option>MEDIUM</option>
+                        <option>HIGH</option>
+                        <option>URGENT</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  {/* Assign controls */}
+                  <div className="ml-2.5 sm:ml-0 flex flex-wrap items-center gap-2">
+                    {/* Assign to me (SUPPORT & ADMIN) */}
+                    <button 
+                      onClick={handleAssignToMe}
+                      disabled={updating}
+                      className="p-2 bg-green-700 text-white rounded-full cursor-pointer"
+                      title='Assign to me'>
+                      <RiCustomerService2Fill className='text-xl'/>
+                    </button>
+
+                    {/* Admin-only agent dropdown */}
+                    {(user.role === 'ADMIN' || user.role === 'OWNER') && (
+                      <div className="supportselect flex items-center justify-between cursor-pointer">
+                        <select value={assignUsername} onChange={(e) => setAssignUsername(e.target.value)} >
+                          <option value="">Select agent</option>
+                          {agents.map(a => (
+                            <option key={a.id} value={a.id}>{a.username} — {a.name}</option>
+                          ))}
+                        </select>
+                        <button
+                          onClick={() => handleAssignAgent(assignUsername)}
+                          disabled={updating || !assignUsername}
+                          className="p-2 rounded-full bg-green-700 text-white cursor pointer">
+                          <MdAssignmentTurnedIn   className='text-xl'/>
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
-
-            <div className="mt-6">
+            <div className="mt-6 supportcard p-4">
               <h4 className="font-medium mb-2">Conversation</h4>
-              {/* Conversation list: customer = blue, support/admin = red */}
-              <div className="space-y-3 max-h-56 overflow-auto p-2 bg-gray-50 rounded-md flex flex-col">
+              <div className="space-y-3 max-h-56 overflow-auto p-2 bg-gray-100 rounded-md flex flex-col">
                 {comments.map((c) => {
                   // Determine role:
                   // - Prefer an explicit author_role from the comment if available.
@@ -297,13 +308,13 @@ export default function SupportDashboard() {
                     <div key={c.id} className={`flex ${isCustomer ? 'justify-start' : 'justify-end'}`}>
                       <div
                         className={
-                          `p-2 rounded-lg shadow-sm max-w-[80%] whitespace-pre-wrap ` +
+                          `p-2 rounded-lg shadow-sm max-w-[80%] whitespace-pre-wrap text-white ` +
                           (isCustomer
-                            ? 'bg-gray-200   '   // customer: blue
-                            : 'bg-green-200  ')     // support/admin: red
+                            ? 'bg-gray-600   '
+                            : 'bg-green-600  ')
                         }
                       >
-                        <div className="text-xs text-gray-600">{c.author_name} • {new Date(c.created_at).toLocaleString()}</div>
+                        <div className="text-xs text-gray-300">{c.author_name} • {new Date(c.created_at).toLocaleString()}</div>
                         <div className="text-sm mt-1.5">{c.message}</div>
                       </div>
                     </div>
@@ -314,7 +325,8 @@ export default function SupportDashboard() {
                 <input
                   value={commentText}
                   onChange={(e) => setCommentText(e.target.value)}
-                  placeholder="Write a reply..." className="supportchat"
+                  placeholder="Write a reply..."
+                  className="supportchat"
                 />
                 <button
                   onClick={handleAddComment}
