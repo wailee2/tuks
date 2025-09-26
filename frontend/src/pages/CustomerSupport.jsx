@@ -248,9 +248,7 @@ export default function CustomerSupport() {
             </div>
           </div>
 
-          {loadingTickets ? (
-            <p>Loading...</p>
-          ) : tickets.length === 0 ? (
+          {loadingTickets ? <LoadingSpinner message="." /> : tickets.length === 0 ? (
             <p className="text-sm text-gray-500">You have no support requests. Use the form to create one.</p>
           ) : (
             <div className=" max-h-[60vh] space-y-2 overflow-auto">
