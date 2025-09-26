@@ -286,7 +286,9 @@ export default function CustomerSupport() {
             <div className="flex items-start justify-between">
               <div>
                 <h4 className="text-lg font-semibold">{selectedTicket.subject}</h4>
-                <div className="text-sm text-gray-500">Status: <span className="font-medium">{selectedTicket.status}</span> • Priority: <span className="font-medium">{selectedTicket.priority}</span></div>
+                <div className="text-sm text-gray-500">
+                  Status: <span className="font-medium">{selectedTicket.status}</span> • Priority: <span className="font-medium">{selectedTicket.priority}</span>
+                </div>
               </div>
               <div className="text-sm text-gray-500">Assigned: {selectedTicket.assigned_to_name || 'Unassigned'}</div>
             </div>

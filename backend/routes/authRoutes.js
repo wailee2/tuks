@@ -43,7 +43,8 @@ router.post('/login', loginIpLimiter, loginAccountLimiter, login);
 router.get('/check-username', checkUsername);
 router.get('/me', authMiddleware, me);
 
-router.get('/google', passport.authenticate('google', { scope: ['profile','email'] }));
+router.get('/google', passport.authenticate('google', { scope: ['profile','email'], accessType: 'offline', prompt: 'consent' }));
+
 
 router.get('/google/callback',
   passport.authenticate('google', { session: false, failureRedirect: '/login' }),
