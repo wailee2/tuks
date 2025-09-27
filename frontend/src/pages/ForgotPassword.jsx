@@ -42,9 +42,9 @@ export default function ForgotPassword() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 p-6">
+    <div className="min-h-screen flex items-center  justify-center bg-gradient-to-br from-gray-50 to-gray-100 p-6">
       <div className="max-w-md w-full bg-white rounded-2xl shadow-lg p-8">
-        <h1 className="text-2xl font-semibold mb-1 text-gray-800">Reset your password</h1>
+        <h1 className="text-2xl font-semibold mb-1 text-gray-800">Forgot password</h1>
         <p className="text-sm text-gray-500 mb-6">Enter your account email and we'll send a password reset link.</p>
 
         {serverMsg && (
@@ -61,21 +61,29 @@ export default function ForgotPassword() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               disabled={loading}
-              className={`mt-1 block w-full px-4 py-2 rounded-lg border ${fieldError ? 'border-red-400' : 'border-gray-200'} focus:outline-none focus:ring-2 focus:ring-indigo-200`}
+              className={`finput ${fieldError ? 'border-red-400' : 'border-gray-200'} `}
               placeholder="you@example.com"
             />
             {fieldError && <p className="text-xs text-red-600 mt-1">{fieldError}</p>}
           </div>
 
-          <div className="flex justify-between items-center">
-            <Link to="/login" className="text-sm text-gray-600 hover:underline">Back to sign in</Link>
+          <div className="flex flex-col justify-between items-center">
+            
             <button
               type="submit"
               disabled={loading}
-              className="ml-3 px-4 py-2 rounded-lg bg-indigo-600 text-white font-medium hover:bg-indigo-700 disabled:opacity-60"
+              className="fbutton"
             >
               {loading ? 'Sending...' : 'Send reset link'}
             </button>
+            <div className='flex gap-2 text-sm mt-6'>
+                <span className='text-gray-600 '>Remember password?</span>
+                <Link
+                    to="/login" 
+                    className="text-green-700 underline font-medium"
+                >   Login
+                </Link>
+            </div>
           </div>
         </form>
       </div>

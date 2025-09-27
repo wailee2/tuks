@@ -35,6 +35,21 @@
   font-style: normal;
 }
 
+/*login register reset form*/
+.finput{
+    @apply mt-1 block w-full px-4 py-2 rounded-lg border focus:outline-none focus:ring-2 focus:ring-green-200
+}
+
+.fbutton{
+    @apply mt-4 px-4 py-3 rounded-lg bg-green-700 text-white font-medium hover:bg-green-800 disabled:opacity-60 cursor-pointer w-full
+}
+
+.rinput{
+    @apply mt-1 block w-full px-4 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-green-200 
+}
+
+
+
 .profilecard{
     @apply border border-gray-400 rounded-lg shadow-xl 
 }

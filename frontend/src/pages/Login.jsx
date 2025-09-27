@@ -141,9 +141,9 @@ export default function Login() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               disabled={loading}
-              className={`mt-1 block w-full px-4 py-2 rounded-lg border ${
+              className={`finput ${
                 fieldErrors.email ? 'border-red-400' : 'border-gray-200'
-              } focus:outline-none focus:ring-2 focus:ring-indigo-200`}
+              } `}
               placeholder="you@example.com"
             />
             {fieldErrors.email && <p className="text-xs text-red-600 mt-1">{fieldErrors.email}</p>}
@@ -156,9 +156,9 @@ export default function Login() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               disabled={loading}
-              className={`mt-1 block w-full px-4 py-2 rounded-lg border ${
+              className={`finput ${
                 fieldErrors.password ? "border-red-400" : "border-gray-200"
-                } focus:outline-none focus:ring-2 focus:ring-indigo-200`}
+                } `}
               placeholder="••••••••"
             />
             <button
@@ -179,13 +179,17 @@ export default function Login() {
               <input type="checkbox" className="form-checkbox h-4 w-4 text-indigo-600" />
               <span className="text-sm text-gray-600">Remember me</span>
             </label>
-            <Link to="/forgot-password" className="text-sm text-indigo-600 hover:underline">Forgot?</Link>
+            <Link 
+              to="/forgot-password"
+              className="text-green-700 mt-2 text-sm underline font-medium"
+            > Forgot Password?
+            </Link>
           </div>
 
           <button
             type="submit"
             disabled={loading}
-            className="w-full flex justify-center items-center gap-2 px-4 py-2 rounded-lg bg-indigo-600 text-white font-medium hover:bg-indigo-700 disabled:opacity-60"
+            className="fbutton"
           >
             {loading ? (
               <>
@@ -202,7 +206,7 @@ export default function Login() {
         </form>
 
         <p className="mt-6 text-center text-sm text-gray-600">
-          Don’t have an account? <a href="/register" className="text-indigo-600 font-medium hover:underline">Sign up</a>
+          Don’t have an account? <a href="/register" className="text-green-700 mt-3 text-sm underline font-medium">Sign up</a>
         </p>
       </div>
     </div>
