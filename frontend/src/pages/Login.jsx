@@ -1,6 +1,7 @@
 // pages/Login.jsx
 import { useState, useContext } from 'react';
 import { AuthContext } from '../context/AuthContext';
+import { Link } from 'react-router-dom';
 import { startGoogleLogin } from '../services/auth.js';
 import { useNavigate } from 'react-router-dom';
 import { FiEye, FiEyeOff } from "react-icons/fi";
@@ -178,7 +179,7 @@ export default function Login() {
               <input type="checkbox" className="form-checkbox h-4 w-4 text-indigo-600" />
               <span className="text-sm text-gray-600">Remember me</span>
             </label>
-            <a href="/forgot-password" className="text-sm text-indigo-600 hover:underline">Forgot?</a>
+            <Link to="/forgot-password" className="text-sm text-indigo-600 hover:underline">Forgot?</Link>
           </div>
 
           <button

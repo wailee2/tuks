@@ -1,7 +1,7 @@
 // routes/authRoutes.js
 const express = require('express');
 const rateLimit = require('express-rate-limit');
-const { register, login, checkUsername, me } = require('../controllers/authController');
+const { register, login, checkUsername, me, forgotPassword, resetPassword } = require('../controllers/authController');
 const { authMiddleware } = require('../middleware/authMiddleware');
 const passport = require("passport");
 const jwt = require("jsonwebtoken");
@@ -35,6 +35,15 @@ const loginIpLimiter = rateLimit({
     res.status(options.statusCode).json({ message: options.message });
   },
 });
+
+// protect forgot/reset from abuse (per-IP)
+const forgotLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 5,
+  message: "Too many password reset requests from this IP, try again later."
+});
+
+
 
 router.post('/register', register);
 router.post('/login', loginIpLimiter, loginAccountLimiter, login);
@@ -73,5 +82,7 @@ router.get('/google/callback',
   }
 );
 
+router.post('/forgot-password', forgotLimiter, forgotPassword);
+router.post('/reset-password', resetPassword);
 
 module.exports = router;

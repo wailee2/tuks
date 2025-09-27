@@ -102,6 +102,43 @@ const setGoogleIdForUser = async (userId, googleId) => {
 };
 
 
+// store hashed reset token and expiry
+const setPasswordResetToken = async (userId, tokenHash, expiresAt) => {
+  const res = await pool.query(
+    'UPDATE users SET password_reset_token = $1, password_reset_expires = $2 WHERE id = $3 RETURNING id, email, name, username',
+    [tokenHash, expiresAt, userId]
+  );
+  return res.rows[0];
+};
+
+// find user by hashed token (and still valid)
+const getUserByPasswordResetToken = async (tokenHash) => {
+  const res = await pool.query(
+    `SELECT id, name, email, username, google_id, password_reset_expires
+     FROM users
+     WHERE password_reset_token = $1 AND password_reset_expires > now()`,
+    [tokenHash]
+  );
+  return res.rows[0];
+};
+
+const clearPasswordResetToken = async (userId) => {
+  const res = await pool.query(
+    'UPDATE users SET password_reset_token = NULL, password_reset_expires = NULL WHERE id = $1 RETURNING id, email',
+    [userId]
+  );
+  return res.rows[0];
+};
+
+// update password
+const updatePassword = async (userId, hashedPassword) => {
+  const res = await pool.query(
+    'UPDATE users SET password = $1 WHERE id = $2 RETURNING id, email, username',
+    [hashedPassword, userId]
+  );
+  return res.rows[0];
+};
+
 module.exports = {
   getUserByEmail,
   getUserByUsername,
@@ -112,5 +149,9 @@ module.exports = {
   searchUsers,
   getUserByGoogleId,
   createUserWithGoogle,
-  setGoogleIdForUser
+  setGoogleIdForUser,
+  setPasswordResetToken,
+  getUserByPasswordResetToken,
+  clearPasswordResetToken,
+  updatePassword,
 };

@@ -22,6 +22,9 @@ import EditProfilePage from './pages/EditProfile';
 import PageNotFound from './pages/PageNotFound';
 import ErrorBoundary from './components/ErrorBoundary';
 
+import ForgotPassword from './pages/ForgotPassword';
+import ResetPassword from './pages/ResetPassword';
+
 
 export default function AppRoutes() {
   const { user } = useContext(AuthContext);
@@ -75,6 +78,9 @@ export default function AppRoutes() {
 
             
             <Route path="/dashboard" element={user ? <Dashboard /> : <Navigate to="/login" />} />
+
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
             
             <Route path="*" element={<PageNotFound />} />
           </Routes>
