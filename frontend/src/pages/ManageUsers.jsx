@@ -24,6 +24,12 @@ import {
   PlusIcon
 } from "lucide-react";
 
+import { FaUser } from "react-icons/fa";
+import { BiSupport, BiSolidAnalyse } from "react-icons/bi";
+import { GrUserAdmin } from "react-icons/gr";
+import { GiCrownedHeart } from "react-icons/gi";
+import { HiMiniUserCircle } from "react-icons/hi2";
+
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 
@@ -34,15 +40,15 @@ const roleColors = {
   SUPPORT: 'bg-purple-200 text-purple-800',
   ANALYST: 'bg-yellow-200 text-yellow-800',
   ADMIN: 'bg-red-200 text-red-800',
-  OWNER: 'bg-green-800 text-white',
+  OWNER: 'bg-green-200 text-green-800',
 };
 const roleIconMap = {
-  USER: User,
+  USER: HiMiniUserCircle,
   MODERATOR: ShieldCheck,
-  SUPPORT: Headphones,
-  ANALYST: BarChart2,
-  ADMIN: Crown,
-  OWNER: Power,
+  SUPPORT: BiSupport,
+  ANALYST: BiSolidAnalyse,
+  ADMIN: GrUserAdmin,
+  OWNER: GiCrownedHeart,
 };
 
 const formatHeaderLabel = (field) => {
@@ -175,7 +181,7 @@ export default function ManageUsers() {
   const totalPages = Math.ceil(filteredUsers.length / pageSize);
   
   return (
-    <div className="flex min-h-screen bg-gray-50 ">
+    <div className="flex min-h-screen ">
       <main className="flex-1 p-7 overflow-x-hidden">
         <div className='mb-8'>
           <h1 className="text-2xl text-gray-800 font-semibold tracking-tight">User management</h1>
@@ -354,14 +360,16 @@ export default function ManageUsers() {
                           aria-label={`Role: ${u.role}`}
                         >
                           {/* Icon badge — uses the roleColors for bg/text so icon inherits color */}
-                          <div
+                          <motion.div
                             className={`inline-flex items-center justify-center h-9 w-9 rounded-full ${roleColors[u.role] || 'bg-gray-200 text-gray-800'}`}
+                            whileHover={{ scale: 1.2, opacity: 0.9 }}
+                            transition={{ type: "spring", stiffness: 300, damping: 20 }}
                           >
                             {(() => {
                               const RoleIcon = roleIconMap[u.role] || User;
                               return <RoleIcon className="h-5 w-5" />;
                             })()}
-                          </div>
+                          </motion.div>
                         </td>
                       )}
                       {visibleFields.includes("status") && (
@@ -538,7 +546,7 @@ export default function ManageUsers() {
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.8, opacity: 0 }}
             transition={{ type: "spring", stiffness: 200, damping: 20 }}
-            className="bg-white/20 backdrop-blur-md border border-white/30 shadow-2xl rounded-2xl p-6 w-80 text-center"
+            className="bg-white/20 backdrop-blur-md border border-white/30 shadow-2xl rounded-2xl p-6 text-center "
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-center gap-3 mb-4">
@@ -557,7 +565,7 @@ export default function ManageUsers() {
               </h2>
             </div>
 
-            <div className="grid gap-2">
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
               {['USER', 'MODERATOR', 'SUPPORT', 'ANALYST', 'ADMIN', ...(user.role === 'OWNER' ? ['OWNER'] : [])].map((r) => {
                 const RoleIcon = roleIconMap[r] || User;
                 return (
@@ -567,7 +575,7 @@ export default function ManageUsers() {
                       handleRoleChange(selectedUser.id, r);
                       closeUserModal();
                     }}
-                    className={`px-4 py-2 rounded-lg text-sm font-medium transition flex items-center justify-center gap-3
+                    className={`px-4 py-4 cursor-pointer rounded-lg text-sm font-medium transition flex items-center justify-center gap-3
                                 ${roleColors[r] || 'bg-gray-200 text-gray-800'} hover:scale-105`}
                   >
                     <div className={`inline-flex items-center justify-center h-8 w-8 rounded-full ${roleColors[r] || 'bg-gray-200 text-gray-800'}`}>
@@ -581,7 +589,7 @@ export default function ManageUsers() {
 
             <button
               onClick={closeUserModal}
-              className="mt-4 px-4 py-2 bg-gray-800/70 text-white rounded-lg hover:bg-gray-700"
+              className="mt-4 px-4 py-2 bg-white/10 hover:bg-white/5 text-white rounded-lg cursor-pointer hover:scale-105 transition"
             >
               Cancel
             </button>

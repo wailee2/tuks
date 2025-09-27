@@ -88,7 +88,7 @@
 }
 
 .supportbutton{
-    @apply rounded-full px-4.5 py-2.5 text-sm font-semibold cursor-pointer hover:opacity-80 w-full sm:w-fit
+    @apply rounded-full px-4.5 py-2.5 text-sm cursor-pointer hover:opacity-80 w-full sm:w-fit
 }
 
 .supportsel{
@@ -109,4 +109,16 @@
 
 .supportcard{
     @apply rounded-lg border-gray-200 border-1 shadow bg-white
+}
+
+.profilebutton{
+    @apply w-full px-3 py-2.5 bg-white/10 hover:bg-white/5 text-white rounded-lg hover:scale-[1.02] transition cursor-pointer
+}
+
+.profilebuttonred{
+    @apply bg-red-600/70 hover:bg-red-600/50
+}
+
+.profilebutclose{
+    @apply px-4 py-2 bg-white/10 hover:bg-white/5 text-white rounded-lg cursor-pointer
 }

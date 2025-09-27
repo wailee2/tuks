@@ -534,7 +534,7 @@ export default function EditProfilePage() {
 
           {/* Actions */}
           <div className="flex justify-end gap-3 mt-3">
-            <button onClick={() => navigate(`/${user?.username || ''}`)} className="border profilebut text-green-700 hover:bg-green-600 hover:text-white">Cancel</button>
+            <button onClick={() => navigate(`/${user?.username || ''}`)} className="border profilebut text-green-700 hover:bg-green-800 hover:text-white">Cancel</button>
             <button onClick={handleSave} disabled={saving || checkingUsername} className=" bg-green-700 text-white flex items-center gap-2 disabled:opacity-60 profilebut">
               {saving ? (
                 <>

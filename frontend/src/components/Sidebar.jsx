@@ -16,6 +16,13 @@ import {
   FiHeart,
 } from "react-icons/fi";
 
+import { TbLayoutDashboardFilled, TbMessage2Filled } from "react-icons/tb";
+import { MdManageAccounts, MdInventory } from "react-icons/md";
+import { BiSupport } from "react-icons/bi";
+import { IoNotifications } from "react-icons/io5";
+import { FaCartShopping } from "react-icons/fa6";
+
+
 function Sidebar() {
   const { user, profile } = useContext(AuthContext);
   const location = useLocation();
@@ -30,27 +37,27 @@ function Sidebar() {
   const noNav = ["/login", "/register", "/reset-password", "/forgot-password"].includes(location.pathname);
 
   const navItems = [
-    { name: "Dashboard", path: "/dashboard", icon: <FiHome aria-hidden /> },
-    { name: "Inventory", path: "/inventory", icon: <FiBox aria-hidden /> },
+    { name: "Dashboard", path: "/dashboard", icon: <TbLayoutDashboardFilled aria-hidden /> },
+    { name: "Inventory", path: "/inventory", icon: <MdInventory aria-hidden /> },
     //{ name: "Orders", path: "/orders", icon: <FiShoppingBag aria-hidden /> },
     //{ name: "Feed", path: "/feed", icon: <FiRss aria-hidden /> },
     //{ name: "Analytics", path: "/analytics", icon: <FiBarChart2 aria-hidden /> },
-    { name: "Marketplace", path: "/marketplace", icon: <FiShoppingCart aria-hidden /> },
-    { name: "Messages", path: "/messages", icon: <FiMessageSquare aria-hidden /> },
-    { name: "Notifications", path: "/notifications", icon: <FiBell aria-hidden /> },
+    { name: "Marketplace", path: "/marketplace", icon: <FaCartShopping aria-hidden /> },
+    { name: "Messages", path: "/messages", icon: <TbMessage2Filled aria-hidden /> },
+    { name: "Notifications", path: "/notifications", icon: <IoNotifications aria-hidden /> },
     //{ name: "Cart", path: "/cart", icon: <FiShoppingCart aria-hidden /> },
-    { name: "Support", path: "/support", icon: <FiHelpCircle aria-hidden /> },
+    { name: "Support", path: "/support", icon: <BiSupport aria-hidden /> },
     ...((user?.role === "ADMIN" || user?.role === "OWNER")
-      ? [{ name: "Manage Users", path: "/manage-users", icon: <FiUsers aria-hidden /> }]
+      ? [{ name: "Manage Users", path: "/manage-users", icon: <MdManageAccounts aria-hidden /> }]
       : []),
 
   ];
 
   // responsive sizing: full-width bottom on small, narrow at md, larger at lg
-  const sidebarWidthClass = iconOnlyMode ? "w-full md:w-18" : "w-full md:w-18 xl:w-61";
+  const sidebarWidthClass = iconOnlyMode ? " w-full md:w-18 " : "w-full md:w-18 xl:w-61";
 
   // alignment: centered icons by default, left-justify from md
-  const linkJustifyClass = iconOnlyMode ? "justify-center" : " md:justify-center xl:justify-start";
+  const linkJustifyClass = iconOnlyMode ? "bg-transparent justify-center" : " md:justify-center xl:justify-start";
 
   // show text at lg (per your request); iconOnlyMode keeps labels sr-only
   const textVisibilityClass = iconOnlyMode ? "sr-only" : "hidden xl:inline";
@@ -58,7 +65,7 @@ function Sidebar() {
   // spacing: gap appears at lg
   const spacingClass = iconOnlyMode ? "space-x-0" : "space-x-0 xl:space-x-3";
 
-  const avatar = profile?.profile_pic || "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='48' height='48'><rect width='48' height='48' fill='%23ddd'/><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' font-size='18' fill='%23666'>U</text></svg>";
+  const avatar = profile?.profile_pic || "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='48' height='48'><rect width='48' height='48' fill='%23ddd'/><circle cx='24' cy='18' r='8' fill='%23fff'/><path d='M12 40c0-6.627 5.373-12 12-12h0c6.627 0 12 5.373 12 12' fill='%23fff'/></svg>";
 
 
   // choose profile or fallback to user (server might put avatar on user object)
@@ -83,7 +90,7 @@ function Sidebar() {
         ${sidebarWidthClass}
         ${hideNavPages ? "hidden md:flex" : ""}
         ${noNav ? "hidden" : ""} 
-        bg-green-200 md:h-screen md:py-4 px-4 md:px-3 xl:px-4 shadow-lg flex md:flex-col gap-5 md:gap-0 transition-all duration-200 ease-in-out overflow-hidden fixed bottom-0 left-0 right-0 md:sticky md:top-0 z-50 justify-between
+        bg-white md:h-screen md:py-4 px-4 md:px-3 xl:px-4 shadow-lg flex md:flex-col gap-5 md:gap-0 transition-all duration-200 ease-in-out overflow-hidden fixed bottom-0 left-0 right-0 md:sticky md:top-0 z-50 justify-between
       `}
     >
       {/* Logo */}
@@ -111,8 +118,8 @@ function Sidebar() {
               className={({ isActive }) =>
                 `${baseLayout} items-center justify-center
                 ${linkJustifyClass}
-                ${spacingClass}  px-2.5 py-2.5 rounded-lg hover:bg-green-200 transition-all duration-150 ${
-                  isActive ? "bg-green-500 text-white font-bold" : "text-gray-700"
+                ${spacingClass}  px-2.5 py-2.5 rounded-lg hover:bg-gray-100 transition-all duration-150 ${
+                  isActive ? "bg-gray-100 text-gray-900 font-bold" : "text-gray-500"
                 } md:flex-none w-full`
               }
             >
@@ -124,7 +131,7 @@ function Sidebar() {
       </nav>
 
       {/* Profile / guest area */}
-      <div className={` ${iconOnlyMode ? "w-full flex items-center justify-center  " : "flex items-center lg:justify-start lg:items-center  md:px-0 xl:px-2 xl:py-2 xl:hover:bg-green-900 rounded"}`}>
+      <div className={` ${iconOnlyMode ? "w-full flex items-center justify-center  " : "flex items-center lg:justify-start lg:items-center  md:px-0 xl:px-2 xl:py-2 xl:hover:bg-gray-200 rounded-full"}`}>
         {user ? (
           // logged-in user -> clicking goes to /:username
           <NavLink

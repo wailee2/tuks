@@ -219,8 +219,8 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto p-2 md:p-6">
-      <div className="bg-white p-2 md:p-6 flex flex-col md:flex-row  gap-6 md:gap-20">
+    <div className=" max-w-4xl mx-auto p-2 md:p-6">
+      <div className=" p-2 md:p-6 flex flex-col md:flex-row  gap-6 md:gap-20">
         {/* clickable avatar */}
         {profile.profile_pic ? (
           <motion.img
@@ -244,7 +244,7 @@ export default function ProfilePage() {
         )}
 
 
-        <div className="flexb-1">
+        <div className="flex-1">
           <div className="flex items-center justify-between gap-4.5">
             <div>
               <div className="text-xl font-semibold">{profile.name}</div>
@@ -258,14 +258,14 @@ export default function ProfilePage() {
                 </button>
                 <button
                   onClick={() => setSettingsOpen(true)}
-                  className="">
+                  className="cursor-pointer">
                     <IoMdSettings className='text-3xl'/>
                 </button>
               </div>
             ) : (
               <div className='flex gap-2'>
                 {!profile.is_following ? (
-                  <button onClick={handleFollow} className=" profilebutton bg-green-600 text-white">Follow</button>
+                  <button onClick={handleFollow} className=" profilebutton bg-green-700 text-white">Follow</button>
                 ) : (
                   <button onClick={handleUnfollow} className="profilebutton buttondark text-white ">Unfollow</button>
                 )}
@@ -399,7 +399,7 @@ export default function ProfilePage() {
                   {profile.is_blocked_by_viewer ? (
                     <button
                       onClick={() => { setActionsOpen(false); handleUnblock(); }}
-                      className="w-full px-3 py-2 bg-gray-200 text-black rounded hover:scale-[1.02] transition"
+                      className="w-full px-3 py-2 bg-white/10 hover:bg-white/5 text-white rounded hover:scale-[1.02] transition cursor-pointer"
                     >
                       Unblock
                     </button>
@@ -407,31 +407,31 @@ export default function ProfilePage() {
                     <button
                       onClick={() => { setActionsOpen(false); handleBlock(); }}
                       disabled={blocking}
-                      className="w-full px-3 py-2 bg-red-600 text-white rounded hover:opacity-90 transition"
+                      className="profilebutton profilebuttonred"
                     >
                       Block
                     </button>
                   )}
                 </div>
-                <div className="flex flex-col  gap-2 mt-2">
+                <div className="flex flex-col  gap-2 mt-1">
                   <button
                     onClick={() => { setActionsOpen(false); handleReport(); }}
-                    className="text-sm  w-full cursor-pointer py-2 bg-gray-800/60 hover:scale-[1.02] transition text-red-400"
+                    className="profilebutton"
                   >
                     Report
                   </button>
                   <button
                     onClick={() => { setActionsOpen(false); handleShare(); }}
-                    className="text-sm w-full cursor-pointer py-2 hover:scale-[1.02] transition bg-gray-800/60 rounded text-white"
+                    className="profilebutton"
                   >
                     Share
                   </button>
                 </div>
 
-                <div className="flex justify-end mt-3">
+                <div className="flex justify-center mt-3">
                   <button
                     onClick={() => setActionsOpen(false)}
-                    className="px-3 py-1 border rounded bg-white/5 text-white hover:bg-white/10"
+                    className="profilebutclose"
                   >
                     Close
                   </button>

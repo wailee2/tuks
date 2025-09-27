@@ -36,7 +36,7 @@ export default function AppRoutes() {
           <Sidebar />
         </div>
         
-        <main className='flex-1 overflow-y-auto pb-20 md:pb-0'>
+        <main className='flex-1 overflow-y-auto pb-20 md:pb-0 bg-gray-50'>
           <Routes>
             <Route path="/auth/success" element={<AuthSuccess />} />
             

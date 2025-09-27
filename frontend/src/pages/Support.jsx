@@ -22,7 +22,7 @@ export default function Support() {
   // Only SUPPORT and ADMIN see the dashboard (but disabled-login already handled above)
   if (user.role === 'SUPPORT' || user.role === 'ADMIN' || user.role === 'OWNER')  {
     return(
-      <div>
+      <div className='bg-gray-50'>
         <h2 className='font-semibold text-2xl px-6 pt-4'>Tickets</h2>
         <SupportDashboard />
       </div>
@@ -31,7 +31,7 @@ export default function Support() {
 
   // Everyone else sees the customer-facing support form
   return(
-    <div>
+    <div className='bg-gray-50'>
       <h2 className='font-semibold text-2xl px-6 pt-4'>Tickets</h2>
       <CustomerSupport />
     </div>

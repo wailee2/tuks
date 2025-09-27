@@ -60,34 +60,22 @@ export default function ProfileSettingsModal({ onClose, onRequestDelete }) {
         <div className="space-y-3">
           <button
             onClick={handleLogout}
-            className="w-full px-3 py-2 bg-gray-800/60 text-white rounded hover:scale-[1.02] transition"
+            className="profilebutton"
           >
             Logout
           </button>
 
           <button
-            onClick={() => alert('Change password flow not implemented here — use your existing flow')}
-            className="w-full px-3 py-2 bg-white/10 text-white rounded hover:scale-[1.02] transition"
-          >
-            Change password
-          </button>
-
-          <button
             onClick={handleDelete}
-            className="w-full px-3 py-2 bg-red-600 text-white rounded hover:opacity-90 transition"
+            className="profilebutton profilebuttonred"
           >
             Request account deletion
           </button>
 
-          <div className="mt-2 text-sm text-white/70">
-            Requesting deletion will immediately disable your account and hide it from other users.
-            Data will be permanently removed after 30 days.
-          </div>
-
-          <div className="flex justify-end mt-3">
+          <div className="flex justify-center mt-3">
             <button
               onClick={onClose}
-              className="px-3 py-1 border rounded bg-white/5 text-white hover:bg-white/10"
+              className="profilebutclose"
             >
               Close
             </button>
