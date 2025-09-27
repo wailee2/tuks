@@ -2,7 +2,6 @@
 import { useContext, useEffect, useState, useRef } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import { getAllUsers, updateUserRole, disableUser } from '../services/admin';
-import SearchBar from '../components/manageusers/SearchBar'
 import { paginate } from '../utils/pagination';
 import { useToasts } from '../context/ToastContext';
 import LoadingSpinner from "../components/LoadingSpinner";

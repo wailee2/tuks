@@ -1,6 +1,6 @@
 // components/Sidebar.jsx
 import React, { useContext } from "react";
-import { NavLink, useLocation } from "react-router-dom";
+import { NavLink, useLocation, Link } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 import {
   FiHome,
@@ -21,6 +21,8 @@ import { MdManageAccounts, MdInventory } from "react-icons/md";
 import { BiSupport } from "react-icons/bi";
 import { IoNotifications } from "react-icons/io5";
 import { FaCartShopping } from "react-icons/fa6";
+import { PiHeartbeatFill } from "react-icons/pi";
+import { VscTerminalUbuntu } from "react-icons/vsc";
 
 
 function Sidebar() {
@@ -94,15 +96,16 @@ function Sidebar() {
       `}
     >
       {/* Logo */}
-      <div
+      <Link
         className={`
-          hidden md:flex items-center mb-4 
+          hidden md:flex items-center mb-4 group cursor-pointer
           ${iconOnlyMode ? "justify-center" : "justify-center xl:justify-start"}
         `}
+        to="/"
       >
-        <FiHeart className="text-red-500 w-6 h-6" aria-hidden />
-        <span className={`font-bold text-xl ml-2 ${textVisibilityClass}`}>Tuks</span>
-      </div>
+        <VscTerminalUbuntu className="text-green-700 w-7 h-7 group-hover:text-green-800 transition" aria-hidden />
+        <span className={`font-semibold tracking-tighter text-xl ml-2 ${textVisibilityClass}`}>Tuks</span>
+      </Link>
 
       {/* Nav: horizontal on small, vertical from md up */}
       <nav className="flex md:flex-col md:space-y-2 w-full gap-[5%] ">
