@@ -253,7 +253,7 @@ export default function ProfilePage() {
               <div className='flex gap-2'>
                 <button
                   onClick={() => navigate(`/settings/edit-profile`)}
-                  className=" profilebutton  bg-green-700 text-white">
+                  className=" profilebut  bg-green-700 text-white">
                     Edit profile
                 </button>
                 <button
