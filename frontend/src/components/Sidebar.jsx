@@ -1,6 +1,5 @@
 // components/Sidebar.jsx
-import React, { useContext, useEffect, useState } from "react";
-import { getProfile } from "../services/profile";
+import React, { useContext } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 import {
@@ -18,7 +17,7 @@ import {
 } from "react-icons/fi";
 
 function Sidebar() {
-  const { user, token, profile } = useContext(AuthContext);
+  const { user, profile } = useContext(AuthContext);
   const location = useLocation();
 
   // icon-only pages
@@ -28,7 +27,7 @@ function Sidebar() {
   const hideNavPages = ["/messages", "/support"].includes(location.pathname);
 
   // pages where nav should be hidden completely
-  const noNav = ["/login", "/register"].includes(location.pathname);
+  const noNav = ["/login", "/register", "/reset-password", "/forgot-password"].includes(location.pathname);
 
   const navItems = [
     { name: "Dashboard", path: "/dashboard", icon: <FiHome aria-hidden /> },
@@ -61,7 +60,6 @@ function Sidebar() {
 
   const avatar = profile?.profile_pic || "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='48' height='48'><rect width='48' height='48' fill='%23ddd'/><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' font-size='18' fill='%23666'>U</text></svg>";
 
-  const defaultSvg = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='48' height='48'><rect width='48' height='48' fill='%23ddd'/><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' font-size='18' fill='%23666'>U</text></svg>";
 
   // choose profile or fallback to user (server might put avatar on user object)
   const avatarUrl = profile?.profile_pic || user?.profile_pic || null;
