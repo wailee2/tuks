@@ -2,6 +2,7 @@ import React, { useState, useContext, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import { FiEye, FiEyeOff } from "react-icons/fi";
+import { Link } from 'react-router-dom';
 
 
 
@@ -146,7 +147,7 @@ export default function RegisterPage() {
               name="name"
               value={form.name}
               onChange={onChange}
-              className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-400 ${errors.name ? 'border-red-300' : 'border-gray-200'}`}
+              className={`registerinput ${errors.name ? 'border-red-300' : 'border-gray-200'}`}
               placeholder="Your full name"
               autoComplete="name"
             />
@@ -160,7 +161,7 @@ export default function RegisterPage() {
                 name="username"
                 value={form.username}
                 onChange={onChange}
-                className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-400 ${errors.username ? 'border-red-300' : 'border-gray-200'}`}
+                className={`registerinput ${errors.username ? 'border-red-300' : 'border-gray-200'}`}
                 placeholder="username (letters, numbers, ., _, -)"
                 autoComplete="username"
               />
@@ -176,11 +177,11 @@ export default function RegisterPage() {
                   <span className="text-xs text-red-600 font-medium">taken</span>
                 ) : null}
               </div>
-            </div>
+            </div>{/*
             <div className="flex items-center justify-between mt-1 text-xs text-gray-500">
               <div>Lowercase recommended. No spaces.</div>
               <div>Preview: <span className="font-medium">{form.username ? form.username.toLowerCase() : '—'}</span></div>
-            </div>
+            </div>*/}
             {errors.username && <p className="text-xs text-red-500 mt-1">{errors.username}</p>}
           </div>
 
@@ -191,7 +192,7 @@ export default function RegisterPage() {
               type="email"
               value={form.email}
               onChange={onChange}
-              className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-400 ${errors.email ? 'border-red-300' : 'border-gray-200'}`}
+              className={`registerinput ${errors.email ? 'border-red-300' : 'border-gray-200'}`}
               placeholder="you@example.com"
               autoComplete="email"
             />
@@ -206,7 +207,7 @@ export default function RegisterPage() {
                 type={showPassword ? 'text' : 'password'}
                 value={form.password}
                 onChange={onChange}
-                className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-400 ${errors.password ? 'border-red-300' : 'border-gray-200'}`}
+                className={`registerinput ${errors.password ? 'border-red-300' : 'border-gray-200'}`}
                 placeholder="Create a strong password"
                 autoComplete="new-password"
               />
@@ -237,7 +238,7 @@ export default function RegisterPage() {
               type="password"
               value={form.confirm}
               onChange={onChange}
-              className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-400 ${errors.confirm ? 'border-red-300' : 'border-gray-200'}`}
+              className={`registerinput ${errors.confirm ? 'border-red-300' : 'border-gray-200'}`}
               placeholder="Repeat your password"
               autoComplete="new-password"
             />
@@ -248,18 +249,27 @@ export default function RegisterPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full inline-flex items-center justify-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 disabled:opacity-60"
+              className="w-full inline-flex items-center justify-center gap-2 px-4 py-3 bg-green-700 hover:bg-green-800 text-white rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-green-400 disabled:opacity-60 "
             >
               {loading ? (
-                <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path></svg>
+                <svg
+                  className="animate-spin h-4 w-4" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+                </svg>
               ) : null}
               <span>{loading ? 'Creating account...' : 'Create account'}</span>
             </button>
           </div>
         </form>
 
-        <div className="mt-4 text-center text-sm text-gray-500">
-          Already have an account? <a className="text-indigo-600 font-medium hover:underline" href="/login">Sign in</a>
+        <div className="mt-6 text-center text-sm text-gray-500">
+          Already have an account?
+          <Link
+            to="/login" 
+            className="text-green-700 underline font-medium ml-1"
+          >   Login
+          </Link>
         </div>
       </div>
     </div>

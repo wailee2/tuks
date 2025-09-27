@@ -93,8 +93,7 @@ export default function Login() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 p-6">
       <div className="max-w-md w-full bg-white rounded-2xl shadow-lg p-8">
-        <h1 className="text-2xl font-semibold mb-1 text-gray-800">Welcome back</h1>
-        <p className="text-sm text-gray-500 mb-6">Sign in to continue to your account</p>
+        <h1 className="text-2xl font-semibold mb-7 text-gray-800">Welcome back</h1>
 
         {/* Server errors */}
         {serverError && (
@@ -120,7 +119,7 @@ export default function Login() {
               startGoogleLogin();
             }}
             disabled={loading}
-            className="w-full flex items-center justify-center gap-3 px-4 py-2 rounded-lg border border-gray-300 bg-white text-gray-700 font-medium hover:bg-gray-50 shadow-sm disabled:opacity-60"
+            className="w-full flex items-center justify-center gap-3 px-4 py-2 rounded-lg border border-gray-300 bg-white text-gray-700 font-medium hover:bg-gray-50 shadow-sm disabled:opacity-60 cursor-pointer"
           >
             <img
               src="https://www.svgrepo.com/show/355037/google.svg"
@@ -189,16 +188,17 @@ export default function Login() {
           <button
             type="submit"
             disabled={loading}
-            className="fbutton"
+            className="loadingbutton"
           >
             {loading ? (
-              <>
+              <div className='flex items-center gap-2'>
+                <span>Signing in...</span>
                 <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
                   <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" opacity="0.25" />
                   <path d="M4 12a8 8 0 018-8" stroke="currentColor" strokeWidth="4" strokeLinecap="round" />
                 </svg>
-                Signing in...
-              </>
+                
+              </div>
             ) : (
               'Sign in'
             )}
@@ -206,7 +206,7 @@ export default function Login() {
         </form>
 
         <p className="mt-6 text-center text-sm text-gray-600">
-          Don’t have an account? <a href="/register" className="text-green-700 mt-3 text-sm underline font-medium">Sign up</a>
+          Don’t have an account? <a href="/register" className="text-green-700 mt-3 text-sm font-medium underline">Register</a>
         </p>
       </div>
     </div>
