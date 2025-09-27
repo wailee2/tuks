@@ -389,7 +389,7 @@ export default function EditProfilePage() {
         <div className="flex items-start gap-6">
           {/* Avatar */}
           <div className="flex-shrink-0">
-            <div className="relative w-28 h-28 rounded-full bg-gray-100 border-2 border-gray-200">
+            <div className="relative w-28 h-28 rounded-full bg-gray-200 border-2 border-gray-200">
               <div className='overflow-hidden rounded-full'>
                 <img
                   src={avatarPreview || form.profile_pic || '/default-anon.png'}
@@ -397,9 +397,9 @@ export default function EditProfilePage() {
                   className="w-full h-full object-cover"
                 />
               </div>
-              <div className='bg-white p-0.5 rounded-full absolute bottom-0.5 right-0.5 flex'>
+              <div className='bg-gray-200 cursor-pointer p-0.5 rounded-full absolute bottom-0.5 right-0.5 flex'>
                 <label
-                  className=" bg-green-700 bg-opacity-90 text-white p-2 text-xs rounded-full cursor-pointer shadow"
+                  className=" bg-green-700 bg-opacity-90 text-white p-2 text-lg rounded-full "
                 >
                   <MdEdit className="text-sm"/>
                   <input type="file" accept="image/*" className="hidden" onChange={handleAvatarSelect} />
