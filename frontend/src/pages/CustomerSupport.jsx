@@ -4,6 +4,7 @@ import { AuthContext } from '../context/AuthContext';
 import { createTicket, getTickets as fetchTicketsApi, getTicket as fetchTicketApi, postComment as postCommentApi } from '../services/support';
 import { Link, useLocation } from 'react-router-dom';
 import { IoSend } from "react-icons/io5";
+import LoadingSpinner from "../components/LoadingSpinner";
 
 export default function CustomerSupport() {
   const { user, token } = useContext(AuthContext);
@@ -184,7 +185,7 @@ export default function CustomerSupport() {
             <input
               value={subject}
               onChange={(e) => setSubject(e.target.value)}
-              className="supportinput mt-1"
+              className="supportinput mt-1 w-full rounded-md"
               placeholder="Short summary..."
             />
           </div>

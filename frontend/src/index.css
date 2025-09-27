@@ -18,7 +18,7 @@
 }
 
 .supportinput{
-    @apply block rounded-md border border-gray-200 shadow-sm px-3 py-2 
+    @apply block border border-gray-200 shadow-sm px-3 py-2 
 }
 
 .supportselect{
@@ -26,7 +26,7 @@
 }
 
 .supportbutton{
-    @apply rounded-full px-8 py-3 text-sm font-semibold cursor-pointer hover:opacity-80 w-full sm:w-fit
+    @apply rounded-full px-4.5 py-2.5 text-sm font-semibold cursor-pointer hover:opacity-80 w-full sm:w-fit
 }
 
 .supportsel{

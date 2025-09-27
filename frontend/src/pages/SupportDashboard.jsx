@@ -165,27 +165,34 @@ export default function SupportDashboard() {
 
   return (
     <div className='p-6'>
-      <div className="space-y-3 mb-3 supportcard p-4">
-        <input placeholder="Search subject/description" value={filters.search} onChange={(e) => setFilters(s => ({ ...s, search: e.target.value }))} className=" supportinput" />
-        <div className="flex flex-wrap gap-2">
-          <select value={filters.status} onChange={(e) => setFilters(s => ({ ...s, status: e.target.value }))} className="supportselect rounded-md">
-            <option value="">Any status</option>
-            <option>OPEN</option>
-            <option>ASSIGNED</option>
-            <option>RESOLVED</option>
-            <option>CLOSED</option>
-          </select>
-          <select value={filters.priority} onChange={(e) => setFilters(s => ({ ...s, priority: e.target.value }))} className="supportselect rounded-md">
-            <option value="">Any priority</option>
-            <option>LOW</option>
-            <option>MEDIUM</option>
-            <option>HIGH</option>
-            <option>URGENT</option>
-          </select>
-        </div>
-        <div className="flex gap-2">
-          <button onClick={applyFilters} className="supportbutton bg-green-700 text-white">Apply</button>
-          <button onClick={fetchAllTickets} className="supportbutton bg-gray-200 text-gray-800">Reset</button>
+      <div className="space-y-3 mb-3 supportcard p-4 flex flex-wrap items-center justify-between gap-3">
+        <input
+          placeholder="Search subject/description"
+          value={filters.search}
+          onChange={(e) => setFilters(s => ({ ...s, search: e.target.value }))}
+          className=" supportinput m-0 rounded-full flex-1 max-w-none md:max-w-md"
+        />
+        <div className='flex gap-3 items-center'>
+          <div className="flex flex-wrap gap-2">
+            <select value={filters.status} onChange={(e) => setFilters(s => ({ ...s, status: e.target.value }))} className="supportselect rounded-md w-fit">
+              <option value="">Any status</option>
+              <option>OPEN</option>
+              <option>ASSIGNED</option>
+              <option>RESOLVED</option>
+              <option>CLOSED</option>
+            </select>
+            <select value={filters.priority} onChange={(e) => setFilters(s => ({ ...s, priority: e.target.value }))} className="supportselect rounded-md">
+              <option value="">Any priority</option>
+              <option>LOW</option>
+              <option>MEDIUM</option>
+              <option>HIGH</option>
+              <option>URGENT</option>
+            </select>
+          </div>
+          <div className="flex flex-wrap gap-2 items-center">
+            <button onClick={applyFilters} className="supportbutton bg-green-700 text-white">Apply</button>
+            <button onClick={fetchAllTickets} className="supportbutton bg-gray-200 text-gray-800">Reset</button>
+          </div>
         </div>
       </div>
     
@@ -193,7 +200,7 @@ export default function SupportDashboard() {
         <div className="col-span-1 md:col-span-2 lg:col-span-2">
           <div className='supportcard p-4'>
             <h3 className="font-semibold mb-3">Tickets</h3>
-            <div className="max-h-[60vh] overflow-auto ">
+            <div className="max-h-[60vh] lg:max-h-[100vh] overflow-auto ">
               {loading ? <LoadingSpinner message="." />: tickets.map(t => (
                 <div
                   key={t.id}
@@ -290,7 +297,7 @@ export default function SupportDashboard() {
               </div>
               <div className="mt-6 supportcard p-4">
                 <h4 className="font-medium mb-2">Conversation</h4>
-                <div className="space-y-3 max-h-56 overflow-auto p-2 bg-gray-100 rounded-md flex flex-col">
+                <div className="space-y-3 max-h-[50vh]  overflow-auto p-2 bg-gray-100 rounded-md flex flex-col">
                   {comments.map((c) => {
                     // Determine role:
                     // - Prefer an explicit author_role from the comment if available.
