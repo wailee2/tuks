@@ -142,6 +142,13 @@ app.get("/health", (req, res) =>
   res.json({ ok: true, time: new Date().toISOString() })
 );
 
+// list routes (prefixes) to skip in the global limiter
+const SKIP_PREFIXES = [
+  "/notifications", // /api/notifications
+  "/admin",         // all /api/admin/* routes
+  "/support",       // /api/support/*
+  // add more prefixes here as needed
+];
 
 //Prevent brute-force login or spam API calls:
 const apiLimiter = rateLimit({
@@ -149,9 +156,26 @@ const apiLimiter = rateLimit({
   max: 100, // limit each IP
   standardHeaders: true,
   legacyHeaders: false,
+  message: { error: 'Too many requests, try again later.' },
+  skip: (req) => {
+    const p = req.path || ""; // when mounted at /api, path begins with '/notifications' etc.
+    return SKIP_PREFIXES.some(prefix => p.startsWith(prefix));
+  },
 });
 
 app.use("/api", apiLimiter);
+
+// More generous / tailored limiter for notifications route
+const notificationsLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 2000, // allow a lot more requests to /api/notifications (tune as needed)
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many notification requests, slow down.' },
+});
+
+// Attach per-route limiter (this will be used for requests to /api/notifications)
+app.use("/api/notifications", notificationsLimiter);
 
 //Prevent DoS via JSON
 app.use(express.json({ limit: "1mb" }));
