@@ -149,14 +149,17 @@ const forgotPassword = async (req, res) => {
     const resetUrl = `${process.env.CLIENT_ORIGIN || 'http://localhost:5173'}/reset-password?token=${rawToken}&email=${encodeURIComponent(user.email)}`;
 
     const mailOptions = {
-      from: process.env.FROM_EMAIL || `"YourApp" <no-reply@yourdomain.com>`,
+      from: process.env.FROM_EMAIL || `tuks <9fernni@gmail.com>`,
       to: user.email,
       subject: 'Password reset request',
+      replyTo: "no-reply@invalid.com",
       text: `Hi ${user.name || user.username},\n\nYou requested a password reset. Click the link below to set a new password. This link expires in ${expiresMinutes} minutes:\n\n${resetUrl}\n\nIf you didn't request this, ignore this email.\n\nThanks.`,
-      html: `<p>Hi ${user.name || user.username},</p>
-             <p>You requested a password reset. Click the link below to set a new password. This link expires in ${expiresMinutes} minutes:</p>
-             <p><a href="${resetUrl}">Reset password</a></p>
-             <p>If you didn't request this, ignore this email.</p>`,
+      html:  `<p>Hi ${user.name || user.username},</p>
+            <p>You requested a password reset. Click the link below to set a new password. This link expires in ${expiresMinutes} minutes:</p>
+            <p><a href="${resetUrl}">Reset password</a></p>
+            <p>If you didn't request this, ignore this email.</p>
+            <hr />
+            <p style="font-size:12px;color:#666;">This is an automated message. Please do not reply.</p>`,
     };
 
     // send (do not fail the endpoint if email fails — log instead)
