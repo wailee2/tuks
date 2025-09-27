@@ -220,19 +220,27 @@ export default function ProfilePage() {
 
   return (
     <div className="max-w-4xl mx-auto p-2 md:p-6">
-      <div className="bg-white p-2 md:p-6 flex flex-col md:flex-row  gap-6 md:gap-20">
+      <div className="bg-white p-2 md:p-6 flex flex-col md:flex-row  gap-6 lg:gap-20">
         {/* clickable avatar */}
         {profile.profile_pic ? (
-          <motion.img
-            src={profile.profile_pic}
-            alt={`${profile.name || profile.username}'s avatar`}
-            className="w-22 h-22 md:w-40 md:h-40 rounded-full object-cover cursor-pointer"
-            onClick={openImageModal}
-            role="button"
-            aria-label="Open profile picture"
-            whileHover={{ scale: 1.05, opacity: 0.9 }}
-            transition={{ type: "spring", stiffness: 300, damping: 20 }}
-          />
+          <div className='profilecard p-4 overflow-hidden relative group cursor-pointer h-fit'>
+            <motion.img
+              src={profile.profile_pic}
+              alt={`${profile.name || profile.username}'s avatar`}
+              className="w-22 h-22 md:w-70 md:h-100 object-cover cursor-pointer rounded-md"
+              onClick={openImageModal}
+              role="button"
+              aria-label="Open profile picture"
+              whileHover={{ scale: 1.135, opacity: 0.9 }}
+              transition={{ type: "spring", stiffness: 300, damping: 20 }}
+            />
+            {/* Dark overlay 
+            <div className="absolute inset-0 bg-blackz/40 opacity-100 pointer-events-none  transsition-opacity duratsion-300"></div>
+
+            <span className="text-5xl macondo-regular capitalize font-bold truncate max-w-[17.5rem] px-5 py-2 bg-black group-hover:backdrop-blur-sm group-hover:bg-transparent  text-white absolute bottom-1/8 group-hover:rounded-full pointer-events-none">
+              {profile.name}
+            </span>*/}
+          </div>
         ) : (
           <div
             className="w-22 h-22 md:w-40 md:h-40 flex items-center justify-center rounded-full 
@@ -243,11 +251,11 @@ export default function ProfilePage() {
           </div>
         )}
 
-
-        <div className="flexb-1">
-          <div className="flex items-center justify-between gap-4.5">
+        <div className="flex-1 w-full ">
+          <div className="flex items-center justify-between gap-4.5 profilecard p-4">
             <div>
               <div className="text-xl font-semibold">{profile.name}</div>
+              <div className="text-sm w-full text-gray-500">@{profile.username}</div>
             </div>
             {isOwner ? (
               <div className='flex gap-2'>
@@ -286,15 +294,18 @@ export default function ProfilePage() {
               </div>
             )}
           </div>
-          <div className="flex items-start justify-between">
+          <div className="flex flex-1 w-full">
             <div>
-              <div className="text-sm text-gray-500">@{profile.username}</div>
-
-              <div className="mt-4 text-sm max-w-xl md:max-w-md text-gray-500">{profile.bio}</div>
+              <div className="mt-2 text-sm md:max-w-md profilecard p-4">
+                div{profile.bio}
+              </div>
+              
         
-              <div className="mt-4 space-y-2 text-sm text-gray-700">
+              <div
+                className="mt-2 space-y-2 text-sm text-gray-700"
+              >
                 {profile.website && (
-                  <div className='flex items-center gap-2'>
+                  <div className='flex items-center gap-2 profilecard p-4'>
                     <IoLink className='text-lg -rotate-45'/>
                     <a
                       href={(profile.website)}
@@ -309,21 +320,21 @@ export default function ProfilePage() {
 
 
                 {profile.email && isVisible('email') && (
-                  <div className='flex items-center gap-2'>
+                  <div className='flex items-center gap-2 profilecard p-4'>
                     <span><MdOutlineMail className='text-lg'/></span>
                     {profile.email}
                   </div>
                 )}
                 
                 {profile.location && isVisible('location') && (
-                  <div className='flex items-center gap-2'>
+                  <div className='flex items-center gap-2 profilecard p-4'>
                     <span><IoLocationOutline className='text-lg'/></span>
                     {profile.location}
                   </div>
                 )}
 
                 {profile.dob && isVisible('dob') && (
-                  <div className='flex items-center gap-2'>
+                  <div className='flex items-center gap-2 profilecard p-4'>
                     <span><IoBalloonOutline className='text-lg'/></span>
                     <span>Born {formatDOB(profile.dob)}</span>
                   </div>
@@ -331,7 +342,7 @@ export default function ProfilePage() {
 
               </div>
 
-              <div className="mt-4 text-sm text-gray-600 flex gap-10">
+              <div className="mt-2 text-sm text-gray-600 flex justify-around gap-8 profilecard p-4">
                 <div>
                   <span className='font-bold text-black'>{profile.posts_count} </span>
                   <span>posts</span>

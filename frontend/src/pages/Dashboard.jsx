@@ -1,5 +1,6 @@
 import { useContext } from 'react';
 import { AuthContext } from '../context/AuthContext';
+import Gritty from '@/components/Gritty'
 
 
 export default function Dashboard() {
@@ -19,6 +20,7 @@ export default function Dashboard() {
             Logout
           </button>
         </header>
+        <Gritty />
 
         <div className="space-y-4">
           <h2 className="text-xl font-semibold">Your Role: {user.role}</h2>

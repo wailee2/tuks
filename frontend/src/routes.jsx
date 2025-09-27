@@ -17,6 +17,7 @@ import Messages from './pages/Messages.jsx';
 import Notifications from './pages/Notifications.jsx';
 import Support from './pages/Support.jsx'
 import ProfilePage from './pages/Profile.jsx';
+import ProfilePage2 from './pages/Profile2.jsx';
 import EditProfilePage from './pages/EditProfile';
 import PageNotFound from './pages/PageNotFound';
 import ErrorBoundary from './components/ErrorBoundary';
@@ -65,16 +66,16 @@ export default function AppRoutes() {
             <Route path="/support" element={<Support />} />
             
             <Route path="/settings/edit-profile" element={<EditProfilePage />} />
-            <Route path="/:username" element={<ProfilePage />} />
+            <Route path="/:username" element={<ProfilePage />} />{/*
+            <Route path="/:username" element={<ProfilePage2 />} />*/}
             
 
 
             <Route path="/notifications" element={user ? <Notifications /> : <Navigate to="/login" />} />
 
-
-
             
             <Route path="/dashboard" element={user ? <Dashboard /> : <Navigate to="/login" />} />
+            
             <Route path="*" element={<PageNotFound />} />
           </Routes>
         </main>

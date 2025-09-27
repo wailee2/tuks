@@ -1,6 +1,45 @@
 @import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Macondo&family=Quicksand:wght@300..700&family=SUSE+Mono:ital,wght@0,100..800;1,100..800&family=Space+Grotesk:wght@300..700&family=UnifrakturCook:wght@700&display=swap');
 
-    /* input.css */
+/*fonts*/
+.suse-mono {
+  font-family: "SUSE Mono", monospace;
+  font-optical-sizing: auto;
+  font-weight: 800; /* change as needed */
+  font-style: normal;
+}
+
+.quicksand{
+  font-family: "Quicksand", sans-serif;
+  font-optical-sizing: auto;
+  font-weight: 800;
+  font-style: normal;
+}
+
+.space-grotesk {
+  font-family: "Space Grotesk", sans-serif;
+  font-optical-sizing: auto;
+  font-weight: 800;
+  font-style: normal;
+}
+
+.unifrakturcook-bold {
+  font-family: "UnifrakturCook", cursive;
+  font-weight: 700;
+  font-style: normal;
+}
+
+.macondo-regular {
+  font-family: "Macondo", cursive;
+  font-weight: 400;
+  font-style: normal;
+}
+
+.profilecard{
+    @apply border border-gray-400 rounded-lg shadow-xl 
+}
+
+
 .profilebutton {
     @apply rounded-full px-4 py-2 text-sm font-semibold cursor-pointer hover:opacity-80
 }
@@ -18,7 +57,7 @@
 }
 
 .supportinput{
-    @apply block border border-gray-200 shadow-sm px-3 py-2 
+    @apply block border border-gray-200 shadow-sm px-3 py-2.5 
 }
 
 .supportselect{
