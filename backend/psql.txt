@@ -5,6 +5,11 @@ WHERE delete_requested_at IS NOT NULL
 
   psql -U postgres -d tuks
 
+  \encoding UTF8
+  SELECT * FROM messages;
+
+
+
 http://localhost:5000/api/profile/CHILLGUY
 Authorization
   Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6Miwicm9sZSI6IlVTRVIiLCJpYXQiOjE3NTgwNTM5NDUsImV4cCI6MTc1ODY1ODc0NX0.P1dEcvJ0NHJiZ5p29paqS6y-Q1HRx6OaQniO9QT0JEk

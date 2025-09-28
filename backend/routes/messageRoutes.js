@@ -1,6 +1,5 @@
 // routes/messageRoutes.js
 const express = require('express');
-// make sure the file path matches your controllers folder (controller filename is messageController.js)
 const {
   sendMessage,
   fetchMessages,
