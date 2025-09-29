@@ -9,6 +9,7 @@ import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
 import ManageUsers from './pages/ManageUsers.jsx';
 import Inventory from './pages/Inventory.jsx';
+import InventoryForm from './pages/InventoryForm';
 import Marketplace from './pages/Marketplace.jsx';
 import OrdersList from './components/OrdersList.jsx';
 import OrderDetails from './pages/OrderDetails.jsx';
@@ -71,6 +72,9 @@ export default function AppRoutes() {
             <Route path="/settings/edit-profile" element={<EditProfilePage />} />
             <Route path="/:username" element={<ProfilePage />} />{/*
             <Route path="/:username" element={<ProfilePage2 />} />*/}
+
+            <Route path="/inventory/new" element={<InventoryForm />} />
+            <Route path="/inventory/:id/edit" element={<InventoryForm />} />
             
 
 

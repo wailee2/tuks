@@ -91,4 +91,12 @@ const deleteProduct = async (id, user_id) => {
   return res.rows[0];
 };
 
-module.exports = { createProduct, getUserProducts, updateProduct, deleteProduct };
+const getProductById = async (id, user_id) => {
+  const res = await pool.query(
+    `SELECT * FROM products WHERE id = $1 AND user_id = $2 LIMIT 1`,
+    [id, user_id]
+  );
+  return res.rows[0] || null;
+};
+
+module.exports = { createProduct, getUserProducts, updateProduct, deleteProduct, getProductById };

@@ -372,7 +372,7 @@ export default function ManageUsers() {
                         </td>
                       )}
                       {visibleFields.includes("status") && (
-                        <td className="px-6 py-4 flex items-center gap-2">
+                        <td className="px-6 py-4 text-xs flex items-center gap-2">
                           {u.id !== user.id && (user.role === "ADMIN" || user.role === "OWNER") && (
                             <>
                               {/* 🚨 Block non-owners from toggling OWNER accounts */}
@@ -383,20 +383,20 @@ export default function ManageUsers() {
                                       whileTap={{ scale: 0.9 }}
                                       whileHover={{ scale: 1.1 }}
                                       onClick={() => handleDisableToggle(u.id, true)}
-                                      className="flex items-center gap-1 px-3 py-1 text-green-500 hover:text-green-600 transition"
+                                      className="flex items-center gap-0.5 px-2 py-1 text-green-500 hover:text-green-600 border border-green-500 bg-green-50 transition rounded-lg "
                                     >
-                                      <CheckCircle className="h-5 w-5" />
-                                      <span className="text-sm">Active</span>
+                                      <span className='w-1.5 h-1.5 bg-green-500 rounded-full '></span>
+                                      <span className="">. Active</span>
                                     </motion.button>
                                   ) : (
                                     <motion.button
                                       whileTap={{ scale: 0.9 }}
                                       whileHover={{ scale: 1.1 }}
                                       onClick={() => handleDisableToggle(u.id, false)}
-                                      className="flex items-center gap-1 px-3 py-1 text-red-500 hover:text-red-600 transition"
+                                      className="flex items-center gap-0.5 px-2 py-1 text-red-500 hover:text-red-600 border border-red-500 bg-red-50 transition rounded-lg"
                                     >
-                                      <XCircle className="h-5 w-5" />
-                                      <span className="text-sm">Disabled</span>
+                                      <span className='w-1.5 h-1.5 bg-red-500 rounded-full '></span>
+                                      <span className="">. Disabled</span>
                                     </motion.button>
                                   )}
                                 </>

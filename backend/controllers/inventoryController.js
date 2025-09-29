@@ -1,6 +1,6 @@
 const pool = require('../config/db'); // <-- add this line
 
-const { createProduct, getUserProducts, updateProduct, deleteProduct } = require('../models/inventoryModel');
+const { createProduct, getUserProducts, updateProduct, deleteProduct, getProductById } = require('../models/inventoryModel');
 
 const addProduct = async (req, res) => {
   try {
@@ -56,5 +56,21 @@ const getMarketplaceProducts = async (req, res) => {
   }
 };
 
+const getProductByIdController = async (req, res) => {
+  try {
+    const id = Number(req.params.id);
+    if (Number.isNaN(id)) return res.status(400).json({ message: 'Invalid product id' });
 
-module.exports = { addProduct, getUserInventory, updateProductController, deleteProductController, getMarketplaceProducts };
+    // get product by id and ensure ownership
+    const product = await getProductById(id, req.user.id);
+    if (!product) return res.status(404).json({ message: 'Product not found' });
+
+    res.json(product);
+  } catch (err) {
+    console.error('Get product by id error:', err);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+
+module.exports = { addProduct, getUserInventory, updateProductController, deleteProductController, getMarketplaceProducts, getProductByIdController };
