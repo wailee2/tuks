@@ -94,15 +94,15 @@ export default function ManageUsers() {
   const dropdownRef = useRef(null);
 
   useEffect(() => {
-  function handleClickOutside(event) {
-    if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-      setDropdownOpen(false);
+    function handleClickOutside(event) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setDropdownOpen(false);
+      }
     }
-  }
 
-  document.addEventListener("mousedown", handleClickOutside);
-  return () => document.removeEventListener("mousedown", handleClickOutside);
-}, []);
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
 
   // Pagination
@@ -383,20 +383,20 @@ export default function ManageUsers() {
                                       whileTap={{ scale: 0.9 }}
                                       whileHover={{ scale: 1.1 }}
                                       onClick={() => handleDisableToggle(u.id, true)}
-                                      className="flex items-center gap-0.5 px-2 py-1 text-green-500 hover:text-green-600 border border-green-500 bg-green-50 transition rounded-lg "
+                                      className="flex items-center gap-1.5 px-2 py-1 text-green-500 hover:text-green-600 border border-green-500 bg-green-50 transition rounded-lg "
                                     >
                                       <span className='w-1.5 h-1.5 bg-green-500 rounded-full '></span>
-                                      <span className="">. Active</span>
+                                      <span className="">Active</span>
                                     </motion.button>
                                   ) : (
                                     <motion.button
                                       whileTap={{ scale: 0.9 }}
                                       whileHover={{ scale: 1.1 }}
                                       onClick={() => handleDisableToggle(u.id, false)}
-                                      className="flex items-center gap-0.5 px-2 py-1 text-red-500 hover:text-red-600 border border-red-500 bg-red-50 transition rounded-lg"
+                                      className="flex items-center gap-1.5 px-2 py-1 text-red-500 hover:text-red-600 border border-red-500 bg-red-50 transition rounded-lg"
                                     >
                                       <span className='w-1.5 h-1.5 bg-red-500 rounded-full '></span>
-                                      <span className="">. Disabled</span>
+                                      <span className="">Disabled</span>
                                     </motion.button>
                                   )}
                                 </>
