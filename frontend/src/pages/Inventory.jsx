@@ -27,7 +27,7 @@ export default function Inventory() {
 
   const handleEdit = (product) => {
     // navigate to the edit page for product
-    navigate(`/inventory/${product.id}/edit`);
+    navigate(`/inventory/${product.id}/edit`, { state: { product } });
   };
 
   return (

@@ -12,7 +12,7 @@ import { motion } from "framer-motion";
 export default function InventoryList({ products = [], onEdit, fetchProducts, loading }) {
   const { addToast } = useToasts();
   const [query, setQuery] = useState('');
-  const [sortBy, setSortBy] = useState('name'); // default sort
+  const [sortBy, setSortBy] = useState('name');
 
   const handleDelete = async (id) => {
     if (!window.confirm('Are you sure you want to delete this product?')) return;

@@ -24,6 +24,7 @@ export const deleteProduct = async (id) => {
 // add this to your existing exports
 export const getProductById = async (id) => {
   try {
+    console.log('[DEBUG] getProductById requesting:', `/inventory/${id}`);
     const res = await api.get(`/inventory/${id}`);
     return res.data;
   } catch (err) {

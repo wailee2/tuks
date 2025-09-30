@@ -5,6 +5,8 @@ import { fetchMarketplaceProducts } from '../services/inventory';
 import { useToasts } from '../context/ToastContext';
 import LoadingSpinner from '../components/LoadingSpinner';
 import { AuthContext } from '../context/AuthContext';
+import { Search } from "lucide-react";
+import { FaCartShopping } from "react-icons/fa6";
 
 const NGN = new Intl.NumberFormat('en-NG', {
   style: 'currency',
@@ -103,22 +105,27 @@ export default function Marketplace() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto p-6">
-      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-6">
-        <div>
-          <h1 className="text-3xl font-semibold">Marketplace</h1>
-          <p className="mt-1 text-sm text-gray-500">Discover items from sellers in your network.</p>
-        </div>
+    <div className="mx-auto p-7">
+      <div className=' mb-6 '>
+        <h1 className="text-2xl font-semibold">Marketplace</h1>
+        <p className="text-sm text-gray-400">Discover items from sellers in your network.</p>
+      </div>
 
-        <div className="flex items-center gap-3 w-full md:w-auto">
-          <div className="flex items-center gap-2 flex-1 md:flex-none">
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-6">
+        
+
+        <div className="flex items-center gap-3 w-full md:w-awuto flex-wrap justify-between">
+          <div className="flex items-center gap-3 w-full md:w-sm border border-gray-200 rounded-full shadow-sm px-4 py-2.5">
+            <Search className="h-5 w-5 text-gray-400 "/>
             <input
               aria-label="Search products"
-              placeholder="Search products, categories, descriptions..."
+              placeholder="Search products..."
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              className="w-full md:w-80 px-3 py-2 border rounded shadow-sm focus:outline-none focus:ring-2 focus:ring-green-200"
+              className="flex-1 outline-none text-[16px] text-gray-800"
             />
+          </div>
+          {/*
             <select
               value={sort}
               onChange={(e) => setSort(e.target.value)}
@@ -129,23 +136,21 @@ export default function Marketplace() {
               <option value="price-asc">Price: Low → High</option>
               <option value="price-desc">Price: High → Low</option>
             </select>
-          </div>
-
+          */}
           <button
             onClick={() => navigate('/cart')}
-            className="inline-flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded shadow"
+            className="text-white bg-green-700 shadow-sm rounded-full border border-gray-300 text-sm px-4 py-2.5 flex items-center justify-between gap-3 cursor-pointer"
             aria-label="Go to cart"
+            title='Cart'
           >
+            <FaCartShopping />
             Cart
           </button>
         </div>
       </div>
 
       <div className="space-y-6">
-        {loading ? (
-          <div className="bg-white p-6 rounded shadow">
-            <LoadingSpinner message="Loading marketplace..." />
-          </div>
+        {loading ? ( <LoadingSpinner message="." />
         ) : filtered.length === 0 ? (
           <div className="bg-white p-8 rounded shadow text-center">
             <h3 className="text-lg font-medium">No products found</h3>
@@ -167,11 +172,12 @@ export default function Marketplace() {
               const isOwner = isOwnerOf(p);
 
               return (
-                <article
+                <div
                   key={p.id}
-                  className="bg-white rounded-lg shadow hover:shadow-lg transition-shadow duration-150 flex flex-col overflow-hidden"
+                  className="border-2 border-gray-300 rounded-xl shadow hover:shadow-lg hover:-translate-y-3 transition duration-150 flex flex-col overflow-hidden cursor-pointer"
+                  onClick={() => navigate(`/marketplace/${p.id}`, { state: { product: p } })}
                 >
-                  <div className="relative h-48 w-full bg-gray-50 overflow-hidden">
+                  <div className="relative h-48 w-full overflow-hidden">
                     {p.image_url || p.thumbnail ? (
                       <img
                         src={p.image_url || p.thumbnail}
@@ -190,38 +196,40 @@ export default function Marketplace() {
                         </svg>
                       </div>
                     )}
-
+                    {/** 
                     <div className="absolute top-3 left-3 inline-flex items-center gap-2 bg-white/90 px-2 py-1 rounded text-xs">
-                      <span className="font-medium">{p.category || 'General'}</span>
+                      <span className="font-medium">{p.category || 'no category'}</span>
                     </div>
-
+                    
                     {!available && (
                       <div className="absolute inset-0 bg-white/70 flex items-center justify-center text-lg font-semibold text-gray-600">
                         Out of stock
                       </div>
-                    )}
+                    )}*/}
                   </div>
 
-                  <div className="p-4 flex-1 flex flex-col">
+                  <div className="px-4 flex-1 flex flex-col">
                     <div className="flex items-start justify-between gap-3">
                       <div>
                         <h4 className="text-lg font-medium leading-tight text-gray-900">{p.name}</h4>
-                        <p className="mt-1 text-sm text-gray-500 line-clamp-2">{p.description || ''}</p>
+                        {/*<p className="mt-1 text-sm text-gray-500 line-clamp-2">{p.description || ''}</p>*/}
+                        <p className="mt-1 text-sm text-gray-500 line-clamp-2">{p.category || ''}</p>
+                        
                       </div>
 
                       <div className="text-right">
-                        <div className="text-sm text-gray-500">Price</div>
                         <div className="text-lg font-semibold">{NGN.format(p.retail_price || 0)}</div>
                       </div>
                     </div>
 
                     <div className="mt-4 flex items-center justify-between gap-3">
+                      {/** 
                       <div className="text-xs text-gray-500">
                         <div>Stock: <span className="font-medium">{p.stock_quantity ?? '—'}</span></div>
                         <div>Seller: <span className="font-medium">{p.seller_name || p.seller || 'Unknown'}</span></div>
-                      </div>
+                      </div>*/}
 
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2">{/** 
                         <button
                           onClick={() => addToCart(p)}
                           disabled={!available || adding}
@@ -231,14 +239,8 @@ export default function Marketplace() {
                           aria-disabled={!available}
                         >
                           {adding ? 'Adding...' : available ? 'Add to Cart' : 'Out of Stock'}
-                        </button>
+                        </button>*/}
 
-                        <button
-                          onClick={() => navigate(`/marketplace/${p.id}`, { state: { product: p } })}
-                          className="px-3 py-2 border rounded text-sm hover:bg-gray-50"
-                        >
-                          View
-                        </button>
                         {/**
                         {isOwner && (
                           <button
@@ -251,7 +253,7 @@ export default function Marketplace() {
                       </div>
                     </div>
                   </div>
-                </article>
+                </div>
               );
             })}
           </div>

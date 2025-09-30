@@ -1,3 +1,4 @@
+// pages/InventoryForm
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate, useLocation, Link } from 'react-router-dom';
 import InventoryForm from '../components/inventory/InventoryForm';

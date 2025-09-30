@@ -21,7 +21,6 @@ import { MdManageAccounts, MdInventory } from "react-icons/md";
 import { BiSupport } from "react-icons/bi";
 import { IoNotifications } from "react-icons/io5";
 import { FaCartShopping } from "react-icons/fa6";
-import { PiHeartbeatFill } from "react-icons/pi";
 import { VscTerminalUbuntu } from "react-icons/vsc";
 
 
@@ -108,7 +107,7 @@ function Sidebar() {
       </Link>
 
       {/* Nav: horizontal on small, vertical from md up */}
-      <nav className="flex md:flex-col md:space-y-2 w-full gap-[5%] ">
+      <nav className="flex md:flex-col md:space-y-2 w-full gap-[5%] bg-white">
         {navItems.map((item) => {
           const hideOnSmall = ["Notifications", "Inventory", "Orders", "Marketplace", "Cart", "Analytics"].includes(item.name);
           const baseLayout = hideOnSmall ? "hidden md:flex" : "flex";
