@@ -1,3 +1,4 @@
+//controllers/inventoryController.js
 const pool = require('../config/db'); // <-- add this line
 
 const { createProduct, getUserProducts, updateProduct, deleteProduct, getProductById } = require('../models/inventoryModel');
@@ -62,7 +63,7 @@ const getProductByIdController = async (req, res) => {
     if (Number.isNaN(id)) return res.status(400).json({ message: 'Invalid product id' });
 
     // get product by id and ensure ownership
-    const product = await getProductById(id, req.user.id);
+    const product = await getProductById(id);
     if (!product) return res.status(404).json({ message: 'Product not found' });
 
     res.json(product);

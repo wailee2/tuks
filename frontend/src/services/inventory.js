@@ -1,3 +1,4 @@
+// service/inventory.js
 import api from './api';
 
 export const addProduct = async (data) => {

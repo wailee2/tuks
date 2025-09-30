@@ -8,9 +8,12 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
 import ManageUsers from './pages/ManageUsers.jsx';
+
 import Inventory from './pages/Inventory.jsx';
 import InventoryForm from './pages/InventoryForm';
 import Marketplace from './pages/Marketplace.jsx';
+import ViewItemPage from './pages/ViewItemPage';
+
 import OrdersList from './components/OrdersList.jsx';
 import OrderDetails from './pages/OrderDetails.jsx';
 import Cart from './pages/Cart.jsx';
@@ -75,6 +78,7 @@ export default function AppRoutes() {
 
             <Route path="/inventory/new" element={<InventoryForm />} />
             <Route path="/inventory/:id/edit" element={<InventoryForm />} />
+            <Route path="/marketplace/:id" element={<ViewItemPage />} />
             
 
 

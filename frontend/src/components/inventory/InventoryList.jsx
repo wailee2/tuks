@@ -110,7 +110,7 @@ export default function InventoryList({ products = [], onEdit, fetchProducts, lo
                   <td className="p-3 align-top font-semibold">{product.name}</td>
                   <td className="p-3 hidden sm:table-cell align-top text-gray-600">{product.category}</td>
                   <td className="p-3 align-top text-gray-600">{product.stock_quantity}</td>
-                  <td className="p-3 hidden md:table-cell align-top text-gray-600">${product.retail_price}</td>
+                  <td className="p-3 hidden md:table-cell align-top text-gray-600">₦{product.retail_price}</td>
                   <td className="p-3 align-top text-gray-600">{product.is_available ? 'Yes' : 'No'}</td>
                   <td className="p-3 align-top text-right flex items-center justify-end gap-3 text-gray-600">
                     <motion.button
