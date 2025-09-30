@@ -4,6 +4,8 @@ import { useParams, useNavigate, useLocation, Link } from 'react-router-dom';
 import InventoryForm from '../components/inventory/InventoryForm';
 import { getProductById } from '../services/inventory';
 import { useToasts } from '../context/ToastContext';
+import { motion } from "framer-motion";
+import { FaArrowLeftLong } from "react-icons/fa6";
 
 export default function InventoryFormPage() {
   const { id } = useParams();
@@ -56,12 +58,21 @@ export default function InventoryFormPage() {
           <h1 className="text-2xl font-semibold">{isEdit ? 'Edit Product' : 'Add Product'}</h1>
           <p className="text-sm text-gray-500">{isEdit ? 'Update the product details.' : 'Create a new product.'}</p>
         </div>
-        <div>
-          <Link to="/inventory" className="text-sm text-gray-600 hover:underline">Back to Inventory</Link>
-        </div>
+        <motion.div
+          className="px-3 py-2 text-gray-600 text-sm border border-gray-200 rounded-full shadow-sm cursor-pointer flex gap-2 items-center"
+          whileHover={{ scale: 1.1, opacity: 0.9 }}
+          transition={{ type: "spring", stiffness: 300, damping: 20 }}
+          title='back to marketplace'
+        >
+          <Link
+            to="/inventory"
+            className="flex gap-2 items-center">
+              <FaArrowLeftLong />Back to Inventory
+          </Link>
+        </motion.div>
       </div>
 
-      <div className="bg-white rounded shadow p-6">
+      <div className="bg-white rounded-2xl shadow p-6">
         <InventoryForm
           initialData={initialData}
           mode={isEdit ? 'edit' : 'create'}

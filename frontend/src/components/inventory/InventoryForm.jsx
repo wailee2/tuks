@@ -2,6 +2,8 @@
 import React, { useEffect, useState } from 'react';
 import { addProduct, updateProduct } from '../../services/inventory';
 import { useToasts } from '../../context/ToastContext';
+import { IoDuplicate } from "react-icons/io5";
+import { motion } from "framer-motion";
 
 export default function InventoryForm({ initialData = null, mode = 'create', onSuccess = () => {} }) {
   const { addToast } = useToasts();
@@ -116,7 +118,7 @@ export default function InventoryForm({ initialData = null, mode = 'create', onS
     <form onSubmit={handleSubmit} className="space-y-6 w-full">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h2 className="text-lg font-semibold">{mode === 'edit' ? 'Edit Product' : 'Add Product'}</h2>
+        <h2 className="text-lg font-semibold">{mode === 'edit' ? 'Edit Item' : 'Add Product'}</h2>
         <div className="flex items-center gap-3">
           {/* Availability switch (live preview) */}
           <div className="flex items-center gap-3">
@@ -133,7 +135,7 @@ export default function InventoryForm({ initialData = null, mode = 'create', onS
               />
               <span
                 className={`w-11 h-6 inline-block rounded-full transition-all ring-0 ${
-                  form.is_available ? 'bg-green-600' : 'bg-gray-300'
+                  form.is_available ? 'bg-green-700' : 'bg-gray-300'
                 }`}
               />
               <span
@@ -314,7 +316,7 @@ export default function InventoryForm({ initialData = null, mode = 'create', onS
         <button
           type="submit"
           disabled={submitting}
-          className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded shadow"
+          className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 bg-green-700 hover:bg-green-800 text-white px-5 py-2 rounded-full cursor-pointer shadow"
         >
           {submitting ? (mode === 'edit' ? 'Updating...' : 'Adding...') : (mode === 'edit' ? 'Update Product' : 'Add Product')}
         </button>
@@ -322,23 +324,26 @@ export default function InventoryForm({ initialData = null, mode = 'create', onS
         <button
           type="button"
           onClick={handleReset}
-          className="flex-1 sm:flex-none px-4 py-2 border rounded text-sm bg-white"
+          className="flex-1 sm:flex-none px-5 py-2 border border-green-700 rounded-full text-green-700 cursor-pointer"
         >
           Reset
         </button>
 
-        <button
-          type="button"
+        <motion.button
+          className="p-3 ml-auto text-white text-sm bg-green-700 hover:bg-white hover:text-green-700 hover:border hover:border-green-700 rounded-full shadow-sm cursor-pointer"
+          whileHover={{ scale: 1.09, opacity: 0.9 }}
+          transition={{ type: "spring", stiffness: 300, damping: 20 }}
+          title='Copy '
           onClick={() => {
             // quick duplicate: copy current form to create a new product (useful for variant creation)
             const duplicate = { ...form, name: form.name ? `${form.name} (Copy)` : '' };
             setForm(duplicate);
             addToast('Duplicated fields — edit then submit to create a new product', 'info');
           }}
-          className="ml-auto text-sm px-3 py-2 border rounded bg-gray-50"
+          type="button"
         >
-          Duplicate
-        </button>
+          <IoDuplicate />
+        </motion.button>
       </div>
     </form>
   );
