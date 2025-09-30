@@ -47,38 +47,39 @@ export const checkUsername = async (token, username) => {
   return res.data;
 };
 
-export const followUser = async (token, username) => {
-  const res = await api.post(`/profile/${encodeURIComponent(username)}/follow`, {}, {
-    headers: { Authorization: `Bearer ${token}` }
-  });
+export const followUser = async (username, token) => {
+  const opts = {};
+  if (token) opts.headers = { Authorization: `Bearer ${token}` };
+  const res = await api.post(`/profile/${encodeURIComponent(username)}/follow`, {}, opts);
   return res.data;
 };
 
-export const unfollowUser = async (token, username) => {
-  const res = await api.post(`/profile/${encodeURIComponent(username)}/unfollow`, {}, {
-    headers: { Authorization: `Bearer ${token}` }
-  });
+export const unfollowUser = async (username, token) => {
+  const opts = {};
+  if (token) opts.headers = { Authorization: `Bearer ${token}` };
+  const res = await api.post(`/profile/${encodeURIComponent(username)}/unfollow`, {}, opts);
   return res.data;
 };
 
-export const blockUser = async (token, username) => {
-  const res = await api.post(`/profile/${encodeURIComponent(username)}/block`, {}, {
-    headers: { Authorization: `Bearer ${token}` }
-  });
+// block/unblock: username first, token optional (previously these were token-first — fixed)
+export const blockUser = async (username, token) => {
+  const opts = {};
+  if (token) opts.headers = { Authorization: `Bearer ${token}` };
+  const res = await api.post(`/profile/${encodeURIComponent(username)}/block`, {}, opts);
   return res.data;
 };
 
-export const unblockUser = async (token, username) => {
-  const res = await api.post(`/profile/${encodeURIComponent(username)}/unblock`, {}, {
-    headers: { Authorization: `Bearer ${token}` }
-  });
+export const unblockUser = async (username, token) => {
+  const opts = {};
+  if (token) opts.headers = { Authorization: `Bearer ${token}` };
+  const res = await api.post(`/profile/${encodeURIComponent(username)}/unblock`, {}, opts);
   return res.data;
 };
 
+// request delete account — token optional (server may rely on cookies)
 export const requestDelete = async (token) => {
-  const res = await api.post('/profile/request-delete', {}, {
-    headers: { Authorization: `Bearer ${token}` }
-  });
+  const opts = {};
+  if (token) opts.headers = { Authorization: `Bearer ${token}` };
+  const res = await api.post('/profile/request-delete', {}, opts);
   return res.data;
 };
-

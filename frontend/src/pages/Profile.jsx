@@ -135,7 +135,7 @@ export default function ProfilePage() {
 
   const handleFollow = async () => {
     try {
-      await followUser(token, username);
+      await followUser(username, token);
       addToast('Followed', 'success');
       fetch();
     } catch (err) {
@@ -145,7 +145,7 @@ export default function ProfilePage() {
 
   const handleUnfollow = async () => {
     try {
-      await unfollowUser(token, username);
+      await unfollowUser(username, token);
       addToast('Unfollowed', 'success');
       fetch();
     } catch (err) {
@@ -156,7 +156,7 @@ export default function ProfilePage() {
   const handleBlock = async () => {
     try {
       setBlocking(true);
-      await blockUser(token, username);
+      await blockUser(username, token);
       addToast('User blocked', 'success');
       fetch();
     } catch (err) {
@@ -169,7 +169,7 @@ export default function ProfilePage() {
   const handleUnblock = async () => {
     try {
       setBlocking(true);
-      await unblockUser(token, username);
+      await unblockUser(username, token);
       addToast('User unblocked', 'success');
       fetch();
     } catch (err) {
