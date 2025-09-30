@@ -5,6 +5,9 @@ import { getProductById } from '../services/inventory';
 import LoadingSpinner from '../components/LoadingSpinner';
 import { useToasts } from '../context/ToastContext';
 import { AuthContext } from '../context/AuthContext';
+import { FiEdit } from "react-icons/fi";
+import { motion } from "framer-motion";
+import { FaArrowLeftLong } from "react-icons/fa6";
 
 const NGN = new Intl.NumberFormat('en-NG', {
   style: 'currency',
@@ -89,28 +92,38 @@ export default function ViewItemPage() {
   };
 
   return (
-    <div className="max-w-4xl mx-auto p-6">
-      <div className="mb-4 flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold">{product.name}</h1>
-          <p className="text-sm text-gray-500">{product.category || 'General'}</p>
-        </div>
-        <div className="flex items-center gap-3">
-          <Link to="/marketplace" className="text-sm text-gray-600 hover:underline">Back to Marketplace</Link>
+    <div className="max-w-4xl mx-auto p-7 ">
+      <div className="mb-4 flex items-center justify-right relative right-0">
+        <div className="flex items-center gap-4">
+          <motion.div
+            className="px-3 py-2 text-gray-600 text-sm border border-gray-200 rounded-full shadow-sm cursor-pointer flex gap-2 items-center"
+            whileHover={{ scale: 1.1, opacity: 0.9 }}
+            transition={{ type: "spring", stiffness: 300, damping: 20 }}
+            title='back to marketplace'
+          >
+            <Link
+              to="/marketplace"
+              className="flex gap-2 items-center">
+                <FaArrowLeftLong />Back to Marketplace
+            </Link>
+          </motion.div>
           {isOwner && (
-            <button
+            <motion.button
               onClick={() => navigate(`/inventory/${product.id}/edit`, { state: { product } })}
-              className="px-3 py-2 bg-yellow-400 hover:bg-yellow-500 text-white rounded text-sm"
+              className="px-3 py-2 text-gray-600 text-sm border border-gray-200 rounded-full shadow-sm cursor-pointer flex gap-2 items-center"
+              whileHover={{ scale: 1.1, opacity: 0.9 }}
+              transition={{ type: "spring", stiffness: 300, damping: 20 }}
+              title='edit item'
             >
-              Edit item
-            </button>
+              <FiEdit />Edit
+            </motion.button>
           )}
         </div>
       </div>
 
-      <div className="bg-white rounded shadow p-6 grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="bg-white rounded-lg shadow p-6 grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="md:col-span-1">
-          <div className="h-64 w-full bg-gray-50 rounded overflow-hidden flex items-center justify-center">
+          <div className="h-82 w-full bg-gray-50 rounded overflow-hidden flex items-center justify-center">
             {product.image_url || product.thumbnail ? (
               <img
                 src={product.image_url || product.thumbnail}
@@ -126,26 +139,36 @@ export default function ViewItemPage() {
             )}
           </div>
 
+          
+
           <div className="mt-4 text-xs text-gray-500">
-            <div>Seller: <span className="font-medium">{product.seller_name || product.seller || 'Unknown'}</span></div>
+            {/**<div>Seller: <span className="font-medium">{product.seller_id || product.seller || 'Unknown'}</span></div>*/}
             <div>Posted: <span className="font-medium">{product.created_at ? new Date(product.created_at).toLocaleDateString() : '—'}</span></div>
           </div>
         </div>
 
-        <div className="md:col-span-2 flex flex-col">
-          <div className="mb-4">
-            <div className="text-sm text-gray-500">Price</div>
-            <div className="text-2xl font-semibold">{NGN.format(product.retail_price || 0)}</div>
+        <div className="md:col-span-2 flex flex-col gap-6">
+          <div>
+            <h1 className="text-3xl font-semibold text-gray-900">{product.name}</h1>
+            <p className="text-lg text-gray-500">{product.category || 'General'}</p>
           </div>
 
-          <div className="text-sm text-gray-700 mb-4">{product.description || 'No description provided.'}</div>
+          <div className="">
+            <div className="text-2xl font-semibold text-gray-900">{NGN.format(product.retail_price || 0)}</div>
+          </div>
+
+          <div className='flex flex-col gap-1 mt-7'>
+            <span className='text-xs text-gray-400'>Desription</span>
+            <div className="text-lg font-semibold text-gray-900 mb-4">{product.description || 'No description provided.'}</div>
+          </div>
+
+          
 
           <div className="flex items-center justify-between mt-auto gap-4">
             <div className="text-xs text-gray-500">
               <div>Stock: <span className="font-medium">{product.stock_quantity ?? '—'}</span></div>
-              <div>Category: <span className="font-medium">{product.category || 'General'}</span></div>
             </div>
-
+            {/**
             <div className="flex items-center gap-3">
               <button
                 onClick={addToCart}
@@ -160,7 +183,7 @@ export default function ViewItemPage() {
               <button onClick={() => navigate('/cart')} className="px-4 py-2 border rounded text-sm">
                 Go to Cart
               </button>
-            </div>
+            </div> */}
           </div>
         </div>
       </div>
