@@ -59,7 +59,7 @@ export default function AppRoutes() {
             <Route path="/orders/:id" element={<OrderDetails />} />
             <Route path="/cart" element={<Cart />} />
 
-
+            {/** 
             <Route
               path="/messages/*"
               element={
@@ -67,7 +67,7 @@ export default function AppRoutes() {
                   <Messages />
                 </ErrorBoundary>
               }
-            />
+            />*/}
 
               
             <Route path="/support" element={<Support />} />
@@ -82,7 +82,7 @@ export default function AppRoutes() {
             
 
 
-            <Route path="/notifications" element={user ? <Notifications /> : <Navigate to="/login" />} />
+            {/*<Route path="/notifications" element={user ? <Notifications /> : <Navigate to="/login" />} />*/}
 
             
             <Route path="/dashboard" element={user ? <Dashboard /> : <Navigate to="/login" />} />

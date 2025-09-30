@@ -265,12 +265,12 @@ export default function ProfilePage() {
             ) : (
               <div className='flex gap-2'>
                 {!profile.is_following ? (
-                  <button onClick={handleFollow} className=" profilebutton bg-green-700 text-white">Follow</button>
+                  <button onClick={handleFollow} className=" followbutton bg-green-700 text-white">Follow</button>
                 ) : (
-                  <button onClick={handleUnfollow} className="profilebutton buttondark text-white ">Unfollow</button>
+                  <button onClick={handleUnfollow} className="followbutton buttondark text-white ">Unfollow</button>
                 )}
 
-                <button onClick={handleMessage} className="profilebutton buttondark text-white">Message</button>
+                <button onClick={handleMessage} className="followbutton buttondark text-white">Message</button>
 
                 {/* ellipsis / more actions button */}
                 <button
@@ -282,7 +282,6 @@ export default function ProfilePage() {
                   {/* simple ellipsis icon (SVG) */}
                   <FaEllipsis className='text-3xl'/>
                 </button>
-
               </div>
             )}
           </div>

@@ -16,7 +16,7 @@ const CLIENT_ORIGIN = process.env.CLIENT_ORIGIN || 'http://localhost:5173';
 /* ---------- Per-account login limiter ---------- */
 const loginAccountLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 5, // max 5 attempts per account
+  max: 50, // max 5 attempts per account
   message: "Too many login attempts for this account. Try again later.",
   keyGenerator: (req, res) => req.body.email?.toLowerCase() || req.ip,
   handler: (req, res, next, options) => {

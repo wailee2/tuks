@@ -44,8 +44,8 @@ function Sidebar() {
     //{ name: "Feed", path: "/feed", icon: <FiRss aria-hidden /> },
     //{ name: "Analytics", path: "/analytics", icon: <FiBarChart2 aria-hidden /> },
     { name: "Marketplace", path: "/marketplace", icon: <FaCartShopping aria-hidden /> },
-    { name: "Messages", path: "/messages", icon: <TbMessage2Filled aria-hidden /> },
-    { name: "Notifications", path: "/notifications", icon: <IoNotifications aria-hidden /> },
+    //{ name: "Messages", path: "/messages", icon: <TbMessage2Filled aria-hidden /> },
+    //{ name: "Notifications", path: "/notifications", icon: <IoNotifications aria-hidden /> },
     //{ name: "Cart", path: "/cart", icon: <FiShoppingCart aria-hidden /> },
     { name: "Support", path: "/support", icon: <BiSupport aria-hidden /> },
     ...((user?.role === "ADMIN" || user?.role === "OWNER")

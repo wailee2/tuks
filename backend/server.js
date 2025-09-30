@@ -153,7 +153,7 @@ const SKIP_PREFIXES = [
 //Prevent brute-force login or spam API calls:
 const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 min
-  max: 100, // limit each IP
+  max: 1000, // limit each IP
   standardHeaders: true,
   legacyHeaders: false,
   message: { error: 'Too many requests, try again later.' },
