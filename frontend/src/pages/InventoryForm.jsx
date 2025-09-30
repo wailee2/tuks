@@ -29,7 +29,7 @@ export default function InventoryFormPage() {
 
       // 2) fallback: fetch by id
       try {
-        const p = await getProductById(Number(id));
+        const p = await getProductById((id));
         if (!p) {
           addToast('Product not found', 'error');
           navigate('/inventory'); // go back to list

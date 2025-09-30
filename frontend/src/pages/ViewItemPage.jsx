@@ -37,7 +37,7 @@ export default function ViewItemPage() {
     (async () => {
       setLoading(true);
       try {
-        const p = await getProductById(Number(id));
+        const p = await getProductById((id));
         if (!p) {
           addToast('Product not found', 'error');
           navigate('/marketplace');

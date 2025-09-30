@@ -7,6 +7,8 @@ import LoadingSpinner from '../components/LoadingSpinner';
 import { AuthContext } from '../context/AuthContext';
 import { Search } from "lucide-react";
 import { FaCartShopping } from "react-icons/fa6";
+import { VscRefresh } from "react-icons/vsc";
+import { motion } from "framer-motion";
 
 const NGN = new Intl.NumberFormat('en-NG', {
   style: 'currency',
@@ -152,16 +154,28 @@ export default function Marketplace() {
       <div className="space-y-6">
         {loading ? ( <LoadingSpinner message="." />
         ) : filtered.length === 0 ? (
-          <div className="bg-white p-8 rounded shadow text-center">
+          <div className="p-8 text-center">
             <h3 className="text-lg font-medium">No products found</h3>
             <p className="mt-2 text-sm text-gray-500">Try clearing your search or check back later.</p>
-            <div className="mt-4 flex items-center justify-center gap-3">
-              <button onClick={loadProducts} className="px-4 py-2 border rounded">
-                Refresh
-              </button>
-              <button onClick={() => navigate('/inventory')} className="px-4 py-2 bg-gray-100 rounded">
+            <div className="mt-4 flex items-center justify-center gap-3 text-gray-500">
+              <motion.button
+                onClick={loadProducts}
+                className="p-2 text-gray-600 text-sm border border-gray-200 rounded-full shadow-sm cursor-pointer"
+                whileHover={{ scale: 1.2, opacity: 0.9 }}
+                transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                title='Refresh'
+              >
+                <VscRefresh className='text-2xl'/>
+              </motion.button>
+              <motion.button
+                onClick={() => navigate('/inventory')}
+                className="px-4 py-2 text-white text-sm bg-green-700 hover:bg-green-800 rounded-full shadow-sm cursor-pointer"
+                whileHover={{ scale: 1.09, opacity: 0.9 }}
+                transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                title='My Inventory'
+              >
                 My Inventory
-              </button>
+              </motion.button>
             </div>
           </div>
         ) : (
