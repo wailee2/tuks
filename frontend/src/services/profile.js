@@ -62,19 +62,17 @@ export const unfollowUser = async (username, token) => {
 };
 
 // block/unblock: username first, token optional (previously these were token-first — fixed)
-export const blockUser = async (username, token) => {
-  const opts = {};
-  if (token) opts.headers = { Authorization: `Bearer ${token}` };
-  const res = await api.post(`/profile/${encodeURIComponent(username)}/block`, {}, opts);
+// services/profile.js
+export const blockUser = async (username) => {
+  const res = await api.post(`/profile/${encodeURIComponent(username)}/block`);
   return res.data;
 };
 
-export const unblockUser = async (username, token) => {
-  const opts = {};
-  if (token) opts.headers = { Authorization: `Bearer ${token}` };
-  const res = await api.post(`/profile/${encodeURIComponent(username)}/unblock`, {}, opts);
+export const unblockUser = async (username) => {
+  const res = await api.post(`/profile/${encodeURIComponent(username)}/unblock`);
   return res.data;
 };
+
 
 // request delete account — token optional (server may rely on cookies)
 export const requestDelete = async (token) => {
