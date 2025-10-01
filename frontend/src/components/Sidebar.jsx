@@ -35,7 +35,7 @@ function Sidebar() {
   const hideNavPages = ["/messages", "/support"].includes(location.pathname);
 
   // pages where nav should be hidden completely
-  const noNav = ["/login", "/register", "/reset-password", "/forgot-password"].includes(location.pathname);
+  const noNav = ["/", "/login", "/register", "/reset-password", "/forgot-password"].includes(location.pathname);
 
   const navItems = [
     { name: "Dashboard", path: "/dashboard", icon: <TbLayoutDashboardFilled aria-hidden /> },
