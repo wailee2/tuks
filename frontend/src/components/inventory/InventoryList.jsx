@@ -45,7 +45,7 @@ export default function InventoryList({ products = [], onEdit, fetchProducts, lo
     return list;
   }, [products, query, sortBy]);
 
-  if (loading) return <LoadingSpinner message="Loading inventory..." />;
+  if (loading) return <LoadingSpinner message="." />;
 
   return (
     <div className="">
